@@ -127,12 +127,12 @@ form_volume = """
 
 def random():
     """Return a random parameter set for the model."""
-    # TODO: too many failures for random hayter_msa parameters
+    # TODO: 40% failures for random hayter_msa parameters
     pars = dict(
         scale=1, background=0,
-        radius_effective=10**np.random.uniform(1, 4.7), # [10, 50000]
-        volfraction=10**np.random.uniform(-2, -0.3),  # [0.01, 0.5]
-        charge=int(10**np.random.uniform(0, 2.3)+0.5), # [1, 200]
+        radius_effective=10**np.random.uniform(0, 4.7), # [1, 50000]
+        volfraction=10**np.random.uniform(-3, -0.3),  # [0.001, 0.5]
+        charge=10**np.random.uniform(-2, 2.3), # [0.01, 200]
         temperature=np.random.uniform(270, 450), # [270, 450]
         concentration_salt=10**np.random.uniform(-3, 2), # [0.001, 100]
         dielectconst=10**np.random.uniform(0, 2.3), # [1, 200]
