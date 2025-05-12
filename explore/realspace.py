@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+import warnings
 import cmath
 import time
 from copy import copy
@@ -12,9 +13,9 @@ from inspect import getfullargspec
 
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt, clip
-from numpy.random import poisson, uniform, randn, rand
+from numpy.random import poisson, uniform, randn, rand, randint
 from numpy.polynomial.legendre import leggauss
-from scipy.integrate import simps
+from scipy.integrate import simpson
 from scipy.special import j1 as J1
 from scipy.special import gamma
 
@@ -25,6 +26,7 @@ try:
     USE_NUMBA = SAS_NUMBA > 0
     USE_CUDA = SAS_NUMBA > 1
 except ImportError:
+    warnings.warn("Numba not available. Code will run more slowly.")
     # Identity decorator @njit or @njit(...)
     njit = lambda f, *args, **kw: f if callable(f) else (lambda k: k)
     USE_NUMBA = USE_CUDA = False
@@ -108,6 +110,11 @@ class Shape:
     rotation = np.eye(3)
     center = np.array([0., 0., 0.])[:, None]
     r_max = None
+    lattice_size = np.array((1, 1, 1))
+    lattice_spacing = np.array((1., 1., 1.))
+    lattice_distortion = 0.0
+    lattice_rotation = 0.0
+    lattice_type = ""
     is_magnetic = False
 
     def volume(self):
@@ -134,13 +141,82 @@ class Shape:
         self.center = self.center + np.array([x, y, z])[:, None]
         return self
 
+    def lattice(self, size=(1, 1, 1), spacing=(2, 2, 2), type="sc",
+            distortion=0.0, rotation=0.0, paracrystalline=False):
+        self.lattice_size = np.asarray(size, 'i')
+        self.lattice_spacing = np.asarray(spacing, 'd')
+        self.lattice_type = type
+        self.lattice_distortion = distortion
+        self.lattice_rotation = rotation
+        if paracrystalline:
+            raise NotImplementedError("don't know how to simulate paracrystals")
+        self.paracrystalline = paracrystalline
+
     def _adjust(self, points):
         points = self.rotation @ points.T + self.center
+        if self.lattice_type:
+            points = self._apply_lattice(points)
         return points.T
 
     def r_bins(self, q, over_sampling=1, r_step=None):
-        return r_bins(q, r_max=self.r_max, r_step=r_step,
+        if self.lattice_type:
+            # Length of the diagonal of the lattice
+            r_max = np.sqrt(np.sum((self.lattice_size*self.lattice_spacing)**2))
+        else:
+            r_max = self.r_max
+        return r_bins(q, r_max=r_max, r_step=r_step,
                       over_sampling=over_sampling)
+
+    def _apply_lattice(self, points):
+        """Spread points to different lattice positions"""
+        size = self.lattice_size
+        spacing = self.lattice_spacing
+        shuffle = self.lattice_distortion
+        rotate = self.lattice_rotation
+        lattice = self.lattice_type
+
+        if rotate != 0:
+            # To vectorize the rotations we will need to unwrap the matrix multiply
+            raise NotImplementedError("don't handle rotations yet")
+
+        # Determine the number of lattice points in the lattice
+        shapes_per_cell = 2 if lattice == "bcc" else 4 if lattice == "fcc" else 1
+        number_of_lattice_points = np.prod(size) * shapes_per_cell
+
+        # For each point in the original shape, figure out which lattice point
+        # to translate it to.  This is both cell index (i*ny*nz + j*nz  + k) as
+        # well as the point in the cell (corner, body center or face center).
+        nsamples = points.shape[1]
+        lattice_point = randint(number_of_lattice_points, size=nsamples)
+
+        # Translate the cell index into the i,j,k coordinates of the center
+        cell_index = lattice_point // shapes_per_cell
+        center = np.vstack((
+            cell_index//(size[1]*size[2]),
+            (cell_index%(size[1]*size[2]))//size[2],
+            cell_index%size[2]))
+        center = np.asarray(center, dtype='d')
+        if lattice == "bcc":
+            center[:, lattice_point % shapes_per_cell == 1] += [[0.5], [0.5], [0.5]]
+        elif lattice == "fcc":
+            center[:, lattice_point % shapes_per_cell == 1] += [[0.0], [0.5], [0.5]]
+            center[:, lattice_point % shapes_per_cell == 2] += [[0.5], [0.0], [0.5]]
+            center[:, lattice_point % shapes_per_cell == 3] += [[0.5], [0.5], [0.0]]
+
+        # Thermal distortion of crystalline lattice
+        # Each lattice point has its own displacement from the ideal position.
+        # Not checking that shapes do not overlap if displacement is too large.
+        offset = shuffle*(randn(3, number_of_lattice_points) if shuffle < 0.3
+                          else rand(3, number_of_lattice_points))
+        center += offset[:, cell_index]
+
+        # Each lattice point has its own rotation.  Rotate the point prior to
+        # applying any displacement.
+        # rotation = rotate@(randn(size=(shapes, 3)) if shuffle < 30 else rand(size=(nsamples, 3)))
+        # for k in shapes: points[k] = rotation[k]@points[k]
+        points += center*(np.array([spacing])).T
+        return points
+
 
 class Composite(Shape):
     def __init__(self, shapes, center=(0, 0, 0), orientation=(0, 0, 0)):
@@ -828,7 +904,7 @@ def j0(x):
 
 
 def calc_Iq_from_Pr(q, r, Pr):
-    Iq = np.array([simps(Pr * j0(qk*r), r) for qk in q])
+    Iq = np.array([simpson(Pr * j0(qk*r), x=r) for qk in q])
     #Iq = np.array([np.trapz(Pr * j0(qk*r), r) for qk in q])
     #Iq /= Iq[0]
     return Iq
@@ -903,13 +979,16 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     import matplotlib.pyplot as plt
     qx, qy = bin_edges(qx), bin_edges(qy)
     #qx, qy = np.meshgrid(qx, qy)
-    if theory is not None:
-        plt.subplot(131)
+    if theory is None:
+        fig, ax = plt.subplots()
+    else:
+        fig, (ax, ax2) = plt.subplots(1, 2)
     #plt.pcolor(qx, qy, np.log10(Iqxy))
     extent = [qx[0], qx[-1], qy[0], qy[-1]]
-    plt.imshow(np.log10(Iqxy), extent=extent, interpolation="nearest",
-               origin='lower')
-    plt.colorbar()
+    im = ax.imshow(
+        np.log10(Iqxy), extent=extent, interpolation="nearest",
+        origin='lower')
+    plt.colorbar(im, ax=ax)
     plt.xlabel('qx (1/A)')
     plt.ylabel('qy (1/A)')
     plt.axis('equal')
@@ -918,19 +997,20 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     if title is not None:
         plt.title(title)
     if theory is not None:
-        plt.subplot(132)
+        plt.subplot(122)
         # Skip bad values in theory
         index = np.isnan(theory)
         theory[index] = Iqxy[index]
-        plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
-                   origin='lower')
+        im2 = ax2.imshow(
+            np.log10(theory), extent=extent, interpolation="nearest",
+            origin='lower')
         plt.title("theory")
-        plt.colorbar()
+        plt.colorbar(im2, ax=ax2)
         plt.axis('equal')
         plt.axis(extent)
         plt.xlabel('qx (1/A)')
 
-    if theory is not None:
+    if False and theory is not None:
         plt.subplot(133)
         rel = (theory-Iqxy)/theory
         plt.imshow(rel, extent=extent, interpolation="nearest", origin='lower')
@@ -1154,11 +1234,14 @@ def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
                                             slda, sldb, sldc, sld_core, view=view)
     return shape, fn, fn_xy
 
-def build_sphere(radius=125, rho=2,
+DEFAULT_SPHERE_RADIUS = 125
+DEFAULT_SPHERE_CONTRAST = 2
+def build_sphere(radius=DEFAULT_SPHERE_RADIUS, rho=DEFAULT_SPHERE_CONTRAST,
                  rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_theta=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(radius, radius, radius, rho, magnetism=magnetism)
     shape.spin = (up_i, up_f, up_theta, up_phi)
+    # Wrap the sasmodels sphere rather than using sphere_Iq so we get magnetism
     fn, fn_xy = wrap_sasmodel(
         'sphere',
         scale=1,
@@ -1299,10 +1382,10 @@ def build_cscyl(ra=30, rb=90, length=30, thick_rim=8, thick_face=14,
     )
     return shape, fn, fn_xy
 
-def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
-                        shuffle=0, rotate=0):
+def build_sc_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
+                     shuffle=0, rotate=0):
     a, b, c = shape.dims
-    shapes = [copy(shape)
+    corners = [copy(shape)
               .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
                      (iy+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
                      (iz+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
@@ -1310,9 +1393,70 @@ def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
               for ix in range(nx)
               for iy in range(ny)
               for iz in range(nz)]
-    lattice = Composite(shapes)
+    lattice = Composite(corners)
     return lattice
 
+def build_bcc_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
+                      shuffle=0, rotate=0):
+    a, b, c = shape.dims
+    corners = [copy(shape)
+               .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    centers = [copy(shape)
+               .shift((ix+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    lattice = Composite(corners + centers)
+    return lattice
+
+def build_fcc_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
+                      shuffle=0, rotate=0):
+    a, b, c = shape.dims
+    corners = [copy(shape)
+               .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    faces_a = [copy(shape)
+               .shift((ix+0.0+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    faces_b = [copy(shape)
+               .shift((ix+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.0+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    faces_c = [copy(shape)
+               .shift((ix+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.0+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    lattice = Composite(corners + faces_a + faces_b + faces_c)
+    return lattice
+
+# CRUFT: py 3.6+ dicts are ordered.
 SHAPE_FUNCTIONS = OrderedDict([
     ("cyl", build_cylinder),
     ("ellcyl", build_ellcyl),
@@ -1329,6 +1473,18 @@ SHAPE_FUNCTIONS = OrderedDict([
 ])
 SHAPES = list(SHAPE_FUNCTIONS.keys())
 
+LATTICE_FUNCTIONS = OrderedDict([
+    ("sc", build_sc_lattice),
+    ("bcc", build_bcc_lattice),
+    ("fcc", build_fcc_lattice),
+])
+LATTICE_TYPES = list(LATTICE_FUNCTIONS.keys())
+NEAREST_NEIGHBOR = {
+    "sc": 1.0,
+    "fcc": 1.0/np.sqrt(2.0),
+    "bcc": np.sqrt(3.0)/2.0,
+}
+
 def check_shape(title, shape, fn=None, show_points=False,
                 mesh=100, qmax=1.0, r_step=0.01, samples=5000):
     rho_solvent = 0
@@ -1342,9 +1498,10 @@ def check_shape(title, shape, fn=None, show_points=False,
     Pr = calc_Pr(r, rho-rho_solvent, points, volume)
     print("calc Pr time", timer() - t0)
     Iq = calc_Iq_from_Pr(q, r, Pr)
-    t0 = timer()
-    Iq_avg = calc_Iq_avg(q, rho-rho_solvent, points, volume)
-    print("calc Iq_avg time", timer() - t0)
+    #t0 = timer()
+    #Iq_avg = calc_Iq_avg(q, rho-rho_solvent, points, volume)
+    #print("calc Iq_avg time", timer() - t0)
+    Iq_avg = None # Suppress since it fails for oriented particles
     theory = (q, fn(q)) if fn is not None else None
 
     import pylab
@@ -1482,9 +1639,12 @@ def main():
                         help='lattice size')
     parser.add_argument('-z', '--spacing', type=str, default='2,2,2',
                         help='lattice spacing')
+    parser.add_argument('-t', '--type', choices=LATTICE_TYPES,
+                        default=LATTICE_TYPES[0],
+                        help='lattice type')
     parser.add_argument('-r', '--rotate', type=float, default=0.,
                         help="rotation relative to lattice, gaussian < 30 degrees, uniform otherwise")
-    parser.add_argument('-w', '--shuffle', type=float, default=0.,
+    parser.add_argument('-w', '--shuffle', type=float, default=0.06,
                         help="position relative to lattice, gaussian < 0.3, uniform otherwise")
     parser.add_argument('-p', '--plot', action='store_true',
                         help='plot points')
@@ -1495,16 +1655,47 @@ def main():
     pars = {key: float(value) for p in opts.pars for key, value in [p.split('=')]}
     nx, ny, nz = [int(v) for v in opts.lattice.split(',')]
     dx, dy, dz = [float(v) for v in opts.spacing.split(',')]
-    shuffle, rotate = opts.shuffle, opts.rotate
+    distortion, rotation = opts.shuffle, opts.rotate
     shape_generator = SHAPE_FUNCTIONS[opts.shape]
     if not check_pars(shape_generator, pars, name=opts.shape):
         return
     shape, fn, fn_xy = shape_generator(**pars)
-    if nx > 1 or ny > 1 or nz > 1:
-        shape = build_cubic_lattice(shape, nx, ny, nz, dx, dy, dz, shuffle, rotate)
+    view = tuple(float(v) for v in opts.view.split(','))
+    # If comparing a sphere in a square lattice, compare against the
+    # corresponding paracrystalline model.
+    if opts.shape == "sphere" and dx == dy == dz and nx*ny*nz > 1:
+        radius = pars.get('radius', DEFAULT_SPHERE_RADIUS)
+        model_name = opts.type + "_paracrystal"
+        model_pars = {
+            "scale": 1.,
+            "background": 0.,
+            "dnn": NEAREST_NEIGHBOR[opts.type]*dx,
+            #"dnn": dx,
+            "d_factor": distortion,
+            #"lattice_spacing": dx,
+            #"lattice_distortion": distortion,
+            "radius": radius,
+            "sld": pars.get('rho', DEFAULT_SPHERE_CONTRAST),
+            "sld_solvent": 0.,
+            "theta": view[0],
+            "phi": view[1],
+            "psi": view[2],
+        }
+        #print(f"lattice {model_name} with {model_pars}")
+        fn, fn_xy = wrap_sasmodel(model_name, **model_pars)
+    if nx*ny*nz > 1:
+        if rotation != 0:
+            print("building %s lattice"%opts.type)
+            build_lattice = LATTICE_FUNCTIONS[opts.type]
+            shape = build_lattice(shape, nx, ny, nz, dx, dy, dz,
+                                  distortion, rotation)
+        else:
+            shape.lattice(size=(nx, ny, nz), spacing=(dx, dy, dz),
+                          type=opts.type,
+                          rotation=rotation, distortion=distortion)
+
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
     if shape.is_magnetic:
-        view = tuple(float(v) for v in opts.view.split(','))
         up_frac_i, up_frac_f, up_theta, up_phi = shape.spin
         check_shape_mag(title, shape, fn_xy, view=view, show_points=opts.plot,
                        mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples,
@@ -1514,7 +1705,6 @@ def main():
         check_shape(title, shape, fn, show_points=opts.plot,
                     mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
     else:
-        view = tuple(float(v) for v in opts.view.split(','))
         check_shape_2d(title, shape, fn_xy, view=view, show_points=opts.plot,
                        mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
 
