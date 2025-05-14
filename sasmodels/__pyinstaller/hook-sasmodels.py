@@ -18,6 +18,12 @@ try:
 
     hiddenimports = [
         "pyopencl",
+        "sasmodels.compare_many",
+        "sasmodels.guyou",
+        "sasmodels.jitter",
+        "sasmodels.list_pars",
+        "sasmodels.multiscat",
+        "sasmodels.special",
     ]
 
     print(f"sasmodels added hiddenimports: {hiddenimports}")
