@@ -25,6 +25,7 @@ try:
         "sasmodels.multiscat",
         "sasmodels.special",
     ]
+    module_collection_mode = "py"
 
     print(f"sasmodels added hiddenimports: {hiddenimports}")
 
