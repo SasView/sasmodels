@@ -18,7 +18,14 @@ try:
 
     hiddenimports = [
         "pyopencl",
+        "sasmodels.compare_many",
+        "sasmodels.guyou",
+        "sasmodels.jitter",
+        "sasmodels.list_pars",
+        "sasmodels.multiscat",
+        "sasmodels.special",
     ]
+    module_collection_mode = "py"
 
     print(f"sasmodels added hiddenimports: {hiddenimports}")
 
