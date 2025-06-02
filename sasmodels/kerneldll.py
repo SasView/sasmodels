@@ -77,6 +77,7 @@ import tempfile
 import ctypes as ct  # type: ignore
 import _ctypes as _ct
 import logging
+import platform
 
 import numpy as np  # type: ignore
 
@@ -220,7 +221,8 @@ def dll_name(model_file, dtype):
     any path or extension, with a form such as 'sas_sphere32'.
     """
     bits = 8*dtype.itemsize
-    basename = "sas%d_%s"%(bits, model_file)
+    arch = platform.machine()
+    basename = "sas%d_%s_%s"%(bits, arch, model_file)
     basename += ARCH + ".so"
 
     # Hack to find precompiled dlls.
