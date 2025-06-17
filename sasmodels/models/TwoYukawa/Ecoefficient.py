@@ -18,7 +18,7 @@ class TYCoeff:
     d2Factor: float = 1.
 
     Ecoefficient: NDArray
-    ABC1C2: Callable[[float, float], [float, float, float, float]]
+    ABC1C2: Callable[[float, float], Tuple[float, float, float, float]]
 
     def __init__(self, Z, K, phi):
         self.z = tuple(Z)
