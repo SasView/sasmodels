@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 import numpy as np
 from numpy import exp, pi, cos, sin, cosh
@@ -10,15 +10,15 @@ from numpy.typing import NDArray
 
 class TYCoeff:
     phi: float
-    z: tuple[float, float]
-    bigK: tuple[float, float]
-    k: tuple[float, float]
+    z: Tuple[float, float]
+    bigK: Tuple[float, float]
+    k: Tuple[float, float]
     # Unused
     d1Factor: float = 1.
     d2Factor: float = 1.
 
     Ecoefficient: NDArray
-    ABC1C2: Callable[[float, float], [float, float, float, float]]
+    ABC1C2: # Callable[[float, float], [float, float, float, float]]
 
     def __init__(self, Z, K, phi):
         self.z = tuple(Z)

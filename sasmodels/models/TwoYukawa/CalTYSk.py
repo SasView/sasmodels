@@ -312,6 +312,8 @@ def demo():
     # Volume Fraction
     volF=0.2
 
+    K1=-6; K2=2.7; volF=0.1; Z1=10; Z2=2.3;
+
     # Please give your Q range, the maximum Q should be larger than 700 to let
     # the program to run.
     # (The reason is : we have to use g(r) to select the right result. Therefore
