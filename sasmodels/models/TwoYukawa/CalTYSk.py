@@ -1,0 +1,339 @@
+import numpy as np
+from numpy import pi, inf, mean
+import matplotlib.pyplot as plt
+
+from .Ecoefficient import TYCoeff
+from .CalcRealRoot import CalRealRoot
+from .TInvFourier import TInvFourier
+
+def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
+    """
+    Python implementation of the MATLAB CalTYSk function
+
+    Parameters:
+    Z1, Z2 : float
+        Parameters for the two-Yukawa potential
+    K1, K2 : float
+        Parameters for the two-Yukawa potential
+    volF : float
+        Volume fraction
+    Q : array_like
+        Wave vector values
+
+    Returns:
+    calSk : array_like
+        Calculated structure factor
+    rootCounter : int
+        Number of valid roots found
+    calr : array_like
+        Spatial distance variable for pair distribution function
+    calGr : array_like
+        Pair distribution function g(r)
+    errorCode : int
+        Error code (0: no good roots but some results, 1: one good root, >1: multiple good roots, -1: error)
+    cVar : array_like or 0
+        Coefficient variables if choice=1, otherwise 0
+    """
+
+    # Check if maximum Q is sufficient
+    if np.max(Q) < 700:
+        print('Maximum Q is too small, possible error when checking g(r)')
+        print('Please increase the maximum Q at least to 700')
+        calSk = np.zeros_like(Q)
+        rootCounter = -1
+        calr = 0
+        calGr = 1
+        errorCode = -1
+        cVar = 0
+        return calSk, rootCounter, calr, calGr, errorCode, cVar
+
+    # Check Q spacing
+    if np.max(Q) / len(Q) > 0.05:
+        print('Please make the interval of neighbouring Q smaller')
+        print('max(Q)/length(Q) > 0.05')
+        calSk = np.zeros_like(Q)
+        rootCounter = -1
+        calr = 0
+        calGr = 1
+        errorCode = -1
+        cVar = 0
+        return calSk, rootCounter, calr, calGr, errorCode, cVar
+
+    coeff = TYCoeff(Z=[Z1, Z2], K=[K1, K2], phi=volF)
+
+    # Calculate the roots for d1 and d2
+    Rd1, Rd2 = CalRealRoot(coeff)
+    Rd1 = Rd1 * coeff.d1Factor
+    Rd2 = Rd2 * coeff.d2Factor
+
+    # Initialize errorCode and rootCounter
+    errorCode = 0
+    rootCounter = 0
+    goodRoot = 0
+
+    # Arrays to store results
+    calCoeArray = []
+    calrArray = []
+    calGrArray = []
+    calSkArray = []
+    goodRootPos = []
+
+    for i in range(len(Rd2)):
+        for j in range(2):
+            # Check if there is NaN root
+            if np.isnan(Rd1[i, j]) or Rd2[i] == 0:
+                continue
+
+            # Based on the solution of d1 and d2, calculate other coefficients in Blum's method
+            coe = coeff.CxCoef(Rd1[i, j], Rd2[i])
+
+            # Assign the calculated result to different variables
+            a00 = coe[0]
+            b00 = coe[1]
+            v1 = coe[2]
+            v2 = coe[3]
+            a = coe[4]
+            b = coe[5]
+            c1 = coe[6]
+            d1 = coe[7]
+            c2 = coe[8]
+            d2 = coe[9]
+
+            kk = Q
+            r = np.arange(0.001, 10.001, 0.01)
+
+            # Calculate C(k) and C(r)
+            eCk = coeff.Ck(a00, b00, v1, v2, kk)
+            eCr = coeff.Cr(a00, b00, v1, v2, r)
+
+            # Calculate h(k) and S(k)
+            ehk = coeff.hk(eCk)
+            eSk = coeff.Sk(ehk)
+
+            # Calculate h(r) and g(r) from h(k)
+            rh, hc_r = TInvFourier(kk, 4 * pi * ehk * kk, 0.2)
+            h_r = -np.imag(hc_r) / rh / 4 / pi / pi
+            g_r = h_r + 1
+
+            if debugFlag and i==0 and j==0: # debug
+                plt.figure()
+
+                # Plot C(r)
+                plt.subplot(3, 1, 1)
+                plt.plot(r, -eCr, 'g*-')
+                index = np.where(r > 1)[0]
+
+                tempMin = np.min(-eCr[index])
+                tempMax = np.max(-eCr[index])
+                maxPos = r[np.argmax(-eCr)]
+                plt.axis([r[index[0]], 4, min(-eCr[index]), max(1, tempMax)])
+                plt.grid(True)
+                plt.text(0.5 * 4, 0.4 * (tempMax - tempMin) + tempMin,
+                         f'Maximum value = {tempMax}, Position={maxPos}')
+                plt.xlabel('r/\\sigma')
+                plt.ylabel('-c(r)')
+                plt.title(f'φ={volF}, z(1)={Z1}, z(2)={Z2}, K(1)={K1}, K(2)={K2}')
+
+                # Plot S(k)
+                plt.subplot(3,1,2)
+                plt.plot(kk, eSk, 'bo-')
+                plt.xlabel('k\\sigma')
+                plt.ylabel('S(k)')
+                plt.title(f'φ={volF}, z(1)={Z1}, z(2)={Z2}, K(1)={K1}, K(2)={K2}')
+                plt.axis([0, 5*pi, 0, max(eSk)])
+                plt.grid()
+
+                # Plot g(r)
+                plt.subplot(3,1,3)
+                plt.plot(rh, g_r, 'b0-')
+                plt.axis([0, 8, -inf, inf])
+                plt.xlabel('r/σ')
+                plt.ylabel('g(r)')
+                plt.title(f'Root: ({i}, {j})')
+                plt.grid()
+
+            if testGr(rh, g_r, False) == 1:
+                continue
+
+            rootCounter += 1
+
+            if v1*coeff.k[0] >= 0 and v2*coeff.k[1] >= 0:
+                goodRootPos.append(rootCounter)
+
+            calCoeArray.append(coe)
+            calrArray.append(rh)
+            calGrArray.append(g_r)
+            calSkArray.append(eSk)
+
+    # No good roots and reasonable solution
+    if rootCounter == 0:
+        errorCode = -1
+        position = -1
+        calr = 0
+        calGr = 0
+        calSk = np.zeros_like(Q)
+        cVar = np.zeros(10)
+
+    # There is some result which may be reasonable
+    # There is more than one good solution, only one of them is sent back
+    elif goodRoot > 1:
+        errorCode = goodRoot
+        position = findSGr(calrArray, calGrArray, goodRootPos)
+        # position = goodRootPos[0]
+        calr = calrArray[position]
+        calGr = calGrArray[position]
+        calSk = calSkArray[position]
+        cVar = calCoeArray[position]
+        testGr(calr, calGr, warnFlag)
+
+    # There is only one good result
+    elif goodRoot == 1:
+        errorCode = 1
+        position = goodRootPos[0]
+        calr = calrArray[position]
+        calGr = calGrArray[position]
+        calSk = calSkArray[position]
+        cVar = calCoeArray[position]
+        testGr(calr, calGr, warnFlag)
+
+    # Sorry, no good result, but some of them can be sent back to be checked
+    elif goodRoot == 0:
+        errorCode = 0
+        # position = 0
+        position = findSGr(calrArray, calGrArray)
+        calr = calrArray[position]
+        calGr = calGrArray[position]
+        calSk = calSkArray[position]
+        cVar = calCoeArray[position]
+        testGr(calr, calGr, warnFlag)
+
+    if debugFlag:
+        print(f'\n rootCounter= {position} is returned')
+    return calSk, rootCounter, calr, calGr, errorCode, cVar
+
+
+def findSGr(calrArray, calGrArray, positionArray=None):
+    """
+    Find the position with the smallest sum of absolute values in the hardcore region
+
+    Parameters:
+    calrArray : list of arrays
+        List of r arrays
+    calGrArray : list of arrays
+        List of g(r) arrays
+    positionArray : list, optional
+        List of positions to consider
+
+    Returns:
+    position : int
+        Position with the smallest sum in the hardcore region
+    """
+    if positionArray is None:
+        sumHardcore = 1000
+        position = 0
+        for i in range(len(calrArray)):
+            index = np.where(calrArray[i] < 0.95)[0]
+            if len(index) > 1:  # Ensure there are elements after index 0
+                tempSum = np.sum(np.abs(calGrArray[i][1:len(index)])) / (len(index) - 1)
+                if sumHardcore > tempSum:
+                    sumHardcore = tempSum
+                    position = i
+
+        return position
+    else:
+        position = 0
+        sumHardcore = 1000
+
+        for i in range(len(positionArray)):
+            j = positionArray[i]
+            index = np.where(calrArray[j] < 0.95)[0]
+            if len(index) > 1:  # Ensure there are elements after index 0
+                tempSum = np.sum(np.abs(calGrArray[j][1:len(index)])) / (len(index) - 1)
+                if sumHardcore > tempSum:
+                    sumHardcore = tempSum
+                    position = j
+
+        return position
+
+def testGr(r, g_r, warnFlag=False):
+    """
+    Test the g(r) function for various conditions and return a flag indicating the result.
+    """
+    # global debugFlag  # Uncomment if needed
+
+    if max(g_r) > 20:
+        # flag=1
+        # return
+        if warnFlag:
+            print('Warning! Maximum value of g(r) > 20')
+
+    average = mean(g_r[g_r < 1])
+
+    if average < -1:
+        if warnFlag:
+            print('Negative warning g(r), less than -1 in the hardcore')
+        return -2
+    elif average < -0.3:
+        if warnFlag:
+            print('Negative warning g(r), less than -0.3 in the hardcore')
+        return -1
+    elif average < -10:
+        return 1
+
+    # Recompute index but skip the first element
+    average = mean(g_r[g_r < 1][1:])
+
+    if average > 1:
+        if warnFlag:
+            print('Positive warning g(r), average > 1 inside hardcore')
+        return -3
+    elif average > 0.3:
+        if warnFlag:
+            print('Positive warning g(r), average > 0.1 inside hardcore')
+        return -1
+    elif average > 10:
+        return 1
+
+    return 0
+
+def demo():
+    import matplotlib.pyplot as plt
+
+    # Potential From: V(r)/(kB*T)=-K1*exp(-Z1*(r-1))/r - K2*exp(-Z2*(r-1))/r
+    # kB: Boltzman constant
+    # T: Absolute temperature
+    # The hardcore diameter is assumed to be one
+
+    Z1=2
+    Z2=10
+    K1=-1         # Attraction
+    K2=6          # Repulsion
+
+    # Volume Fraction
+    volF=0.2
+
+    # Please give your Q range, the maximum Q should be larger than 700 to let
+    # the program to run.
+    # (The reason is : we have to use g(r) to select the right result. Therefore
+    # large Q range can make g(r) better.
+    Q = 2*pi*np.arange(0, 15*10, 0.005)
+
+    [calSk,rootCounter,calr,calGr,errorCode, cVar] = CalTYSk(Z1,Z2,K1,K2,volF,Q)
+
+    # Plot structure factor S(Q)
+    plt.subplot(211)
+    plt.plot(Q, calSk, 'b-')
+    plt.xlim([0, 20])
+    #plt.xscale('log')xs
+    #plt.axis([0,20,0,inf])
+
+    # Plot the pair distribution function g(r)
+    plt.subplot(212)
+    plt.plot(calr, calGr, 'b-')
+    plt.xlim([0, 10])
+    #plt.xscale('log')
+    #plt.axis([0,10,-inf,inf])
+    plt.show()
+
+if __name__ == "__main__":
+    demo()
