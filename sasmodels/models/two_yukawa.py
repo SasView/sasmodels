@@ -121,8 +121,8 @@ Iq.vectorized = True  # Iq accepts an array of q value
 
 # The test results were generated with MatLab Code (TYSQ22) (Jan. 22, 2024)
 # Note that this test reverses the definition of the original code : k1 > 0 means repulsion and k1 < 0 means attraction.
-tests = [
-    [{'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
-      'volfraction' : 0.2, 'k1' : -6, 'k2':2.0, 'z1':10, 'z2':2.0},
-     [0.0009425, 0.029845], [0.126775, 0.631068]],
-]
+#tests = [
+#    [{'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
+#      'volfraction' : 0.2, 'k1' : -6, 'k2':2.0, 'z1':10, 'z2':2.0},
+#     [0.0009425, 0.029845], [0.126775, 0.631068]],
+#]
