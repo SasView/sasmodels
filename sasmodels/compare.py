@@ -1678,22 +1678,34 @@ class Explore(object):
         """
         Plot the data and residuals.
         """
+        import matplotlib.pyplot as plt
+
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'][0] = pars
         if not self.fix_p2:
             self.opts['pars'][1] = pars
-        result = run_models(self.opts)
+        try:
+            result = run_models(self.opts)
+        except Exception as exc:
+            print("Exception %s while evaluating"%(exc.__class__.__name__))
+            import traceback
+            traceback.print_exc()
+            plt.clf()
+            return
         limits = plot_models(self.opts, result, limits=self.limits)
+        is_sf = self.opts['info'][0].structure_factor
         if self.limits is None:
             vmin, vmax = limits
-            if self.opts['info'][0].structure_factor:
-                self.limits = 0.01, 10
+            if is_sf:
+                self.limits = 0.01, 4
             else:
                 self.limits = vmax*1e-7, 1.3*vmax
-            import pylab
-            pylab.clf()
+            plt.clf()
             plot_models(self.opts, result, limits=self.limits)
+        #if is_sf:
+        #    plt.yscale('linear')
+        #    plt.xscale('linear')
 
 
 def main(*argv):
