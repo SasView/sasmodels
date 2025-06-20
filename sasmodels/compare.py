@@ -1610,6 +1610,7 @@ class Explore(object):
         # type: (Dict[str, Any]) -> None
         from bumps.cli import config_matplotlib  # type: ignore
         from . import bumps_model
+
         config_matplotlib()
         self.opts = opts
         opts['pars'] = list(opts['pars'])
@@ -1686,7 +1687,10 @@ class Explore(object):
         limits = plot_models(self.opts, result, limits=self.limits)
         if self.limits is None:
             vmin, vmax = limits
-            self.limits = vmax*1e-7, 1.3*vmax
+            if self.opts['info'][0].structure_factor:
+                self.limits = 0.01, 10
+            else:
+                self.limits = vmax*1e-7, 1.3*vmax
             import pylab
             pylab.clf()
             plot_models(self.opts, result, limits=self.limits)
