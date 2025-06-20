@@ -88,7 +88,7 @@ Authorship and Verification
 import numpy as np
 from numpy import inf
 
-name = "Two_Yukawa"
+name = "two_yukawa"
 title = "User model for two Yukawa structure factor (S(q))"
 description = """"""
 
@@ -110,7 +110,7 @@ parameters = [
     ]
 
 def Iq(q, radius_effective, volfraction, k1, k2, z1, z2):
-    from .TwoYukawa.CalTYSk import CalTYSk
+    from sasmodels.models.TwoYukawa.CalTYSk import CalTYSk
     Q_eff = 2*radius_effective*q
     Qmax = max(Q_eff.max(), 700.1)
     Q = np.arange(0, Qmax, 0.04)
