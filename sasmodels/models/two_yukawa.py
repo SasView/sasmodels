@@ -19,7 +19,7 @@ The interaction potential $V(r)$ is
 where $R$ is radius_effective.
 $K_1$ ( or $K_2$ ) is positive when there is a repulsion.
 $K_1$ ( or $K_2$ ) is negative when there is an attraction.
-And $r$ is the normalized inter-particle distance, $\frac{r_{cc}}{2R}$. 
+And $r$ is the normalized inter-particle distance, $\frac{r_{cc}}{2R}$.
 $r_{cc}$ is the distance between the center-of-mass of particles.
 
 .. note::
@@ -46,25 +46,23 @@ method,[4] in which the structure factor is solved using the Ornstein-Zernike
 equation by Baxter's Q-method with the MSA closure.
 
 The algorithm used in this model was originally proposed and developled by Liu
-et al. in 2005 and implemented using MatLab.[1] The algorithm was later
-reimplemented using C and Igor. The codes for a two Yukawa potential in SasView are mostly based on the C codes written by M. Hennig
-in 2010.
+et al. in 2005 and implemented using MatLab.[1]
 
 When the overall attraction is not very strong, this algorithm produces
 reasonably accurate results.[2] However, when the net attraction is very strong,
 it has been shown that the fitting algorithm tends to overestimate the
 attraction strength. Accuracy of this algorithm was evaluated by Broccio, et
-al.[2] It should be noted that the MSA is not be an accurate closure for 
+al.[2] It should be noted that the MSA is not be an accurate closure for
 systems with strong attractions. So cares need to be taken when having quantitative
 discussions of the fitting results for those systems.
 
 When using the O-Z equation to obtain the structure factor, it assumes that a
 system is in a liquid state. However, when the attraction potential is too
 strong the system may not be in a liquid state, and the O-Z equation may not
-have a solution, or the solution may be unphysical. It should be noted that any closure 
+have a solution, or the solution may be unphysical. It should be noted that any closure
 for a O-Z euqation is an approximation. Thus, the structure factor calculated using a closure
 is an approximation of the real structure factor. Its accuracy varies for different parameter ranges.
-One should not "blindly" trust the results. This is true too for the MSA closure used here to solve 
+One should not "blindly" trust the results. This is true too for the MSA closure used here to solve
 the O-Z equation for two Yukawa potential.[2]
 
 References
