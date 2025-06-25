@@ -5,6 +5,9 @@ v1.0.10 2025-06-25
 ------------------
 * Reorganisation of project structure for wheel support
 * Round to nearest integer for star polymer arms
+* Fix pickle errors with product models
+* Fix random model generator for Hayter MSA
+* Doc update: Make equations in core shell sphere docs match the code
 * Package dependency: Use tccbox instead of tinycc
 
 v1.0.9 2025-02-28
