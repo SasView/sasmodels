@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v1.0.10 2025-06-25
+------------------
+* Reorganisation of project structure for wheel support
+* Round to nearest integer for star polymer arms
+* Package dependency: Use tccbox instead of tinycc
+
 v1.0.9 2025-02-28
 -----------------
 * Fix precision and improve stability at low Q for both the star_polymer and binary_hard_sphere models
