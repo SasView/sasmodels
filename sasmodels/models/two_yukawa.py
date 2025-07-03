@@ -99,21 +99,50 @@ valid = "k1 != 0 && k2 != 0 && z1 != z2"
 
 parameters = [ 
 #   ["name", "units", default, [lower, upper], "type", "description"],
-    ["radius_effective", "Ang", 50.0, [-inf, inf], '', ''],
-    ['volfraction', '', 0.1, [-inf, inf], '', ''],
-    ['k1', '', -6, [-inf, inf], '', ''],
-    ['k2', '', 2.0, [-inf, inf], '', ''],
-    ['z1', '', 10.0, [-inf, inf], '', ''],
-    ['z2', '', 2.0, [-inf, inf], '', ''],
+    ["radius_effective", "Ang", 50.0, [0, inf], '', ''],
+    ['volfraction', '', 0.1, [0, inf], '', ''],
+    ['k1', '', 6.0, [-inf, inf], '', ''],
+    ['k2', '', -2.0, [-inf, inf], '', ''],
+    ['z1', '', 10.0, [0, inf], '', ''],
+    ['z2', '', 2.0, [0, inf], '', ''],
     ]
 
+Q_UPPER = 700
+Q_STEP = 0.04
+K_MIN = 1e-4
+Z_MIN = 1e-2
+Z_MIN_DIFF = 1e-2
 def Iq(q, radius_effective, volfraction, k1, k2, z1, z2):
     from sasmodels.models.TwoYukawa.CalTYSk import CalTYSk
-    Q_eff = 2*radius_effective*q
-    Qmax = max(Q_eff.max(), 700.1)
-    Q = np.arange(0, Qmax, 0.04)
-    Sk, num_roots, r, Gr, error, cVar = CalTYSk(z1,z2,k1,k2,volfraction,Q,warnFlag=False)
-    Sk_eff = np.interp(Q_eff, Q, Sk)
+
+    # TODO: Use finer sampling for small radius? Use log-log interpolation?
+    # The form computed by CalTYSk assumes a particle diameter of 1.0 but we can correct
+    # for this by scaling our measured Q by the proposed diameter.
+    # For small radii the Qcalc step is larger than the Qeff step, which shows up as
+    # linear interpolation on a log-log plot.
+    # Make sure we are calculating enough Q to test G(r)
+    Qeff = 2*radius_effective*q
+    Qmax = max(Qeff.max(), Q_UPPER)
+    Qcalc = np.arange(0, Qmax + Q_STEP, Q_STEP)
+
+    # Clip parameters to prevent numerical precision problems in CalTYSk
+    if abs(k1) < K_MIN:
+        k1 = -K_MIN if k1 < 0 else K_MIN
+    if abs(k2) < K_MIN:
+        k2 = -K_MIN if k2 < 0 else K_MIN
+    z1 = max(z1, Z_MIN)
+    z2 = max(z2, Z_MIN)
+    if abs(z1-z2) < Z_MIN_DIFF:
+        z1 = z2 + Z_MIN_DIFF
+    if z1 < z2:
+        z1, z2 = z2, z1
+        k1, k2 = k2, k1
+    # print(z1,z2,k1,k2,volfraction,Qmax)
+
+    Sk, num_roots, r, Gr, error, cVar = CalTYSk(z1,z2,k1,k2,volfraction,Qcalc,warnFlag=False)
+
+    # Interpret back into Q
+    Sk_eff = np.interp(Qeff, Qcalc, Sk)
     return Sk_eff
 Iq.vectorized = True  # Iq accepts an array of q value
 

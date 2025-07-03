@@ -59,7 +59,10 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
         cVar = 0
         return calSk, rootCounter, calr, calGr, errorCode, cVar
 
-    coeff = TYCoeff(Z=[Z1, Z2], K=[K1, K2], phi=volF)
+    # Note: we are using the opposite sign convention for K1 and K2 in python compared
+    # to the matlab code. We are reversing it here rather than updating the rest of the
+    # code to minimize the difference between this code and matlab.
+    coeff = TYCoeff(Z=[Z1, Z2], K=[-K1, -K2], phi=volF)
 
     # Calculate the roots for d1 and d2
     Rd1, Rd2 = CalRealRoot(coeff)
@@ -112,6 +115,7 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
 
             # Calculate h(r) and g(r) from h(k)
             rh, hc_r = TInvFourier(kk, 4 * pi * ehk * kk, 0.2)
+            rh, hc_r = rh[1:], hc_r[1:]
             h_r = -np.imag(hc_r) / rh / 4 / pi / pi
             g_r = h_r + 1
 
@@ -303,6 +307,9 @@ def demo():
     # kB: Boltzman constant
     # T: Absolute temperature
     # The hardcore diameter is assumed to be one
+    # K1, K2 follow the sign convention of the matlab code
+    # In Matlab, negative K1 means attraction, positive means repulsion
+    # In Python, negative K1 means repulsion, positive means attraction
 
     Z1=2
     Z2=10
@@ -312,6 +319,8 @@ def demo():
     # Volume Fraction
     volF=0.2
 
+    # Use matlab syntax for defining parameters to ease comparison. Note that
+    # K1, K2 are negative in matlab and positive in python.
     K1=-6; K2=2.7; volF=0.1; Z1=10; Z2=2.3;
 
     # Please give your Q range, the maximum Q should be larger than 700 to let
@@ -320,7 +329,7 @@ def demo():
     # large Q range can make g(r) better.
     Q = 2*pi*np.arange(0, 15*10, 0.005)
 
-    [calSk,rootCounter,calr,calGr,errorCode, cVar] = CalTYSk(Z1,Z2,K1,K2,volF,Q)
+    [calSk,rootCounter,calr,calGr,errorCode, cVar] = CalTYSk(Z1,Z2,-K1,-K2,volF,Q)
 
     # Plot structure factor S(Q)
     plt.subplot(211)
