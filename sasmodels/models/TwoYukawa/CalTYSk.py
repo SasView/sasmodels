@@ -6,6 +6,17 @@ from .Ecoefficient import TYCoeff
 from .CalcRealRoot import CalRealRoot
 from .TInvFourier import TInvFourier
 
+# Supplied Q vector must go out to at least this value to calculate g(r).
+Q_UPPER = 700
+Q_STEP = 0.04 # Suggested step size for Q
+
+# Suggested parameter bounds. These are not enforced in the code, allowing
+# the exploration of limiting cases. For now the limits should be implemented
+# by the caller.
+K_MIN = 1e-4  # Minimum absolute value for K
+Z_MIN = 1e-2  # Minimum value for Z
+Z_MIN_DIFF = 1e-2 # Minimum difference between Z1 and Z2
+
 def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
     """
     Python implementation of the MATLAB CalTYSk function
@@ -35,10 +46,15 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
         Coefficient variables if choice=1, otherwise 0
     """
 
+    # Better numerical stability if Z1 > Z2.
+    if Z1 < Z2:
+        Z1, Z2 = Z2, Z1
+        K1, K2 = K2, K1
+
     # Check if maximum Q is sufficient
-    if np.max(Q) < 700:
+    if np.max(Q) < Q_UPPER:
         print('Maximum Q is too small, possible error when checking g(r)')
-        print('Please increase the maximum Q at least to 700')
+        print(f'Please increase the maximum Q at least to {Q_UPPER}')
         calSk = np.zeros_like(Q)
         rootCounter = -1
         calr = 0
