@@ -17,21 +17,19 @@ The interaction potential $V(r)$ is
     \end{cases}
 
 where $R$ is radius_effective.
-$K_1$ ( or $K_2$ ) is positive when there is a repulsion.
-$K_1$ ( or $K_2$ ) is negative when there is an attraction.
+$K_1$ ( or $K_2$ ) is positive when there is attraction.
+$K_1$ ( or $K_2$ ) is negative when there is repulsion.
 And $r$ is the normalized inter-particle distance, $\frac{r_{cc}}{2R}$.
 $r_{cc}$ is the distance between the center-of-mass of particles.
 
 .. note::
 
-   This routine only works for a potential with two Yukawa terms. If the
-   amplitude, $K_1$ or $K_2$, of either Yukawa potential becomes zero, the
-   routine may self-destruct! But one can make either amplitude very small if
-   there is a need to make one amplitude to be zero. Also, $Z_1$ and $Z_2$
-   should be different. If these two numbers are identical, it essentially
-   becomes a potential with one Yukawa term. But these two values can be very
-   close to each other. Therefore, the initial parameters of $Z_1$ and $Z_2$
-   should be different.
+    This routine only works for a potential with two Yukawa terms where
+    $Z_1 \neq Z_2$. When $|Z_1 - Z_2| < 0.01$ we set $Z_1 = Z_2 + 0.01$,
+    giving a two-term potential numerically similar to the corresponding
+    one term potential with $Z_1 = Z_2$. To avoid numerical instability,
+    $|K_1|$, $|K_2|$ are clipped below $10^{-4}$ and $Z_1$, $Z_2$ are
+    clipped below $10^{-2}$.
 
 .. note::
 
@@ -107,13 +105,8 @@ parameters = [
     ['z2', '', 2.0, [0, inf], '', ''],
     ]
 
-Q_UPPER = 700
-Q_STEP = 0.04
-K_MIN = 1e-4
-Z_MIN = 1e-2
-Z_MIN_DIFF = 1e-2
 def Iq(q, radius_effective, volfraction, k1, k2, z1, z2):
-    from sasmodels.models.TwoYukawa.CalTYSk import CalTYSk
+    from sasmodels.models.TwoYukawa.CalTYSk import CalTYSk, Q_UPPER, Q_STEP, K_MIN, Z_MIN, Z_MIN_DIFF
 
     # TODO: Use finer sampling for small radius? Use log-log interpolation?
     # The form computed by CalTYSk assumes a particle diameter of 1.0 but we can correct
@@ -134,9 +127,6 @@ def Iq(q, radius_effective, volfraction, k1, k2, z1, z2):
     z2 = max(z2, Z_MIN)
     if abs(z1-z2) < Z_MIN_DIFF:
         z1 = z2 + Z_MIN_DIFF
-    if z1 < z2:
-        z1, z2 = z2, z1
-        k1, k2 = k2, k1
     # print(z1,z2,k1,k2,volfraction,Qmax)
 
     Sk, num_roots, r, Gr, error, cVar = CalTYSk(z1,z2,k1,k2,volfraction,Qcalc,warnFlag=False)
