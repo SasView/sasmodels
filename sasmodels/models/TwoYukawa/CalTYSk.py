@@ -178,7 +178,9 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
             rootCounter += 1
 
             if v1*coeff.k[0] >= 0 and v2*coeff.k[1] >= 0:
-                goodRootPos.append(rootCounter)
+                goodRoot += 1
+                goodRootPos.append(rootCounter-1) # python index arrays are 0-origin
+
 
             calCoeArray.append(coe)
             calrArray.append(rh)
