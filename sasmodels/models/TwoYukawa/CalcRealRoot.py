@@ -37,24 +37,30 @@ def CalRealRoot(coeff):
 
     d2Coeff = make_poly(Ecoefficient)
     # print("Polynomial coefficients:"); print(d2Coeff)
+    # print("Poly: "+ " ".join(f"{coeff:+8.1e}" for coeff in d2Coeff))
 
     N=len(d2Coeff)
 
-    Factor = 1  # 20
-    FactorArray = Factor ** np.arange(N)[::-1]
+    if 1:
+        Factor = 1  # 20
+        FactorArray = Factor ** np.arange(N)[::-1]
+        d2Coeff_factor = d2Coeff*FactorArray
+        myd2Root_factor = np.roots(d2Coeff_factor)
+        myd2Root = myd2Root_factor*Factor
+    else:
+        # Very slow high precision root finder
+        import mpmath
+        myd2Root = mpmath.polyroots(d2Coeff, maxsteps=500, extraprec=1000)
 
-    d2Coeff_factor = d2Coeff*FactorArray
-
-    myd2Root_factor = np.roots(d2Coeff_factor)
     if 0:
-       import mpmath
-       myd2Root_factor_mpmath = mpmath.polyroots(d2Coeff_factor, maxsteps=500, extraprec=100)
-       nproots = list(sorted(myd2Root_factor, key=lambda v: (v.real, v.imag)))
-       mproots = list(complex(v) for v in sorted(myd2Root_factor_mpmath, key=lambda v: (v.real,v.imag)))
-       for k, (npr, mpr) in enumerate(zip(nproots, mproots)):
-           print(f"{k:02} {npr} {mpr} {abs((npr-mpr)/(mpr + (mpr==0)))}")
-
-    myd2Root = myd2Root_factor*Factor
+        import mpmath
+        myd2Root_mpmath = mpmath.polyroots(d2Coeff, maxsteps=500, extraprec=1000)
+        nproots = list(sorted(myd2Root, key=lambda v: (v.real, v.imag)))
+        #print(nproots/Factor)
+        mproots = list(complex(v) for v in sorted(myd2Root_mpmath, key=lambda v: (v.real,v.imag)))
+        for k, (npr, mpr) in enumerate(zip(nproots, mproots)):
+            if (mpr.imag == 0 and mpr != 0):
+                print(f"{k:02} mp:{float(mpr.real):.2f} np:{npr.real:.2f} {abs((npr-mpr)/(abs(mpr) + (mpr==0))):8.2e}")
 
     myRd2Root = []
     myRd1Root = []
@@ -64,7 +70,7 @@ def CalRealRoot(coeff):
         if np.imag(d2) != 0:
             continue
 
-        d2 = np.real(d2)
+        d2 = float(np.real(d2))
 
         # Coeff of Equation 1
         ycoe14 = gE1d42 * d2

@@ -46,11 +46,6 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
         Coefficient variables if choice=1, otherwise 0
     """
 
-    # Better numerical stability if Z1 > Z2.
-    if Z1 < Z2:
-        Z1, Z2 = Z2, Z1
-        K1, K2 = K2, K1
-
     # Check if maximum Q is sufficient
     if np.max(Q) < Q_UPPER:
         print('Maximum Q is too small, possible error when checking g(r)')
@@ -96,6 +91,9 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
     calGrArray = []
     calSkArray = []
     goodRootPos = []
+
+    # For debugging purposes keep track of the roots we are considering and their status.
+    scanned_roots = []  # tuple[float,str,int] giving root:flag:position
 
     for i in range(len(Rd2)):
         for j in range(2):
@@ -173,6 +171,7 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
                 plt.grid()
 
             if testGr(rh, g_r, False) == 1:
+                scanned_roots.append((Rd1[i, j], "X", -1))
                 continue
 
             rootCounter += 1
@@ -180,6 +179,9 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
             if v1*coeff.k[0] >= 0 and v2*coeff.k[1] >= 0:
                 goodRoot += 1
                 goodRootPos.append(rootCounter-1) # python index arrays are 0-origin
+                scanned_roots.append((Rd1[i, j], " ", rootCounter-1))
+            else:
+                scanned_roots.append((Rd1[i, j], "?", rootCounter-1))
 
 
             calCoeArray.append(coe)
@@ -230,7 +232,8 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
         testGr(calr, calGr, warnFlag)
 
     if debugFlag:
-        print(f'\n rootCounter= {position} is returned')
+        print("roots:", " ".join(f"{root: 7.2f}{flag if index!=position else '*'}" for root, flag, index in sorted(scanned_roots)))
+
     return calSk, rootCounter, calr, calGr, errorCode, cVar
 
 
