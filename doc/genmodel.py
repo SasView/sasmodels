@@ -149,10 +149,10 @@ def make_figure(model_info, opts):
     """
     import matplotlib.pyplot as plt
 
-    # print("Build model")
+    print("Build model")
     model = core.build_model(model_info)
 
-    # print("Set up figure")
+    print("Set up figure")
     fig_height = 3.0 # in
     fig_left = 0.6 # in
     fig_right = 0.5 # in
@@ -170,10 +170,10 @@ def make_figure(model_info, opts):
         ax_width = ax_height/ratio # square axes
         fig = plt.figure(figsize=aspect)
         ax2d = fig.add_axes([0.5+ax_left, ax_bottom, ax_width, ax_height])
-        # print("2D plot")
+        print("2D plot")
         plot_2d(model, opts, ax2d)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
-        # print("1D plot")
+        print("1D plot")
         plot_1d(model, opts, ax1d)
         #ax.set_aspect('square')
     else:
@@ -187,14 +187,14 @@ def make_figure(model_info, opts):
         aspect = (fig_width, fig_height)
         fig = plt.figure(figsize=aspect)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
-        # print("1D plot")
+        print("1D plot")
         plot_1d(model, opts, ax1d)
 
     if model_info.profile:
-        # print("Profile inset")
+        print("Profile inset")
         plot_profile_inset(model_info, ax1d)
 
-    # print("Save")
+    print("Save")
     # Save image in model/img
     makedirs(joinpath(TARGET_DIR, 'img'), exist_ok=True)
     path = joinpath(TARGET_DIR, 'img', figfile(model_info))
@@ -312,17 +312,16 @@ def make_figure_cached(model_info, opts):
     into the cache.
 
     Be sure to clear the cache from time to time.  Even though the model
-    source hasn't changed, the supporting infrastructure may change the rendering
-    of the figure.
+    source
     """
     import hashlib
 
     # check if we are caching
     cache_dir = os.environ.get('SASMODELS_BUILD_CACHE', None)
     if cache_dir is None:
-        # print("No figure cache directory, creating...")
+        print("Nothing cashed, creating...")
         make_figure(model_info, opts)
-        # print("Made a figure")
+        print("Made a figure")
         return
 
     # TODO: changing default parameters won't trigger a rebuild.
@@ -371,10 +370,9 @@ def process_model(py_file, force=False):
 
     If *force* then generate the rst file regardless of time stamps.
     """
-    model_name = basename(py_file).rsplit('.', 1)[0]
-    rst_file = joinpath(TARGET_DIR, f"{model_name}.rst")
+    rst_file = joinpath(TARGET_DIR, basename(py_file).replace('.py', '.rst'))
     if not (force or newer(py_file, rst_file) or newer(__file__, rst_file)):
-        # print("skipping", rst_file)
+        #print("skipping", rst_file)
         return rst_file
 
     # Load the model file
@@ -399,15 +397,17 @@ def process_model(py_file, force=False):
     }
 
     # Generate the RST file and the figure.  Order doesn't matter.
-    print(f"{model_name}: make docs in {rst_file}")
+    print("generating rst", rst_file)
+    print("1: docs")
     gen_docs(model_info, rst_file)
-    print(f"{model_name}: make figure")
-    # TODO: Caching isn't used. Should remove it to simplify the code.
-    # TODO: If we don't remove it, then update the cache on forced rebuild.
+    print("2: figure", end='')
     if force:
+        print()
         make_figure(model_info, PLOT_OPTS)
     else:
+        print(" (cached)")
         make_figure_cached(model_info, PLOT_OPTS)
+    print("Done process_model")
 
     return rst_file
 
@@ -416,7 +416,7 @@ def run_sphinx(rst_files, output):
     Use sphinx to build *rst_files*, storing the html in *output*.
     """
 
-    # print("Building index...")
+    print("Building index...")
 
     conf_dir = dirname(realpath(__file__))
     with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
@@ -424,7 +424,7 @@ def run_sphinx(rst_files, output):
         for path in rst_files:
             fid.write("    %s\n"%basename(path))
 
-    # print("Running sphinx command...")
+    print("Running sphinx command...")
 
     command = [
         sys.executable,
@@ -474,16 +474,17 @@ def main():
     global TARGET_DIR
     TARGET_DIR = os.path.expanduser(args.rst)
     if not os.path.exists(TARGET_DIR) and not args.sphinx:
-        print("Build directory %r does not exist"%TARGET_DIR)
+        print("build directory %r does not exist"%TARGET_DIR)
         sys.exit(1)
     makedirs(TARGET_DIR, exist_ok=True)
 
-    # print("** Generating all .rst files and figures **")
+    print("** 'Normal' processing **")
     rst_files = [process_model(py_file, args.force)
                      for py_file in args.files]
+    print("normal .rst file processing complete")
 
     if args.sphinx:
-        # print("** running sphinx **")
+        print("running sphinx")
         run_sphinx(rst_files, args.build)
 
 
