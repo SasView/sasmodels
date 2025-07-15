@@ -56,7 +56,7 @@ def CalRealRoot(coeff):
         import mpmath
         myd2Root_mpmath = mpmath.polyroots(d2Coeff, maxsteps=500, extraprec=1000)
         nproots = list(sorted(myd2Root, key=lambda v: (v.real, v.imag)))
-        #print(nproots/Factor)
+        # print(nproots/Factor)
         mproots = list(complex(v) for v in sorted(myd2Root_mpmath, key=lambda v: (v.real,v.imag)))
         for k, (npr, mpr) in enumerate(zip(nproots, mproots)):
             if (mpr.imag == 0 and mpr != 0):
@@ -65,23 +65,29 @@ def CalRealRoot(coeff):
     myRd2Root = []
     myRd1Root = []
 
+    # Solve Eq 15 in DOI:10.1063/1.1830433, giving two d1 solutions for each proposed d2 root.
+    # Check both d1 against Eq 14, rejecting those that that are not near zero.
     for d2 in myd2Root:
-        # Skip imaginary roots
+        # Skip imaginary d2 roots
         if np.imag(d2) != 0:
+            if abs(d2.imag) < 1e-12*abs(d2.real):
+                print("Skipping nearly real {d2}")
             continue
 
         d2 = float(np.real(d2))
 
-        # Coeff of Equation 1
+        # Coeff of Equation 14
         ycoe14 = gE1d42 * d2
         ycoe13 = gE1d31 + gE1d32 * d2 + gE1d33 * d2**2
         ycoe12 = gE1d22 * d2
         ycoe11 = gE1d11 + gE1d12 * d2 + gE1d13 * d2**2
         ycoe10 = gE1d02 * d2
-        def checkd(d):
-            return d if np.abs(ycoe14 * d**2 + ycoe13 * d + ycoe12 + ycoe11 / d + ycoe10 / d**2) < 1e-5 else np.nan
+        def checkd1(d1):
+            """Verify equation 14 is near zero."""
+            # TODO: why are we dividing by d1^2?
+            return d1 if np.abs(ycoe14 * d1**2 + ycoe13 * d1 + ycoe12 + ycoe11 / d1 + ycoe10 / d1**2) < 1e-5 else np.nan
 
-        # Coeff of Equation 2
+        # Coeff of Equation 15
         ycoe22 = gE2d31 * d2 + gE2d33 * d2**3
         ycoe21 = gE2d20 + gE2d21 * d2 + gE2d22 * d2**2 + gE2d23 * d2**3 + gE2d24 * d2**4
         ycoe20 = gE2d11 * d2 + gE2d13 * d2**3
@@ -91,17 +97,18 @@ def CalRealRoot(coeff):
             continue
 
         if ycoe22 == 0:
-            # Eq. 2 is linear. Avoid divide by zero when looking for a pair of quadratic roots.
+            # Eq. 15 is linear. Avoid divide by zero when looking for a pair of quadratic roots.
             # TODO: should we skip this root entirely?
-            dp = 0
-            dm = np.nan
+            # TODO: shouldn't the solution to $y2_1 d_1 + y2_0 = 0$ be $d_1 = -y2_0 / y2_1$?
+            d1p = 0
+            d1m = np.nan
         else:
-            dp = checkd((-ycoe21 + np.sqrt(discriminant)) / (2 * ycoe22))
-            dm = checkd((-ycoe21 - np.sqrt(discriminant)) / (2 * ycoe22))
-        pair = [dp, dm] if not np.isnan(dp) else [dm, dp]
+            d1p = checkd1((-ycoe21 + np.sqrt(discriminant)) / (2 * ycoe22))
+            d1m = checkd1((-ycoe21 - np.sqrt(discriminant)) / (2 * ycoe22))
+        d1pair = [d1p, d1m] if not np.isnan(d1p) else [d1m, d1p]
 
         myRd2Root.append(d2)
-        myRd1Root.append(pair)
+        myRd1Root.append(d1pair)
 
     # Check the roots
     if 0:

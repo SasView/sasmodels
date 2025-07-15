@@ -20,25 +20,26 @@ The interaction potential $V(r)$ is
 .. math::
 
     \frac{V(r)}{k_BT} = \begin{cases}
-    \infty & r < 2R \\
-    K_1 \frac{e^{-Z_1(r-1)}}{r} + K_2 \frac{e^{-Z_2(r-1)}}{r} & r \geq 2R
+    \infty & r < 1 \\
+    K_1 \frac{e^{-Z_1(r-1)}}{r} + K_2 \frac{e^{-Z_2(r-1)}}{r} & r \geq 1
     \end{cases}
 
-where $R$ is radius_effective and $r$ is the normalized
-distance, $\frac{r_{cc}}{2R}$, between the center-of-mass of particles.
+where $r$ is the normalized distance, $\frac{r_{cc}}{2R}$. ($R$ is the effective
+radius and $r_{cc}$ is the distance between the center-of-mass of particles.)
 $K_1$ and $K_2$ are positive for repulsion and negative for attraction.
 $Z_1$ and $Z_2$ are the inversely proportional to the decay rate of the
 potential. They should always be positive.
 
-To reduce numerical issues during fitting the lower boundary of the absolute
+To reduce numerical issues during fitting, the lower boundary of the absolute
 values for $K_1$ and $K_2$ are set to 0.0001. That is, when $|K| < 0.0001$ it is
 adjusted 0.0001 while preserving the sign. Similarly, when $Z_1$ or $Z_2$ are
 less than 0.01, they are adjusted to 0.01. To make the two Yukawa terms
 functionally different, $Z_1$ is adjusted to $Z_2+0.01$ if the difference
 between them is less than 0.01. The impact of these changes on the accuracy of
-$S(Q) was negligible for all tested cases. The algorithm works best if $Z_1 >
-Z_2$, particularly for large $Z$ such as $Z>20$. When $Z_1$ is less than $Z_2$,
-the code will automatically swap $Z_1$ and $Z_2$, and $K_1$ and $K_2$.
+$S(Q)$ was negligible for all tested cases. The algorithm works best if
+$Z_1>Z_2$, particularly for large $Z$ such as $Z>20$. When $Z_1$ is less than
+$Z_2$, the code will automatically swap $Z_1$ and $Z_2$, and $K_1$ and $K_2$.
+$S(Q)$ is set to 1.0 for volume fraction $\phi < 10^{-10}$.
 
 .. note::
 
@@ -64,9 +65,9 @@ tends to overestimate the attraction strength. Care is needed when discussing
 quantitative fitting results for those systems.
 
 When the interaction distances $Z_1$ and $Z_2$ are large, the method implemented
-here may be influenced by the numerical accuracy of the computer. In general,
-when $Z<20$, the code should function well. When $Z>25$, sometimes the
-intermediate results of this codes may run into the limit of the largest number
+here may be influenced by the numerical accuracy of a computer. In general, when
+$Z<20$, the code should function well for most cases. When $Z>25$, sometimes the
+intermediate results of this code may run into the limit of the largest number
 that a computer can handle. Therefore, results may potentially become less
 reliable. Hence, the check of $g(r)$ becomes very important in those situations.
 So far, no limitation of the value of $K$ has been encountered except that they
@@ -93,6 +94,32 @@ Authorship and Verification
 import numpy as np
 from numpy import inf
 
+# TODO: move TwoYukawa library to sasmodels.TwoYukawa and drop the complicated import machinery.
+# two_yukawa requires the TwoYukawa package. This should be available in
+# sasmodels, but if you are using a custom version in the plugins directory
+# you will want to use your own version of the library. The following hack
+# loads TwoYukawa from the same location as two_yukawa
+import sys
+from pathlib import Path
+import importlib.util
+
+# Clean out old TwoYukawa to force a reload
+remove = [modname for modname in sys.modules if modname.startswith('TwoYukawa.') or modname == 'TwoYukawa']
+for modname in remove:
+    del sys.modules[modname]
+
+# Load new TwoYukawa from the current directory
+path = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('TwoYukawa', str(path / 'TwoYukawa/__init__.py'))
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+sys.modules['TwoYukawa'] = module
+#loader = SourceFileLoader('TwoYukawa', str(path / 'TwoYukawa/__init__.py'))
+#sys.modules['TwoYukawa'] = loader.load_module()
+
+# Load symbols from TwoYukawa
+from TwoYukawa.CalTYSk import CalTYSk, Q_UPPER, Q_STEP, K_MIN, Z_MIN, Z_MIN_DIFF
+
 name = "two_yukawa"
 title = "User model for two Yukawa structure factor (S(q))"
 description = """"""
@@ -115,17 +142,9 @@ parameters = [
     ]
 
 def Iq(q, radius_effective, volfraction, k1, k2, z1, z2):
-    from sasmodels.models.TwoYukawa.CalTYSk import CalTYSk, Q_UPPER, Q_STEP, K_MIN, Z_MIN, Z_MIN_DIFF
-
-    # TODO: Use finer sampling for small radius? Use log-log interpolation?
-    # The form computed by CalTYSk assumes a particle diameter of 1.0 but we can correct
-    # for this by scaling our measured Q by the proposed diameter.
-    # For small radii the Qcalc step is larger than the Qeff step, which shows up as
-    # linear interpolation on a log-log plot.
-    # Make sure we are calculating enough Q to test G(r)
-    Qeff = 2*radius_effective*q
-    Qmax = max(Qeff.max(), Q_UPPER)
-    Qcalc = np.arange(0, Qmax + Q_STEP, Q_STEP)
+    # Low volume fractions lead to singularities when solving for the polynomial roots.
+    if volfraction < 1e-10:
+        return q*0 + 1
 
     # Clip parameters to prevent numerical precision problems in CalTYSk
     if abs(k1) < K_MIN:
@@ -143,17 +162,31 @@ def Iq(q, radius_effective, volfraction, k1, k2, z1, z2):
         k1, k2 = k2, k1
     # print(z1,z2,k1,k2,volfraction,Qmax)
 
-    Sk, num_roots, r, Gr, error, cVar = CalTYSk(z1,z2,k1,k2,volfraction,Qcalc,warnFlag=False)
+    # The form computed by CalTYSk assumes a particle diameter of 1.0 but we can correct
+    # for this by scaling our measured Q by the proposed diameter.
+    Qeff = 2*radius_effective*q
 
-    # Interpret back into Q
-    Sk_eff = np.interp(Qeff, Qcalc, Sk)
-    return Sk_eff
+    # Returns Sk, num_roots, r, Gr, error, cVar
+    Sk, *rest = CalTYSk(z1,z2,k1,k2,volfraction,Qeff,warnFlag=False,debugFlag=False)
+    return Sk
 Iq.vectorized = True  # Iq accepts an array of q value
 
-# The test results were generated with MatLab Code (TYSQ22) (Jan. 22, 2024)
-# Note that this test reverses the definition of the original code : k1 > 0 means repulsion and k1 < 0 means attraction.
+# The test results generated with MatLab Code (TYSQ22) (Jan. 22, 2024) are listed here as a reference.
+# The results from the matlab code is not used for the unit test.
+# Note that in the matlab code, the definition of k1 (or k2) is different from the python code : k1 > 0 means attraction and k1 < 0 means repulsion.
+# The following results are for V(r)=-6*exp(-10*(r-1))/r+2.0*exp(-2*(r-1))/r
 #tests = [
 #    [{'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
-#      'volfraction' : 0.2, 'k1' : -6, 'k2':2.0, 'z1':10, 'z2':2.0},
-#     [0.0009425, 0.029845], [0.126775, 0.631068]],
+#      'volfraction' : 0.1, 'k1' : 6, 'k2':-2.0, 'z1':10, 'z2':2.0},
+#     [0.0012566, 0.2423303], [0.0311018, 0.8694631]],
 #]
+
+# The following unit test code is generated by the python code.
+# In the python code, it reverses the definition of the original code : k1 > 0 means repulsion and k1 < 0 means attraction.
+# The following results are for V(r)=-6*exp(-10*(r-1))/r+2.0*exp(-2*(r-1))/r
+tests = [
+   [{'scale': 1.0, 'background': 0.0, 'radius_effective' : 50.0,
+      'volfraction': 0.1, 'k1': -6, 'k2': 2.0, 'z1': 10, 'z2': 2.0},
+     #[0.0012513, 0.2423349], [0.0309966, 0.8695362]],  # Yun values from python?
+     [0.0012513, 0.2423349], [0.242317237668712, 1.0050855502754]],  # PAK values from matlab
+]

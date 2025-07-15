@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import pi, inf, mean
-import matplotlib.pyplot as plt
 
 from .Ecoefficient import TYCoeff
 from .CalcRealRoot import CalRealRoot
@@ -46,29 +45,29 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
         Coefficient variables if choice=1, otherwise 0
     """
 
-    # Check if maximum Q is sufficient
-    if np.max(Q) < Q_UPPER:
-        print('Maximum Q is too small, possible error when checking g(r)')
-        print(f'Please increase the maximum Q at least to {Q_UPPER}')
-        calSk = np.zeros_like(Q)
-        rootCounter = -1
-        calr = 0
-        calGr = 1
-        errorCode = -1
-        cVar = 0
-        return calSk, rootCounter, calr, calGr, errorCode, cVar
+    # # Check if maximum Q is sufficient
+    # if np.max(Q) < Q_UPPER:
+    #     print('Maximum Q is too small, possible error when checking g(r)')
+    #     print(f'Please increase the maximum Q at least to {Q_UPPER}')
+    #     calSk = np.zeros_like(Q)
+    #     rootCounter = -1
+    #     calr = 0
+    #     calGr = 1
+    #     errorCode = -1
+    #     cVar = 0
+    #     return calSk, rootCounter, calr, calGr, errorCode, cVar
 
-    # Check Q spacing
-    if np.max(Q) / len(Q) > 0.05:
-        print('Please make the interval of neighbouring Q smaller')
-        print('max(Q)/length(Q) > 0.05')
-        calSk = np.zeros_like(Q)
-        rootCounter = -1
-        calr = 0
-        calGr = 1
-        errorCode = -1
-        cVar = 0
-        return calSk, rootCounter, calr, calGr, errorCode, cVar
+    # # Check Q spacing
+    # if np.max(Q) / len(Q) > 0.05:
+    #     print('Please make the interval of neighbouring Q smaller')
+    #     print('max(Q)/length(Q) > 0.05')
+    #     calSk = np.zeros_like(Q)
+    #     rootCounter = -1
+    #     calr = 0
+    #     calGr = 1
+    #     errorCode = -1
+    #     cVar = 0
+    #     return calSk, rootCounter, calr, calGr, errorCode, cVar
 
     # Note: we are using the opposite sign convention for K1 and K2 in python compared
     # to the matlab code. We are reversing it here rather than updating the rest of the
@@ -95,6 +94,10 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
     # For debugging purposes keep track of the roots we are considering and their status.
     scanned_roots = []  # tuple[float,str,int] giving root:flag:position
 
+    # kk is used to compute g(r) for selecting between available solutions
+    # Use a fixed Q range for this calculation
+    kk = np.arange(0, Q_UPPER + Q_STEP, Q_STEP)
+    # kk = Q
     for i in range(len(Rd2)):
         for j in range(2):
             # Check if there is NaN root
@@ -105,23 +108,11 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
             coe = coeff.CxCoef(Rd1[i, j], Rd2[i])
 
             # Assign the calculated result to different variables
-            a00 = coe[0]
-            b00 = coe[1]
-            v1 = coe[2]
-            v2 = coe[3]
-            a = coe[4]
-            b = coe[5]
-            c1 = coe[6]
-            d1 = coe[7]
-            c2 = coe[8]
-            d2 = coe[9]
+            # coe contains [a00, b00, v1, v2, a, b, c1, d1, c2, d2]
+            a00, b00, v1, v2, *rest = coe
 
-            kk = Q
-            r = np.arange(0.001, 10.001, 0.01)
-
-            # Calculate C(k) and C(r)
+            # Calculate C(k)
             eCk = coeff.Ck(a00, b00, v1, v2, kk)
-            eCr = coeff.Cr(a00, b00, v1, v2, r)
 
             # Calculate h(k) and S(k)
             ehk = coeff.hk(eCk)
@@ -133,8 +124,16 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
             h_r = -np.imag(hc_r) / rh / 4 / pi / pi
             g_r = h_r + 1
 
-            if debugFlag and i==0 and j==0: # debug
+            if debugFlag:
+                import matplotlib.pyplot as plt
+
+                # Prepare a new figure window without clobbering the current one
+                old_fig = plt.gcf().number
                 plt.figure()
+
+                # Calculate C(r)
+                r = np.arange(0.001, 10.001, 0.01)
+                eCr = coeff.Cr(a00, b00, v1, v2, r)
 
                 # Plot C(r)
                 plt.subplot(3, 1, 1)
@@ -163,15 +162,19 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
 
                 # Plot g(r)
                 plt.subplot(3,1,3)
-                plt.plot(rh, g_r, 'b0-')
-                plt.axis([0, 8, -inf, inf])
+                plt.plot(rh, g_r, 'bo-')
+                plt.axis([0, 8, None, None])
                 plt.xlabel('r/σ')
                 plt.ylabel('g(r)')
-                plt.title(f'Root: ({i}, {j})')
+                plt.title(f'Root: ({i}, {j}) = {Rd1[i, j]:.2f}')
                 plt.grid()
 
+                # Restore the original figure
+                plt.figure(old_fig)
+
+            hardcore_gr = np.mean(abs(g_r[rh < 0.95][1:]))
             if testGr(rh, g_r, False) == 1:
-                scanned_roots.append((Rd1[i, j], "X", -1))
+                scanned_roots.append((Rd1[i, j], "X", -1, hardcore_gr))
                 continue
 
             rootCounter += 1
@@ -179,10 +182,9 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
             if v1*coeff.k[0] >= 0 and v2*coeff.k[1] >= 0:
                 goodRoot += 1
                 goodRootPos.append(rootCounter-1) # python index arrays are 0-origin
-                scanned_roots.append((Rd1[i, j], " ", rootCounter-1))
+                scanned_roots.append((Rd1[i, j], " ", rootCounter-1, hardcore_gr))
             else:
-                scanned_roots.append((Rd1[i, j], "?", rootCounter-1))
-
+                scanned_roots.append((Rd1[i, j], "?", rootCounter-1, hardcore_gr))
 
             calCoeArray.append(coe)
             calrArray.append(rh)
@@ -231,8 +233,29 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
         cVar = calCoeArray[position]
         testGr(calr, calGr, warnFlag)
 
-    if debugFlag:
-        print("roots:", " ".join(f"{root: 7.2f}{flag if index!=position else '*'}" for root, flag, index in sorted(scanned_roots)))
+    else:
+        raise AssertionError('Internal error in CalTYSk root checking logic.')
+
+    if warnFlag:
+        print("roots:", " ".join(f"{root: 7.2f}{flag}({g_r:.3f}){'*' if index==position else ' '}" for root, flag, index, g_r in sorted(scanned_roots)))
+
+    # Only show plots if the last root is not the selected root
+    if scanned_roots and debugFlag:
+        min_index = np.argmin([abs(r) for r, flag, index, g_r in scanned_roots])
+        if scanned_roots[min_index][2] != position:
+            import matplotlib.pyplot as plt
+            plt.show()
+
+    # TODO: Use stable numerics for Ck and hk for small Q and remove the max(Q, 0.01) hack
+    # Compute S(Q) at the desired Q
+    if errorCode >= 0:
+        a00, b00, v1, v2, *rest = cVar
+        eCk = coeff.Ck(a00, b00, v1, v2, np.maximum(Q, 0.01))
+        ehk = coeff.hk(eCk)
+        calSk = coeff.Sk(ehk)
+    else:
+        calSk = Q*0.0
+
 
     return calSk, rootCounter, calr, calGr, errorCode, cVar
 
@@ -280,44 +303,51 @@ def findSGr(calrArray, calGrArray, positionArray=None):
 
         return position
 
-def testGr(r, g_r, warnFlag=False):
+def testGr(r, g_r, warnFlag=True):
     """
     Test the g(r) function for various conditions and return a flag indicating the result.
     """
     # global debugFlag  # Uncomment if needed
 
+    # TODO: Test against max absolution value of g(r)
     if max(g_r) > 20:
-        # flag=1
-        # return
         if warnFlag:
             print('Warning! Maximum value of g(r) > 20')
+        # return 1
 
-    average = mean(g_r[g_r < 1])
+    # TODO: Average over abs(g_r) rather than g_r.
+    average = mean(g_r[r < 1])
 
+    # TODO: Uncomment to rejection really bad solutions.
+    # if average < -10:
+    #     if warnFlag:
+    #         print('Negative warning g(r), average < -10 inside hardcore')
+    #     return 1
     if average < -1:
         if warnFlag:
-            print('Negative warning g(r), less than -1 in the hardcore')
+            print('Negative warning g(r), average < -1 inside hardcore')
         return -2
-    elif average < -0.3:
+    if average < -0.3:
         if warnFlag:
-            print('Negative warning g(r), less than -0.3 in the hardcore')
+            print('Negative warning g(r), average < -0.3 inside hardcore')
         return -1
-    elif average < -10:
-        return 1
 
+    # TODO: The r=0 element was already removed, right after the fourier transform.
     # Recompute index but skip the first element
-    average = mean(g_r[g_r < 1][1:])
+    average = mean(g_r[r < 1][1:])
 
+    # if average > 10:
+    #     if warnFlag:
+    #         print('Positive warning g(r), averat > 10 inside hardcore')
+    #     return 1
     if average > 1:
         if warnFlag:
             print('Positive warning g(r), average > 1 inside hardcore')
-        return -3
-    elif average > 0.3:
+        return -2
+    if average > 0.3:
         if warnFlag:
-            print('Positive warning g(r), average > 0.1 inside hardcore')
+            print('Positive warning g(r), average > 0.3 inside hardcore')
         return -1
-    elif average > 10:
-        return 1
 
     return 0
 
