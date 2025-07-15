@@ -956,6 +956,8 @@ def plot_models(opts, result, limits=None, setnum=0):
         if have_comp:
             plt.subplot(131)
         plot_theory(base_data, base_value, view=view, use_data=use_data, limits=limits)
+        if setnum > 0:
+            plt.legend([f"Set {k+1}" for k in range(setnum+1)], loc='best')
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
@@ -984,7 +986,6 @@ def plot_models(opts, result, limits=None, setnum=0):
         # at each q
         plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
-        plt.legend(['P%d'%(k+1) for k in range(setnum+1)], loc='best')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
@@ -1610,7 +1611,6 @@ class Explore(object):
         # type: (Dict[str, Any]) -> None
         from bumps.cli import config_matplotlib  # type: ignore
         from . import bumps_model
-
         config_matplotlib()
         self.opts = opts
         opts['pars'] = list(opts['pars'])
@@ -1678,34 +1678,19 @@ class Explore(object):
         """
         Plot the data and residuals.
         """
-        import matplotlib.pyplot as plt
-
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'][0] = pars
         if not self.fix_p2:
             self.opts['pars'][1] = pars
-        try:
-            result = run_models(self.opts)
-        except Exception as exc:
-            print("Exception %s while evaluating"%(exc.__class__.__name__))
-            import traceback
-            traceback.print_exc()
-            plt.clf()
-            return
+        result = run_models(self.opts)
         limits = plot_models(self.opts, result, limits=self.limits)
-        is_sf = self.opts['info'][0].structure_factor
         if self.limits is None:
             vmin, vmax = limits
-            if is_sf:
-                self.limits = 0.01, 4
-            else:
-                self.limits = vmax*1e-7, 1.3*vmax
-            plt.clf()
+            self.limits = vmax*1e-7, 1.3*vmax
+            import pylab
+            pylab.clf()
             plot_models(self.opts, result, limits=self.limits)
-        #if is_sf:
-        #    plt.yscale('linear')
-        #    plt.xscale('linear')
 
 
 def main(*argv):
