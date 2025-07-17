@@ -24,7 +24,8 @@ that the normalization constants are correct for the different algorithms.
 
 from __future__ import print_function, division
 
-import os, sys
+import os
+import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import warnings
 
