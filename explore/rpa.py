@@ -179,11 +179,11 @@ def demo():
         raise ValueError("Case %d not implmented"%case_num)
 
     pars = build_pars(case_num, [B, C, D], **K)
-    print "eval sasmodels"
+    print("eval sasmodels")
     Iq_sasmodels = sasmodels_rpa(q, pars)
-    print "eval sasview"
+    print("eval sasview")
     Iq_sasview = sasview_rpa(q, pars)
-    print 1./Iq[0], 1./Iq_sasmodels[0], 1./Iq_sasview[0]
+    print(1./Iq[0], 1./Iq_sasmodels[0], 1./Iq_sasview[0])
 
     #return
     import pylab

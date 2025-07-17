@@ -94,7 +94,7 @@ def gsphere(z,r):
     low = ((d > 0) & (d < 2))
     dlow = d[low]
     dlow2 = dlow**2
-    print dlow.shape, dlow2.shape
+    print(dlow.shape, dlow2.shape)
     g[low] = sqrt(1-dlow2/4.)*(1+dlow2/8.) + dlow2/2.*(1-dlow2/16.)*log(dlow/(2.+sqrt(4.-dlow2)))
     return g
 
