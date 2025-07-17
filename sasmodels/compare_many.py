@@ -28,8 +28,6 @@ try:
     from typing import Tuple, Any, Dict, List
 except ImportError:
     pass
-else:
-    pass
 # pylint: enable=unused-import
 
 MODELS = core.list_models()

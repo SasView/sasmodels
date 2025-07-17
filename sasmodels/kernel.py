@@ -16,8 +16,6 @@ try:
     from typing import List, Any
 except ImportError:
     pass
-else:
-    pass
 # pylint: enable=unused-import
 
 
