@@ -34,10 +34,8 @@ from . import resolution2d
 from .details import make_kernel_args
 from .product import RADIUS_MODE_ID
 
-# pylint: disable=unused-import
 from .data import Data
 from .kernel import KernelModel
-# pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray

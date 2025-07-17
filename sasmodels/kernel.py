@@ -11,14 +11,6 @@ the kernel should be released, which also releases the inputs.
 
 from __future__ import division, print_function
 
-# pylint: disable=unused-import
-try:
-    from typing import List, Any
-except ImportError:
-    pass
-# pylint: enable=unused-import
-
-
 class KernelModel(object):
     """
     Model definition for the compute engine.
