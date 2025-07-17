@@ -8,8 +8,7 @@ def transform(module):
     #print("processing",module.name)
     if module.name.startswith('numpy'):
         if module.name == 'numpy':
-            import numpy
+            pass
         elif module.name == 'numpy.random':
-            import numpy.random
-            from numpy.random import seed, get_state, set_state
+            pass
 

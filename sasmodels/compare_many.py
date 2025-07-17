@@ -29,7 +29,7 @@ try:
 except ImportError:
     pass
 else:
-    from .data import Data
+    pass
 # pylint: enable=unused-import
 
 MODELS = core.list_models()

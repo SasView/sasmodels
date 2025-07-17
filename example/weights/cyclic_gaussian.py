@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import exp, sin, cos, pi, radians, degrees
+from numpy import exp, sin, pi, radians, degrees
 
 from sasmodels.weights import Dispersion as BaseDispersion
 

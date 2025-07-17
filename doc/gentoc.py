@@ -13,7 +13,7 @@ try:
 except ImportError:
     pass
 else:
-    from sasmodels.modelinfo import ModelInfo
+    pass
 
 TEMPLATE = """\
 ..

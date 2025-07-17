@@ -2,13 +2,11 @@
 Application to explore the difference between sasview 3.x orientation
 dispersity and possible replacement algorithms.
 """
-import mpl_toolkits.mplot3d   # Adds projection='3d' option to subplot
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons
-from matplotlib import cm
 
 import numpy as np
-from numpy import pi, cos, sin, sqrt, exp, degrees, radians
+from numpy import cos, sin, exp, radians
 
 def draw_sphere(ax, radius=10., steps=100):
     u = np.linspace(0, 2 * np.pi, steps)

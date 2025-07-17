@@ -7,5 +7,4 @@ def register(linter):
 def transform(module):
     #print("processing",module.name)
     if module.name == 'pyopencl':
-        import pyopencl
-        import pyopencl as cl
+        pass

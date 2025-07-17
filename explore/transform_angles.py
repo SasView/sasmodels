@@ -10,7 +10,7 @@ from __future__ import print_function, division
 import sys
 
 import numpy as np
-from numpy import pi, cos, sin, sqrt, exp, degrees, radians
+from numpy import cos, sin, radians
 from scipy.optimize import fmin
 
 # Definition of rotation matrices comes from wikipedia:

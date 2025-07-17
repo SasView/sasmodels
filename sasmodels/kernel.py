@@ -17,9 +17,7 @@ try:
 except ImportError:
     pass
 else:
-    import numpy as np
-    from .details import CallDetails
-    from .modelinfo import ModelInfo
+    pass
 # pylint: enable=unused-import
 
 

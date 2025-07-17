@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 from bumps.names import *
 from sasmodels.core import load_model
 from sasmodels.bumps_model import Model, Experiment

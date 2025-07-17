@@ -30,7 +30,7 @@ import warnings
 
 import numpy as np
 import mpmath as mp
-from numpy import pi, sin, cos, sqrt, exp, expm1, degrees, log10, arccos
+from numpy import pi, sin, cos, degrees, log10, arccos
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import dblquad, simps, romb, romberg
 import pylab

@@ -1030,7 +1030,6 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
     # an issue since we are lazy-loading the package on a path that isn't tested.
     # Importing mplot3d adds projection='3d' option to subplot
-    import mpl_toolkits.mplot3d  # pylint: disable=unused-import
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Slider

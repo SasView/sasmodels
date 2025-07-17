@@ -1,4 +1,3 @@
-import numpy as np
 from scipy.stats import laplace
 
 from sasmodels import weights

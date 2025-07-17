@@ -47,8 +47,8 @@ from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
 
 # pylint: disable=unused-import
-from typing import Optional, Dict, Any, Callable, Tuple, List
-from .modelinfo import ModelInfo, Parameter, ParameterSet
+from typing import Callable
+from .modelinfo import ModelInfo, ParameterSet
 from .data import Data
 
 try:
