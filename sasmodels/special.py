@@ -13,24 +13,11 @@ See section :ref:`Python_Functions` for differences from the C library.
 import numpy as np
 
 # Functions to add to our standard set
-from numpy import degrees, radians
 
 # C99 standard math library functions
-from numpy import exp, log, power as pow, expm1, log1p, sqrt, cbrt
-from numpy import sin, cos, tan, arcsin as asin, arccos as acos, arctan as atan
-from numpy import sinh, cosh, tanh, arcsinh as asinh, arccosh as acosh, arctanh as atanh
-from numpy import arctan2 as atan2
-from numpy import fabs, fmin, fmax, clip, trunc, rint
-from numpy import pi, nan, inf
-from scipy.special import gamma as sas_gamma
-from scipy.special import gammaln as sas_gammaln
-from scipy.special import gammainc as sas_gammainc
-from scipy.special import gammaincc as sas_gammaincc
-from scipy.special import erf as sas_erf
-from scipy.special import erfc as sas_erfc
-from scipy.special import j0 as sas_J0
+from numpy import sin, cos
+from numpy import nan, inf
 from scipy.special import j1 as sas_J1
-from scipy.special import jn as sas_JN
 
 # erf, erfc, tgamma, lgamma  **do not use**
 

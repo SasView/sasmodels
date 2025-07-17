@@ -24,13 +24,14 @@ that the normalization constants are correct for the different algorithms.
 
 from __future__ import print_function, division
 
-import os, sys
+import os
+import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import warnings
 
 import numpy as np
 import mpmath as mp
-from numpy import pi, sin, cos, sqrt, exp, expm1, degrees, log10, arccos
+from numpy import pi, sin, cos, degrees, log10, arccos
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import dblquad, simps, romb, romberg
 import pylab

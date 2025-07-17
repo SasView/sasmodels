@@ -15,7 +15,6 @@ the modifyitems hook is only called after test selection.]
 """
 from __future__ import print_function
 
-import os.path
 import inspect
 
 import pytest

@@ -1,7 +1,7 @@
 from bumps.names import *
 from sasmodels.core import load_model
 from sasmodels.bumps_model import Model, Experiment
-from sasmodels.data import load_data, plot_data
+from sasmodels.data import load_data
 
 # latex data, same sample usans and sans
 # particles radius ~2300, uniform dispersity

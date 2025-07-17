@@ -164,7 +164,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, pi
+from numpy import inf
 
 name = "fcc_paracrystal"
 title = "Face-centred cubic lattic with paracrystalline distortion"

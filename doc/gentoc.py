@@ -12,8 +12,6 @@ try:
     from typing import Optional, BinaryIO, List, Dict
 except ImportError:
     pass
-else:
-    from sasmodels.modelinfo import ModelInfo
 
 TEMPLATE = """\
 ..

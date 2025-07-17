@@ -2,7 +2,7 @@
 Minimal example of calling a kernel for a specific set of q values.
 """
 
-from numpy import logspace, sqrt
+from numpy import logspace
 from matplotlib import pyplot as plt
 from sasmodels.core import load_model
 from sasmodels.direct_model import call_kernel, call_Fq

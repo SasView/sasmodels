@@ -31,16 +31,11 @@ from . import sesans  # type: ignore
 from . import weights
 from . import resolution
 from . import resolution2d
-from .details import make_kernel_args, dispersion_mesh
+from .details import make_kernel_args
 from .product import RADIUS_MODE_ID
 
-# pylint: disable=unused-import
-from typing import Optional, Dict, Tuple, List, Callable
-from collections import OrderedDict
 from .data import Data
-from .kernel import Kernel, KernelModel
-from .modelinfo import Parameter, ParameterSet, ModelInfo
-# pylint: enable=unused-import
+from .kernel import KernelModel
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray

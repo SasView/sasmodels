@@ -1,7 +1,7 @@
 import logging
 
 from bumps.names import *
-from sasmodels import core, bumps_model, sesans
+from sasmodels import core, bumps_model
 from sasdata.dataloader.loader import Loader
 
 def get_bumps_model(model_name):

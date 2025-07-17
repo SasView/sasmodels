@@ -112,7 +112,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf
+from numpy import inf
 
 name = "micromagnetic_FF_3D"
 title = "Field-dependent magnetic microstructure around imperfections in bulk ferromagnets"

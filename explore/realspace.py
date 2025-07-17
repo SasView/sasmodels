@@ -1,13 +1,11 @@
 from __future__ import division, print_function
 
 import cmath
-import time
 from copy import copy
 import os
 import argparse
 from collections import OrderedDict
 from timeit import default_timer as timer
-from typing import Tuple
 from inspect import getfullargspec
 
 import numpy as np
@@ -941,7 +939,6 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
         plt.title('max rel. err=%g' % np.max(abs(rel)))
 
 def plot_points(rho, points):
-    import mpl_toolkits.mplot3d
     import matplotlib.pyplot as plt
 
     ax = plt.axes(projection='3d')
@@ -1525,6 +1522,6 @@ if __name__ == "__main__":
         import sasmodels
     except ImportError:
         import sys
-        from os.path import realpath, dirname, join as joinpath
+        from os.path import realpath, dirname
         sys.path.insert(0, dirname(dirname(realpath(__file__))))
     main()

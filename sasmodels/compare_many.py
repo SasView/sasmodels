@@ -23,15 +23,6 @@ from .compare import (
     randomize_pars, suppress_pd, make_data, make_engine, get_pars,
     constrain_pars)
 
-# pylint: disable=unused-import
-try:
-    from typing import Tuple, Any, Dict, List
-except ImportError:
-    pass
-else:
-    from .data import Data
-# pylint: enable=unused-import
-
 MODELS = core.list_models()
 
 def calc_stats(target, value, index):

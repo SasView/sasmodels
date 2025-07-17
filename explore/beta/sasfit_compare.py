@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 # Make sasmodels available on the path
-import sys, os
+import sys
+import os
 BETA_DIR = os.path.dirname(os.path.realpath(__file__))
 SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
 sys.path.insert(0, SASMODELS_DIR)

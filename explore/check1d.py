@@ -11,7 +11,8 @@ with angle set by -angle=alpha in the qx-qy plane.
 
 from __future__ import print_function, division
 
-import sys, os
+import sys
+import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import numpy as np
