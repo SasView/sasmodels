@@ -110,7 +110,7 @@ def quote_path(v):
     and do not quote it.  This is fragile:  -Ipath with space needs to
     be quoted.
     """
-    return '"'+v+'"' if v and ' ' in v and not v[0] in "\"'-" else v
+    return '"'+v+'"' if v and ' ' in v and v[0] not in "\"'-" else v
 
 
 def fix_pyopencl_include():
