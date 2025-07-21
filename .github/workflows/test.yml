@@ -7,8 +7,20 @@ defaults:
     shell: bash
 
 jobs:
-  test:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --fix-only --exit-non-zero-on-fix"
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: always()
+        with:
+          msg: '[pre-commit.ci lite] apply automatic fixes for ruff linting errors'
 
+  test:
+    needs: [ruff]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
