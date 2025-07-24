@@ -1,5 +1,5 @@
 import numpy as np
-from numpy import pi, inf, mean
+from numpy import pi, mean
 
 from .Ecoefficient import TYCoeff
 from .CalcRealRoot import CalRealRoot
@@ -372,7 +372,7 @@ def demo():
 
     # Use matlab syntax for defining parameters to ease comparison. Note that
     # K1, K2 are negative in matlab and positive in python.
-    K1=-6; K2=2.7; volF=0.1; Z1=10; Z2=2.3;
+    K1=-6; K2=2.7; volF=0.1; Z1=10; Z2=2.3
 
     # Please give your Q range, the maximum Q should be larger than 700 to let
     # the program to run.
