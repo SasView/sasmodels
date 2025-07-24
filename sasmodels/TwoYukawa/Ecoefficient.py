@@ -13,11 +13,12 @@ class TYCoeff:
     z: Tuple[float, float]
     bigK: Tuple[float, float]
     k: Tuple[float, float]
+
     # Unused
     d1Factor: float = 1.
     d2Factor: float = 1.
 
-    Ecoefficient: NDArray
+    Ecoefficient: NDArray # Order 25 polynomial coefficients (26 total, including the x^0 term)
     ABC1C2: Callable[[float, float], Tuple[float, float, float, float]]
 
     def __init__(self, Z, K, phi):
@@ -25,7 +26,7 @@ class TYCoeff:
         self.bigK = tuple(K)
         self.k = (K[0]*exp(Z[0]), K[1]*exp(Z[1]))
         self.phi = phi
-        # The followint sets Ecoefficient and myC1C2
+        # The following sets Ecoefficient and myC1C2
         calculate_coefficients(self)
 
     def gHat(self, a, b, c1, d1, c2, d2, s):
@@ -154,7 +155,6 @@ def calculate_coefficients(self):
     w1, w2 = self.w(0), self.w(1)
     x1, x2 = self.x(0), self.x(1)
     y1, y2 = self.y(0), self.y(1)
-
 
     Ccd1_11 = -6*phi -6*exp(-2*z1)*phi+ 12*exp(-z1)*phi + 6*phi*v1 + 12*phi*x1 - 12*phi*v1/z1**2 + 12*exp(-z1)*phi*v1/z1**2 \
         +12*exp(-z1)*phi*v1/z1 - 12*phi*x1/z1 + 12*exp(-z1)*phi*x1/z1
@@ -552,7 +552,7 @@ def calculate_coefficients(self):
 
     self.Ecoefficient = Ecoefficient
 
-    # The following are used in d_coeI_J functions, but those aren't used. Suppress for now.
+    # TODO: The following are used by d_coeI_J. Remove them or add the d_coeI_J functions.
     """
     def aDend1(d2): return d2*(Ccd1_21*Ccd2_12 - Ccd1_11*Ccd2_22)
     def aNumd0(d2): return d2*(-Ccd2_22*k1*v1+Ccd2_12*k1*v2)

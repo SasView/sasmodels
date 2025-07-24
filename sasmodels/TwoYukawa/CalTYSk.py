@@ -42,7 +42,7 @@ def CalTYSk(Z1, Z2, K1, K2, volF, Q, warnFlag=True, debugFlag=False):
     errorCode : int
         Error code (0: no good roots but some results, 1: one good root, >1: multiple good roots, -1: error)
     cVar : array_like or 0
-        Coefficient variables if choice=1, otherwise 0
+        Coefficients *[a00, b00, v1, v2, a, b, c1, d1, c2, d2]*
     """
 
     # # Check if maximum Q is sufficient

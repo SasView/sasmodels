@@ -1,8 +1,9 @@
 import numpy as np
 
+from .Ecoefficient import TYCoeff
 from .Epoly import make_poly
 
-def CalRealRoot(coeff):
+def CalRealRoot(coeff: TYCoeff):
 
     Ecoefficient = coeff.Ecoefficient
 

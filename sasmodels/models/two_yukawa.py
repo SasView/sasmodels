@@ -91,29 +91,23 @@ Authorship and Verification
 * **Last Modified by:** Yun Liu **Date:** January 22, 2024
 * **Last Reviewed by:** Yun Liu **Date:** January 22, 2024
 """
-import numpy as np
 from numpy import inf
 
-# TODO: move TwoYukawa library to sasmodels.TwoYukawa and drop the complicated import machinery.
-# two_yukawa requires the TwoYukawa package. This should be available in
-# sasmodels, but if you are using a custom version in the plugins directory
-# you will want to use your own version of the library. The following hack
-# loads TwoYukawa from the same location as two_yukawa
-import sys
-from pathlib import Path
-import importlib.util
-
 # TODO: pep8 says packages and modules should not use camel case
-from sasmodels.TwoYukawa.CalTYSk import CalTYSk, Q_UPPER, Q_STEP, K_MIN, Z_MIN, Z_MIN_DIFF
+from sasmodels.TwoYukawa.CalTYSk import CalTYSk, K_MIN, Z_MIN, Z_MIN_DIFF
 
-# If you want a customized version of two_yukawa as a plugin (for example, because you want
-# to use the high precision polynomial root solver from mpmath) it will need to find the
-# customized TwoYukawa library. The following loads the most recent version of the TwoYukawa
-# library from the current directory each time the plugin is leaded. It assumes the TwoYukawa
-# library is in a subdirectory beside the two_yukawa.py plugin model.
-# Note: to test this code, comment the import line above, and change path to path.parent in
-# the spec = ... line below.
+# If you want a customized version of two_yukawa as a plugin (for example,
+# because you want to use the high precision polynomial root solver from mpmath)
+# you will need to load the customized TwoYukawa library. The following loads it
+# from the plugin directory each time the plugin is loaded. You will need copy
+# the following into you plugins directory before modifying:
+#     https://github.com/SasView/sasmodels/tree/master/sasmodels/models/two_yukawa.py
+#     https://github.com/SasView/sasmodels/tree/master/sasmodels/TwoYukawa
 if 0:
+    import sys
+    from pathlib import Path
+    import importlib.util
+
     # Remove existing TwoYukawa from sys.modules to force a reload
     remove = [modname for modname in sys.modules if modname.startswith('TwoYukawa.') or modname == 'TwoYukawa']
     for modname in remove:
@@ -127,7 +121,7 @@ if 0:
     sys.modules['TwoYukawa'] = module
 
     # Override sasmodels library symbols with the local symbols.
-    from TwoYukawa.CalTYSk import CalTYSk, Q_UPPER, Q_STEP, K_MIN, Z_MIN, Z_MIN_DIFF
+    from TwoYukawa.CalTYSk import CalTYSk, K_MIN, Z_MIN, Z_MIN_DIFF
 
 name = "two_yukawa"
 title = "User model for two Yukawa structure factor (S(q))"
