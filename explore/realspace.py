@@ -1071,7 +1071,6 @@ def csbox_Iqxy(qx, qy, a, b, c, da, db, dc, slda, sldb, sldc, sld_core, view=(0,
     qa, qb, qc = invert_view(qx, qy, view)
 
     sld_solvent = 0
-    overlapping = False
     dr0 = sld_core - sld_solvent
     drA, drB, drC = slda-sld_solvent, sldb-sld_solvent, sldc-sld_solvent
     tA, tB, tC = a + 2*da, b + 2*db, c + 2*dc
@@ -1354,9 +1353,6 @@ def check_shape(title, shape, fn=None, show_points=False,
 
 def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
                    mesh=100, qmax=1.0, samples=5000):
-    rho_solvent = 0
-    #qx = np.linspace(0.0, qmax, mesh)
-    #qy = np.linspace(0.0, qmax, mesh)
     qx = np.linspace(-qmax, qmax, mesh)
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
@@ -1405,9 +1401,6 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
                     mesh=100, qmax=1.0, samples=5000,
                     up_frac_i=0, up_frac_f=0, up_theta=0, up_phi=0):
-    rho_solvent = 0
-    #qx = np.linspace(0.0, qmax, mesh)
-    #qy = np.linspace(0.0, qmax, mesh)
     qx = np.linspace(-qmax, qmax, mesh)
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)

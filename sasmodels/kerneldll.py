@@ -94,7 +94,7 @@ from .generate import F16, F32, F64
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any, List
+    from typing import Tuple, Callable, List
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
@@ -447,7 +447,7 @@ class DllKernel(Kernel):
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
                      radius_effective_mode):
-        # type: (CallDetails, np.ndarray, float, bool, int)
+        # type: (CallDetails, np.ndarray, float, bool, int) -> None
 
         # Setup kernel function and arguments.
         kernel = self.kernel[1 if magnetic else 0]

@@ -91,7 +91,7 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any, Dict, List
+    from typing import Tuple, Dict, List
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:

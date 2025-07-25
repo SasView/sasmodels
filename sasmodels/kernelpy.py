@@ -24,7 +24,7 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Callable, List
+    from typing import Callable, List
     from .details import CallDetails
     from .modelinfo import ModelInfo
 except ImportError:

@@ -38,7 +38,7 @@ weights.load_weights()
 
 # pylint: disable=unused-import
 try:
-    from typing import (Dict, Mapping, Any, Sequence, Tuple, NamedTuple,
+    from typing import (Dict, Any, Sequence, Tuple, NamedTuple,
                         List, Optional, Union, Callable)
     from types import ModuleType
     from .modelinfo import ModelInfo, Parameter

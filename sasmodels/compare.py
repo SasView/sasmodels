@@ -1214,32 +1214,56 @@ def parse_opts(argv):
         'ngauss'    : '0',
     }
     for arg in flags:
-        if arg == '-noplot':    opts['plot'] = False
-        elif arg == '-plot':    opts['plot'] = True
-        elif arg == '-linear':  opts['view'] = 'linear'
-        elif arg == '-log':     opts['view'] = 'log'
-        elif arg == '-q4':      opts['view'] = 'q4'
-        elif arg == '-1d':      opts['is2d'] = False
-        elif arg == '-2d':      opts['is2d'] = True
-        elif arg == '-exq':     opts['qmax'] = 10.0
-        elif arg == '-highq':   opts['qmax'] = 1.0
-        elif arg == '-midq':    opts['qmax'] = 0.2
-        elif arg == '-lowq':    opts['qmax'] = 0.05
-        elif arg == '-sesans':  opts['sesans'] = True
-        elif arg == '-zero':    opts['zero'] = True
-        elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
+        if arg == '-noplot':
+            opts['plot'] = False
+        elif arg == '-plot':
+            opts['plot'] = True
+        elif arg == '-linear':
+            opts['view'] = 'linear'
+        elif arg == '-log':
+            opts['view'] = 'log'
+        elif arg == '-q4':
+            opts['view'] = 'q4'
+        elif arg == '-1d':
+            opts['is2d'] = False
+        elif arg == '-2d':
+            opts['is2d'] = True
+        elif arg == '-exq':
+            opts['qmax'] = 10.0
+        elif arg == '-highq':
+            opts['qmax'] = 1.0
+        elif arg == '-midq':
+            opts['qmax'] = 0.2
+        elif arg == '-lowq':
+            opts['qmax'] = 0.05
+        elif arg == '-sesans':
+            opts['sesans'] = True
+        elif arg == '-zero':
+            opts['zero'] = True
+        elif arg.startswith('-nq='):
+            opts['nq'] = int(arg[4:])
         elif arg.startswith('-q='):
             opts['qmin'], opts['qmax'] = [float(v) for v in arg[3:].split(':')]
-        elif arg.startswith('-res='):      opts['res'] = arg[5:]
-        elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
-        elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
-        elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
-        elif arg.startswith('-cutoff='):   opts['cutoff'] = arg[8:]
-        elif arg.startswith('-title='):    opts['title'] = arg[7:]
-        elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
-        elif arg.startswith('-engine='):   opts['engine'] = arg[8:]
-        elif arg.startswith('-neval='):    opts['count'] = arg[7:]
-        elif arg.startswith('-ngauss='):   opts['ngauss'] = arg[8:]
+        elif arg.startswith('-res='):
+            opts['res'] = arg[5:]
+        elif arg.startswith('-noise='):
+            opts['noise'] = float(arg[7:])
+        elif arg.startswith('-sets='):
+            opts['sets'] = int(arg[6:])
+        elif arg.startswith('-accuracy='):
+            opts['accuracy'] = arg[10:]
+        elif arg.startswith('-cutoff='):
+            opts['cutoff'] = arg[8:]
+        elif arg.startswith('-title='):
+            opts['title'] = arg[7:]
+        elif arg.startswith('-data='):
+            opts['datafile'] = arg[6:]
+        elif arg.startswith('-engine='):
+            opts['engine'] = arg[8:]
+        elif arg.startswith('-neval='):
+            opts['count'] = arg[7:]
+        elif arg.startswith('-ngauss='):
+            opts['ngauss'] = arg[8:]
         elif arg.startswith('-random='):
             opts['seed'] = int(arg[8:])
             opts['sets'] = 0
@@ -1251,29 +1275,52 @@ def parse_opts(argv):
             opts['is2d'] = True
         elif arg.startswith('-maxdim'):
             opts['maxdim'] = float(arg[8:])
-        elif arg == '-preset':  opts['seed'] = -1
-        elif arg == '-mono':    opts['mono'] = True
-        elif arg == '-poly':    opts['mono'] = False
-        elif arg == '-magnetic':       opts['magnetic'] = True
-        elif arg == '-nonmagnetic':    opts['magnetic'] = False
-        elif arg == '-pars':    opts['show_pars'] = True
-        elif arg == '-nopars':  opts['show_pars'] = False
-        elif arg == '-hist':    opts['show_hist'] = True
-        elif arg == '-nohist':  opts['show_hist'] = False
-        elif arg == '-rel':     opts['rel_err'] = True
-        elif arg == '-abs':     opts['rel_err'] = False
-        elif arg == '-half':    opts['engine'] = 'half'
-        elif arg == '-fast':    opts['engine'] = 'fast'
-        elif arg == '-single':  opts['engine'] = 'single'
-        elif arg == '-double':  opts['engine'] = 'double'
-        elif arg == '-single!': opts['engine'] = 'single!'
-        elif arg == '-double!': opts['engine'] = 'double!'
-        elif arg == '-quad!':   opts['engine'] = 'quad!'
-        elif arg == '-edit':    opts['explore'] = True
-        elif arg == '-weights': opts['show_weights'] = True
-        elif arg == '-profile': opts['show_profile'] = True
-        elif arg == '-html':    opts['html'] = True
-        elif arg == '-help':    opts['html'] = True
+        elif arg == '-preset':
+            opts['seed'] = -1
+        elif arg == '-mono':
+            opts['mono'] = True
+        elif arg == '-poly':
+            opts['mono'] = False
+        elif arg == '-magnetic':
+            opts['magnetic'] = True
+        elif arg == '-nonmagnetic':
+            opts['magnetic'] = False
+        elif arg == '-pars':
+            opts['show_pars'] = True
+        elif arg == '-nopars':
+            opts['show_pars'] = False
+        elif arg == '-hist':
+            opts['show_hist'] = True
+        elif arg == '-nohist':
+            opts['show_hist'] = False
+        elif arg == '-rel':
+            opts['rel_err'] = True
+        elif arg == '-abs':
+            opts['rel_err'] = False
+        elif arg == '-half':
+            opts['engine'] = 'half'
+        elif arg == '-fast':
+            opts['engine'] = 'fast'
+        elif arg == '-single':
+            opts['engine'] = 'single'
+        elif arg == '-double':
+            opts['engine'] = 'double'
+        elif arg == '-single!':
+            opts['engine'] = 'single!'
+        elif arg == '-double!':
+            opts['engine'] = 'double!'
+        elif arg == '-quad!':
+            opts['engine'] = 'quad!'
+        elif arg == '-edit':
+            opts['explore'] = True
+        elif arg == '-weights':
+            opts['show_weights'] = True
+        elif arg == '-profile':
+            opts['show_profile'] = True
+        elif arg == '-html':
+            opts['html'] = True
+        elif arg == '-help':
+            opts['html'] = True
         elif arg.startswith('-D'):
             var, val = arg[2:].split('=')
             os.environ[var] = val

@@ -130,10 +130,14 @@ def build_pars(case_num, polys, **interactions):
     pars = interactions.copy()
     pars["case_num"] = case_num
     polys = list(reversed(polys))
-    if len(polys) >= 4: set_poly("a",polys[3])
-    if len(polys) >= 3: set_poly("b",polys[2])
-    if len(polys) >= 2: set_poly("c",polys[1])
-    if len(polys) >= 1: set_poly("d",polys[0])
+    if len(polys) >= 4:
+        set_poly("a",polys[3])
+    if len(polys) >= 3:
+        set_poly("b",polys[2])
+    if len(polys) >= 2:
+        set_poly("c",polys[1])
+    if len(polys) >= 1:
+        set_poly("d",polys[0])
     return pars
 
 def sasmodels_rpa(q, pars):

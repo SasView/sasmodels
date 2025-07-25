@@ -5,7 +5,6 @@
 
 from __future__ import division
 
-#from pylab import *
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import jv as besselj

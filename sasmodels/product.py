@@ -126,10 +126,8 @@ from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import OrderedDict as OrderedDictType
-    import typing
-    from typing import Tuple, Callable, Union, List, Optional, Dict
-    from .modelinfo import ParameterSet, Parameter
+    from typing import Tuple, Callable, Union, List, Dict
+    from .modelinfo import Parameter
     from .details import CallDetails
     Parts = Dict[str, Union[float, np.ndarray, Tuple[np.ndarray, np.ndarray]]]
 except ImportError:
