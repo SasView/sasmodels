@@ -34,6 +34,7 @@ import math
 import datetime
 import traceback
 import re
+from dataclasses import dataclass
 
 import numpy as np  # type: ignore
 
@@ -1574,23 +1575,50 @@ def explore(opts):
     """
     explore the model using the bumps gui.
     """
-    import wx  # type: ignore
     from bumps.names import FitProblem  # type: ignore
+
+    model = Explore(opts)
+    problem = FitProblem(model)
+    name = ":".join(opts['name']) if opts['name'][0] == opts['name'][1] else opts['name'][0]
+    problem.name = name
+
+    try:
+        wx_explore(problem)
+    except ImportError:
+        webview_explore(problem)
+        # print("The explore option requires wxPython.  Try 'pip install wxPython'.")
+
+def webview_explore(problem):
+    import logging
+    from aiohttp import web
+    from bumps.webview.server.cli import BumpsOptions
+    from bumps.webview.server import api
+    import bumps.webview.server.webserver as server
+
+    logging.getLogger("webview").setLevel(logging.WARNING)
+
+    server.init_web_app()
+    server.app.on_startup.append(lambda App: api.set_problem(problem))
+    sock = server.setup_app(options=BumpsOptions())
+    web.run_app(server.app, sock=sock)
+
+def wx_explore(problem):
+    import wx  # type: ignore
     from bumps.gui.app_frame import AppFrame  # type: ignore
     from bumps.gui import signal
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
     app = wx.App() if wx.GetApp() is None else None
-    model = Explore(opts)
-    problem = FitProblem(model)
     frame = AppFrame(parent=None, title="explore", size=(1000, 700))
     if not is_mac:
         frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
+    # Hack to revert parameters to initial values: override the reload model tool
     def _reset_parameters(event):
+        model = next(problem.models)
         model.revert_values()
         signal.update_parameters(problem)
     frame.Bind(wx.EVT_TOOL, _reset_parameters, frame.ToolBar.GetToolByPos(1))
@@ -1600,17 +1628,22 @@ def explore(opts):
     if app:
         app.MainLoop()
 
-class Explore(object):
+@dataclass
+class Explore:
     """
     Bumps wrapper for a SAS model comparison.
 
     The resulting object can be used as a Bumps fit problem so that
     parameters can be adjusted in the GUI, with plots updated on the fly.
     """
+    pars: dict[str, Parameter]
+    name = "sasmodels"
+
     def __init__(self, opts):
         # type: (Dict[str, Any]) -> None
         from bumps.cli import config_matplotlib  # type: ignore
         from . import bumps_model
+
         config_matplotlib()
         self.opts = opts
         opts['pars'] = list(opts['pars'])
@@ -1678,19 +1711,36 @@ class Explore(object):
         """
         Plot the data and residuals.
         """
+        import matplotlib.pyplot as plt
+
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'][0] = pars
         if not self.fix_p2:
             self.opts['pars'][1] = pars
-        result = run_models(self.opts)
+        try:
+            result = run_models(self.opts)
+        except Exception as exc:
+            print("Exception %s while evaluating"%(exc.__class__.__name__))
+            import traceback
+            traceback.print_exc()
+            plt.clf()
+            return
         limits = plot_models(self.opts, result, limits=self.limits)
-        if self.limits is None:
-            vmin, vmax = limits
-            self.limits = vmax*1e-7, 1.3*vmax
-            import pylab
-            pylab.clf()
+
+        is_sf = self.opts['info'][0].structure_factor
+        if 0 and self.limits is None:
+            # Set limits based on first plot
+            if is_sf:
+                self.limits = 0.01, 4
+            else:
+                vmin, vmax = limits
+                self.limits = vmax*1e-7, 1.3*vmax
+            plt.clf()
             plot_models(self.opts, result, limits=self.limits)
+        if is_sf:
+            plt.xscale('linear')
+            plt.yscale('linear')
 
 
 def main(*argv):
