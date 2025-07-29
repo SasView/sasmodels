@@ -11201,7 +11201,7 @@ constant double Gauss5000Z[5000]={
 };
 
 static int
-gauss_weights(double qr, double **w, double **z)
+gauss_weights(double qr, constant double **w, constant double **z)
 {
     if (qr < 100) {
         *w = Gauss76Wt; *z = Gauss76Z; return 76;

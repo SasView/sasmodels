@@ -93,16 +93,19 @@ Fq(double q,
     const double uplim = M_PI_4;
     const double halflength = 0.5*length;
 
+    double qr = q*fmax(radius+thick_radius, 2*halflength+thick_face);
+    constant double *w, *z;
+    int n = gauss_weights(qr, &w, &z);
     double total_F1 = 0.0;
     double total_F2 = 0.0;
-    for(int i=0;i<GAUSS_N;i++) {
-        double theta = (GAUSS_Z[i] + 1.0)*uplim;
+    for(int i=0;i<n;i++) {
+        double theta = (z[i] + 1.0)*uplim;
         double sin_theta, cos_theta; // slots to hold sincos function output
         SINCOS(theta, sin_theta, cos_theta);
         double form = bicelle_kernel(q*sin_theta, q*cos_theta, radius, thick_radius, thick_face,
                                    halflength, sld_core, sld_face, sld_rim, sld_solvent);
-        total_F1 += GAUSS_W[i]*form*sin_theta;
-        total_F2 += GAUSS_W[i]*form*form*sin_theta;
+        total_F1 += w[i]*form*sin_theta;
+        total_F2 += w[i]*form*form*sin_theta;
     }
     // Correct for integration range
     total_F1 *= uplim;
