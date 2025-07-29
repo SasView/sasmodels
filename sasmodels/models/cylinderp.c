@@ -69,7 +69,7 @@ Fq(double q,
     double total_F2 = 0.0;
 
     double qr = q*(radius > length ? radius : length);
-    double *w, *z;
+    constant double *w, *z;
     int n = gauss_weights(qr, &w, &z);
     for (int i=0; i<n ;i++) {
         const double theta = z[i]*zm + zb;
