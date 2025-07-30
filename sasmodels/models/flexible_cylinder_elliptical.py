@@ -117,7 +117,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c",
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c", "lib/wrc_cyl.c",
           "flexible_cylinder_elliptical.c"]
 
 def random():
@@ -146,7 +146,8 @@ tests = [
     #  'background':    0.0001,
     # }, 0.001, 3509.2187],
 
-    # Additional tests with larger range of parameters
+    # Tests with a range of parameters
+    # Values computed with 10000 integration points
     [{'length':     1000.0,
       'kuhn_length': 100.0,
       'radius':       20.0,
@@ -154,7 +155,7 @@ tests = [
       'sld':           1.0,
       'sld_solvent':   6.3,
       'background':    0.0001,
-     }, 1.0, 0.00223819],
+     }, 1.0, 0.002238188259406479],
     [{'length':        10.0,
       'kuhn_length': 800.0,
       'radius':        2.0,
@@ -162,7 +163,7 @@ tests = [
       'sld':           6.0,
       'sld_solvent':  12.3,
       'background':    0.001,
-     }, 0.1, 0.390281],
+     }, 0.1, 0.39028135615503373],
     [{'length':        100.0,
       'kuhn_length': 800.0,
       'radius':       50.0,
@@ -170,5 +171,5 @@ tests = [
       'sld':           0.1,
       'sld_solvent':   5.1,
       'background':    0.0,
-     }, 1.0, 0.0016338264790]
+     }, 1.0, 0.001848640535039348],
     ]

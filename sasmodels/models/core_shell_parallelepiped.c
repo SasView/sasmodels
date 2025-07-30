@@ -131,22 +131,30 @@ Fq(double q,
     const double drB = (brim_sld-solvent_sld);
     const double drC = (crim_sld-solvent_sld);
 
+    const double qr_max = q*0.5*tC;
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // outer integral (with gauss points), integration limits = 0, 1
     // substitute d_cos_alpha for sin_alpha d_alpha
     double outer_sum_F1 = 0; //initialize integral
     double outer_sum_F2 = 0; //initialize integral
-    for( int i=0; i<GAUSS_N; i++) {
-        const double cos_alpha = 0.5 * ( GAUSS_Z[i] + 1.0 );
+    for( int i=0; i<n; i++) {
+        const double cos_alpha = 0.5 * ( z[i] + 1.0 );
         const double mu = half_q * sqrt(1.0-cos_alpha*cos_alpha);
         const double siC = length_c * sas_sinx_x(length_c * cos_alpha * half_q);
         const double siCt = tC * sas_sinx_x(tC * cos_alpha * half_q);
+
+        const double qr_max_inner = mu*fmax(tA, tB);  // = qab*max(len)/2
+        constant double *w_inner, *z_inner;
+        int n_inner = gauss_weights(qr_max, &w_inner, &z_inner);
 
         // inner integral (with gauss points), integration limits = 0, 1
         // substitute beta = PI/2 u (so 2/PI * d_(PI/2 * beta) = d_beta)
         double inner_sum_F1 = 0.0;
         double inner_sum_F2 = 0.0;
-        for(int j=0; j<GAUSS_N; j++) {
-            const double u = 0.5 * ( GAUSS_Z[j] + 1.0 );
+        for(int j=0; j<n_inner; j++) {
+            const double u = 0.5 * ( z_inner[j] + 1.0 );
             double sin_beta, cos_beta;
             SINCOS(M_PI_2*u, sin_beta, cos_beta);
             const double siA = length_a * sas_sinx_x(length_a * mu * sin_beta);
@@ -166,13 +174,13 @@ Fq(double q,
                 + drC*siA*siB*(siCt-siC);
 #endif
 
-            inner_sum_F1 += GAUSS_W[j] * f;
-            inner_sum_F2 += GAUSS_W[j] * f * f;
+            inner_sum_F1 += w_inner[j] * f;
+            inner_sum_F2 += w_inner[j] * f * f;
         }
         // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
         // and sum up the outer integral
-        outer_sum_F1 += GAUSS_W[i] * inner_sum_F1 * 0.5;
-        outer_sum_F2 += GAUSS_W[i] * inner_sum_F2 * 0.5;
+        outer_sum_F1 += w[i] * inner_sum_F1 * 0.5;
+        outer_sum_F2 += w[i] * inner_sum_F2 * 0.5;
     }
     // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
     outer_sum_F1 *= 0.5;

@@ -14,15 +14,18 @@ double form_volume(double length, double kuhn_length, double radius)
 double
 elliptical_crosssection(double q, double a, double b)
 {
-    double sum=0.0;
+    const double qr_max = q*fmax(a, b);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
 
-    for(int i=0;i<GAUSS_N;i++) {
-        const double zi = ( GAUSS_Z[i] + 1.0 )*M_PI_4;
+    double sum=0.0;
+    for(int i=0;i<n;i++) {
+        const double zi = ( z[i] + 1.0 )*M_PI_4;
         double sn, cn;
         SINCOS(zi, sn, cn);
         const double arg = q*sqrt(a*a*sn*sn + b*b*cn*cn);
         const double yyy = sas_2J1x_x(arg);
-        sum += GAUSS_W[i] * yyy * yyy;
+        sum += w[i] * yyy * yyy;
     }
     sum *= 0.5;
     return(sum);

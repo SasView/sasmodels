@@ -579,6 +579,31 @@ def model_tests():
     for test in tests:
         yield _build_test(test)
 
+def _generate_target_values(modelname, ngauss=0):
+    from .generate import set_integration_size
+
+    model_info = load_model_info(modelname)
+    if ngauss != 0:
+        set_integration_size(model_info, ngauss)
+    model = build_model(model_info, platform="dll", dtype="d")
+
+    for pars, q, Iq in model_info.tests:
+        qin = q
+        if isinstance(Iq, float):
+            q, Iq = [q], [Iq]
+        if isinstance(q[0], tuple):
+            qx, qy = zip(*q)
+            q_vectors = [np.array(qx), np.array(qy)]
+        else:
+            q_vectors = [np.array(q)]
+        kernel = model.make_kernel(q_vectors)
+        target = np.array(Iq)
+        actual = call_kernel(kernel, pars)
+        if True or (actual != target).any():
+            print("Test:", modelname, pars)
+            print(f"  q = ", qin)
+            print(f"  current => [{', '.join(f'{v:.15g}' for v in target)}]")
+            print(f"  ngauss={ngauss} => [{', '.join(f'{v:.15g}' for v in actual)}]")
 
 def main():
     # type: () -> int
@@ -601,6 +626,11 @@ def main():
                         help="Engines on which to run the test.  "
                         "Valid values are opencl, cuda, dll, and all. "
                         "Defaults to all if no value is given")
+    parser.add_argument("-t", "--targets", action="store_true",
+                        help="Generate target values for test.")
+    parser.add_argument("--ngauss", type=int, default=10000,
+                        help="Number of gauss points to use in integration for "
+                        "target values. Warning: this is very slow the first time.")
     parser.add_argument("models", nargs="*",
                         help="The names of the models to be tested.  "
                         "If the first model is 'all', then all but the listed "
@@ -630,9 +660,13 @@ def main():
         print("unknown engine " + opts.engine)
         return 1
 
-    runner = TestRunner(verbosity=opts.verbose, **test_args)
-    result = runner.run(make_suite(loaders, opts.models))
-    return 1 if result.failures or result.errors else 0
+    if opts.targets:
+        for model in opts.models:
+            _generate_target_values(model, ngauss=opts.ngauss)
+    else:
+        runner = TestRunner(verbosity=opts.verbose, **test_args)
+        result = runner.run(make_suite(loaders, opts.models))
+        return 1 if result.failures or result.errors else 0
 
 
 if __name__ == "__main__":

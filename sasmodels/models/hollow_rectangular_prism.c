@@ -72,6 +72,10 @@ Fq(double q,
     const double vol_total = length_a * length_b * length_c;
     const double vol_core = 8.0 * (a_half-thickness) * (b_half-thickness) * (c_half-thickness);
 
+    const double qr_max = q*c_half;
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     //Integration limits to use in Gaussian quadrature
     const double v1a = 0.0;
     const double v1b = M_PI_2;  //theta integration limits
@@ -80,20 +84,24 @@ Fq(double q,
 
     double outer_sum_F1 = 0.0;
     double outer_sum_F2 = 0.0;
-    for(int i=0; i<GAUSS_N; i++) {
+    for(int i=0; i<n; i++) {
 
-        const double theta = 0.5 * ( GAUSS_Z[i]*(v1b-v1a) + v1a + v1b );
+        const double theta = 0.5 * ( z[i]*(v1b-v1a) + v1a + v1b );
         double sin_theta, cos_theta;
         SINCOS(theta, sin_theta, cos_theta);
 
         const double termC1 = sas_sinx_x(q * c_half * cos(theta));
         const double termC2 = sas_sinx_x(q * (c_half-thickness)*cos(theta));
 
+        const double qr_max_inner = q*sin_theta*fmax(a_half, b_half);  // = qab*max(len)/2
+        constant double *w_inner, *z_inner;
+        int n_inner = gauss_weights(qr_max, &w_inner, &z_inner);
+
         double inner_sum_F1 = 0.0;
         double inner_sum_F2 = 0.0;
-        for(int j=0; j<GAUSS_N; j++) {
+        for(int j=0; j<n_inner; j++) {
 
-            const double phi = 0.5 * ( GAUSS_Z[j]*(v2b-v2a) + v2a + v2b );
+            const double phi = 0.5 * ( z_inner[j]*(v2b-v2a) + v2a + v2b );
             double sin_phi, cos_phi;
             SINCOS(phi, sin_phi, cos_phi);
 
@@ -108,14 +116,14 @@ Fq(double q,
             const double AP1 = vol_total * termA1 * termB1 * termC1;
             const double AP2 = vol_core * termA2 * termB2 * termC2;
 
-            inner_sum_F1 += GAUSS_W[j] * (AP1-AP2);
-            inner_sum_F2 += GAUSS_W[j] * square(AP1-AP2);
+            inner_sum_F1 += w_inner[j] * (AP1-AP2);
+            inner_sum_F2 += w_inner[j] * square(AP1-AP2);
         }
         inner_sum_F1 *= 0.5 * (v2b-v2a);
         inner_sum_F2 *= 0.5 * (v2b-v2a);
 
-        outer_sum_F1 += GAUSS_W[i] * inner_sum_F1 * sin(theta);
-        outer_sum_F2 += GAUSS_W[i] * inner_sum_F2 * sin(theta);
+        outer_sum_F1 += w[i] * inner_sum_F1 * sin(theta);
+        outer_sum_F2 += w[i] * inner_sum_F2 * sin(theta);
     }
     outer_sum_F1 *= 0.5*(v1b-v1a);
     outer_sum_F2 *= 0.5*(v1b-v1a);

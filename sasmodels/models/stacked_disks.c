@@ -75,13 +75,16 @@ stacked_disks_1d(
 /*    StackedDiscsX  :  calculates the form factor of a stacked "tactoid" of core shell disks
 like clay platelets that are not exfoliated
 */
-    double summ = 0.0;    //initialize integral
-
     double d = 2.0*thick_layer+thick_core;
     double halfheight = 0.5*thick_core;
 
-    for(int i=0; i<GAUSS_N; i++) {
-        double zi = (GAUSS_Z[i] + 1.0)*M_PI_4;
+    const double qr_max = fmax(halfheight+thick_layer, radius);
+    constant double *w, *z;
+    int n = gauss_weights(q*qr_max, &w, &z);
+
+    double summ = 0.0;    //initialize integral
+    for(int i=0; i<n; i++) {
+        double zi = (z[i] + 1.0)*M_PI_4;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(zi, sin_alpha, cos_alpha);
         double yyy = stacked_disks_kernel(q*sin_alpha, q*cos_alpha,
@@ -94,7 +97,7 @@ like clay platelets that are not exfoliated
                            layer_sld,
                            solvent_sld,
                            d);
-        summ += GAUSS_W[i] * yyy * sin_alpha;
+        summ += w[i] * yyy * sin_alpha;
     }
 
     double answer = M_PI_4*summ;

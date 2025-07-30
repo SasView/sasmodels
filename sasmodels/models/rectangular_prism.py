@@ -144,7 +144,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "rotation about c axis"],
              ]
 
-source = ["lib/gauss76.c", "rectangular_prism.c"]
+source = ["lib/adaptive.c", "rectangular_prism.c"]
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",

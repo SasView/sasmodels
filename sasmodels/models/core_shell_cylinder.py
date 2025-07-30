@@ -133,7 +133,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "rotation about beam"],
              ]
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c", "core_shell_cylinder.c"]
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "outer radius", "half outer length",

@@ -100,30 +100,41 @@ Fq(double q,
 {
     const double pa = square(radius_equat_minor/radius_equat_major) - 1.0;
     const double pc = square(radius_polar/radius_equat_major) - 1.0;
+
+    // TODO: check that c_length dominates the outer loop, and a_length, b_length inner
+    // const double qr_max = q*fmax(fmax(radius_equat_minor, radius_equat_major), radius_polar);
+    const double qr_max = q*radius_polar;
+    constant double *z, *w;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
     const double zb = M_PI_4;
     double outer_sum_F1 = 0.0;
     double outer_sum_F2 = 0.0;
-    for (int i=0;i<GAUSS_N;i++) {
-        //const double u = GAUSS_Z[i]*(upper-lower)/2 + (upper + lower)/2;
-        const double phi = GAUSS_Z[i]*zm + zb;
+    for (int i=0;i<n;i++) {
+        //const double u = z[i]*(upper-lower)/2 + (upper + lower)/2;
+        const double phi = z[i]*zm + zb;
         const double pa_sinsq_phi = pa*square(sin(phi));
+
+        const double qr_max_inner = q*fmax(radius_equat_major, radius_equat_minor);
+        constant double *z_inner, *w_inner;
+        int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
 
         double inner_sum_F1 = 0.0;
         double inner_sum_F2 = 0.0;
         const double um = 0.5;
         const double ub = 0.5;
-        for (int j=0;j<GAUSS_N;j++) {
+        for (int j=0;j<n_inner;j++) {
             // translate a point in [-1,1] to a point in [0, 1]
-            const double usq = square(GAUSS_Z[j]*um + ub);
+            const double usq = square(z_inner[j]*um + ub);
             const double r = radius_equat_major*sqrt(pa_sinsq_phi*(1.0-usq) + 1.0 + pc*usq);
             const double fq = sas_3j1x_x(q*r);
-            inner_sum_F1 += GAUSS_W[j] * fq;
-            inner_sum_F2 += GAUSS_W[j] * fq * fq;
+            inner_sum_F1 += w_inner[j] * fq;
+            inner_sum_F2 += w_inner[j] * fq * fq;
         }
-        outer_sum_F1 += GAUSS_W[i] * inner_sum_F1;  // correcting for dx later
-        outer_sum_F2 += GAUSS_W[i] * inner_sum_F2;  // correcting for dx later
+        outer_sum_F1 += w[i] * inner_sum_F1;  // correcting for dx later
+        outer_sum_F2 += w[i] * inner_sum_F2;  // correcting for dx later
     }
     // translate integration ranges from [-1,1] to [lower,upper] and normalize by 4 pi
     outer_sum_F1 *= 0.25;  // = outer*um*zm*8.0/(4.0*M_PI);
