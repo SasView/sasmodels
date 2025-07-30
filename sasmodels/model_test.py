@@ -601,7 +601,7 @@ def _generate_target_values(modelname, ngauss=0):
         actual = call_kernel(kernel, pars)
         if True or (actual != target).any():
             print("Test:", modelname, pars)
-            print(f"  q = ", qin)
+            print("  q = ", qin)
             print(f"  current => [{', '.join(f'{v:.15g}' for v in target)}]")
             print(f"  ngauss={ngauss} => [{', '.join(f'{v:.15g}' for v in actual)}]")
 
