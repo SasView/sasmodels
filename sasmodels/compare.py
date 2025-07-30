@@ -80,7 +80,7 @@ Options (* for default):
 
     === model parameters ===
     -preset*/-random[=seed] preset or random parameters
-    -sets=n generates n random datasets with the seed given by -random=seed
+    -sets=n generates n random datasets using -seed=seed
     -pars/-nopars* prints the parameter set or not
     -sphere[=150] set up spherical integration over theta/phi using n points
     -mono*/-poly suppress or allow polydispersity on generated parameters
@@ -1023,7 +1023,7 @@ OPTIONS = [
     '2d', '1d', 'sesans',
 
     # Parameter set
-    'preset', 'random', 'random=', 'sets=',
+    'preset', 'random', 'random=', 'sets=', 'seed=',
     'nopars', 'pars',
     'sphere', 'sphere=', # integrate over a sphere in 2d with n points
     'poly', 'mono',
@@ -1227,6 +1227,7 @@ def parse_opts(argv):
         elif arg.startswith('-res='):      opts['res'] = arg[5:]
         elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
+        elif arg.startswith('-seed='):     opts['seed'] = int(arg[6:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = arg[8:]
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
