@@ -93,9 +93,10 @@ Fq(double q,
     const double uplim = M_PI_4;
     const double halflength = 0.5*length;
 
-    double qr = q*fmax(radius+thick_radius, 2*halflength+thick_face);
+    const double qr_max = q*fmax(radius+thick_radius, 2*halflength+thick_face);
     constant double *w, *z;
-    int n = gauss_weights(qr, &w, &z);
+    int n = gauss_weights(qr_max, &w, &z);
+
     double total_F1 = 0.0;
     double total_F2 = 0.0;
     for(int i=0;i<n;i++) {

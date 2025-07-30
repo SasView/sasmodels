@@ -104,20 +104,24 @@ Fq(double q,
     const double equat_shell = radius_equat_core + thick_shell;
     const double polar_shell = radius_equat_core*x_core + thick_shell*x_polar_shell;
 
+    const double qr_max = q*fmax(equat_shell, polar_shell);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // translate from [-1, 1] => [0, 1]
     const double m = 0.5;
     const double b = 0.5;
     double total_F1 = 0.0;     //initialize intergral
     double total_F2 = 0.0;     //initialize intergral
-    for(int i=0;i<GAUSS_N;i++) {
-        const double cos_theta = GAUSS_Z[i]*m + b;
+    for(int i=0;i<n;i++) {
+        const double cos_theta = z[i]*m + b;
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
         double fq = _cs_ellipsoid_kernel(q*sin_theta, q*cos_theta,
             radius_equat_core, polar_core,
             equat_shell, polar_shell,
             sld_core_shell, sld_shell_solvent);
-        total_F1 += GAUSS_W[i] * fq;
-        total_F2 += GAUSS_W[i] * fq * fq;
+        total_F1 += w[i] * fq;
+        total_F2 += w[i] * fq * fq;
     }
     total_F1 *= m;
     total_F2 *= m;
