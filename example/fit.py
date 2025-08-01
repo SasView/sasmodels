@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from bumps.fitProblem import FitProblem
+from bumps.names import FitProblem
 from sasmodels.core import load_model
 from sasmodels.bumps_model import Model, Experiment
 from sasmodels.data import load_data, set_beam_stop, set_top
@@ -188,6 +188,6 @@ else:
     problem = FitProblem(M)
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     problem.plot()
-    import pylab
-    pylab.show()
+    plt.show()

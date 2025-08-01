@@ -27,7 +27,7 @@ same directory).  You probably need a command such as::
     sasview.exe bumps.cli multiscatfit.py --store=t1
 """
 
-from bumps.fitProblem import FitProblem
+from bumps.names import FitProblem
 from sasmodels.core import load_model
 from sasmodels.bumps_model import Model, Experiment
 from sasmodels.data import load_data

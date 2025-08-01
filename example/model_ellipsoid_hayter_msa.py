@@ -1,11 +1,10 @@
 import sys
-import numpy as np
+
 #sys.path.append('path_to_sasmodels')
+from bumps.names import FitProblem, inf
 
-
-from bumps.fitProblem import FitProblem
+from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
 from sasmodels.data import load_data
 
 # IMPORT THE DATA USED
@@ -24,17 +23,17 @@ pars = dict(scale=6.4, background=0.06, sld=0.33, sld_solvent=2.15, radius_polar
 model = Model(kernel, **pars)
 
 # PARAMETER RANGES (ONLY THOSE PARAMETERS ARE FITTED)
-model.scale.range(0, np.inf)
-model.background.range(-np.inf, np.inf)
-#model.sld.range(-np.inf, np.inf)
-model.sld_solvent.range(-np.inf, np.inf)
-#model.radius_polar.range(0, np.inf)
-#model.radius_equatorial.range(0, np.inf)
+model.scale.range(0, inf)
+model.background.range(-inf, inf)
+#model.sld.range(-inf, inf)
+model.sld_solvent.range(-inf, inf)
+#model.radius_polar.range(0, inf)
+#model.radius_equatorial.range(0, inf)
 #model.volfraction.range(0,0.74)
-#model.charge.range(0, np.inf)
+#model.charge.range(0, inf)
 #model.temperature.range(0,1000)
 #model.concentration_salt.range(0, 1)
-#model.dielectconst.range(0,np.inf)
+#model.dielectconst.range(0,inf)
 
 M = Experiment(data=data, model=model)
 
