@@ -159,3 +159,13 @@ python_functions = [
 log_level = "DEBUG"
 filterwarnings = [
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# The ruff rules are available at: https://docs.astral.sh/ruff/rules/
+select = ["E",       # pycodestyle errors
+          "F"]       # pyflakes
+
+ignore = ["E501"]    # line too long (leave to formatter)
