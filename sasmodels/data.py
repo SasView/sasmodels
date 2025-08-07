@@ -40,7 +40,7 @@ from numpy import sqrt, sin, cos, pi
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Dict, List, Optional, Tuple, Callable
+    from typing import Union, Optional, Tuple, Callable
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
     OptLimits = Optional[Tuple[float, float]]
@@ -128,11 +128,6 @@ def set_top(data, cutoff):
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
-
-class Source:
-    ...
-class Sample:
-    ...
 
 def _as_numpy(data):
     return None if data is None else np.asarray(data)

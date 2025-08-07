@@ -1,7 +1,7 @@
 """
 This is a data file used to load in sesans data and fit it using the bumps engine
 """
-from bumps.names import *
+from bumps.names import Parameter
 
 import sesansfit
 

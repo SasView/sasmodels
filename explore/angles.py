@@ -104,7 +104,8 @@ def vprint(var, vec, comment=None, post=None):
 
     if OUTPUT == 'math ':
         print("\n// " + comment if comment else "")
-        if post: print("// " + post)
+        if post:
+            print("// " + post)
         print(desc)
 
 def mprint(var, mat, comment=None, post=None):

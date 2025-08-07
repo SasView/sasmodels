@@ -26,3 +26,6 @@ __pycache__
 # are part of the repo and required by some models.
 /sasmodels/models/lib/gauss*.c
 sasmodels/_version.py
+
+# Local pre-commit hooks
+.pre-commit-config.yaml

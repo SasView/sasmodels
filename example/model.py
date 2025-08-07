@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from bumps.names import *
+from bumps.names import FitProblem
 from sasmodels.core import load_model
 from sasmodels.bumps_model import Model, Experiment
 from sasmodels.data import load_data, set_beam_stop, set_top

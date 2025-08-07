@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# ruff: noqa: E701
 """
 Program to compare models using different compute engines.
 
@@ -1251,29 +1250,29 @@ def parse_opts(argv):
             opts['is2d'] = True
         elif arg.startswith('-maxdim'):
             opts['maxdim'] = float(arg[8:])
-        elif arg == '-preset':  opts['seed'] = -1
-        elif arg == '-mono':    opts['mono'] = True
-        elif arg == '-poly':    opts['mono'] = False
-        elif arg == '-magnetic':       opts['magnetic'] = True
-        elif arg == '-nonmagnetic':    opts['magnetic'] = False
-        elif arg == '-pars':    opts['show_pars'] = True
-        elif arg == '-nopars':  opts['show_pars'] = False
-        elif arg == '-hist':    opts['show_hist'] = True
-        elif arg == '-nohist':  opts['show_hist'] = False
-        elif arg == '-rel':     opts['rel_err'] = True
-        elif arg == '-abs':     opts['rel_err'] = False
-        elif arg == '-half':    opts['engine'] = 'half'
-        elif arg == '-fast':    opts['engine'] = 'fast'
-        elif arg == '-single':  opts['engine'] = 'single'
-        elif arg == '-double':  opts['engine'] = 'double'
-        elif arg == '-single!': opts['engine'] = 'single!'
-        elif arg == '-double!': opts['engine'] = 'double!'
-        elif arg == '-quad!':   opts['engine'] = 'quad!'
-        elif arg == '-edit':    opts['explore'] = True
-        elif arg == '-weights': opts['show_weights'] = True
-        elif arg == '-profile': opts['show_profile'] = True
-        elif arg == '-html':    opts['html'] = True
-        elif arg == '-help':    opts['html'] = True
+        elif arg == '-preset':      opts['seed'] = -1
+        elif arg == '-mono':        opts['mono'] = True
+        elif arg == '-poly':        opts['mono'] = False
+        elif arg == '-magnetic':    opts['magnetic'] = True
+        elif arg == '-nonmagnetic': opts['magnetic'] = False
+        elif arg == '-pars':        opts['show_pars'] = True
+        elif arg == '-nopars':      opts['show_pars'] = False
+        elif arg == '-hist':        opts['show_hist'] = True
+        elif arg == '-nohist':      opts['show_hist'] = False
+        elif arg == '-rel':         opts['rel_err'] = True
+        elif arg == '-abs':         opts['rel_err'] = False
+        elif arg == '-half':        opts['engine'] = 'half'
+        elif arg == '-fast':        opts['engine'] = 'fast'
+        elif arg == '-single':      opts['engine'] = 'single'
+        elif arg == '-double':      opts['engine'] = 'double'
+        elif arg == '-single!':     opts['engine'] = 'single!'
+        elif arg == '-double!':     opts['engine'] = 'double!'
+        elif arg == '-quad!':       opts['engine'] = 'quad!'
+        elif arg == '-edit':        opts['explore'] = True
+        elif arg == '-weights':     opts['show_weights'] = True
+        elif arg == '-profile':     opts['show_profile'] = True
+        elif arg == '-html':        opts['html'] = True
+        elif arg == '-help':        opts['html'] = True
         elif arg.startswith('-D'):
             var, val = arg[2:].split('=')
             os.environ[var] = val

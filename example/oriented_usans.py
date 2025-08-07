@@ -1,4 +1,5 @@
-from bumps.names import *
+from bumps.names import FitProblem
+import numpy as np
 
 from sasmodels.data import load_data
 from sasmodels.core import load_model

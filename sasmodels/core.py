@@ -27,7 +27,7 @@ from . import custom
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Union, Optional, Any, Tuple
+    from typing import List, Tuple
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
 except ImportError:
