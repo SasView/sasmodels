@@ -20,7 +20,6 @@ direct parameter values and by :class:`.bumps_model.Experiment` which wraps
 the parameter values in boxes so that the user can set fitting ranges, etc.
 on the individual parameters and send the model to the Bumps optimizers.
 """
-from __future__ import print_function, division
 
 import os
 
@@ -174,7 +173,7 @@ def _make_sesans_transform(data):
     return hankel
 
 
-class DataMixin(object):
+class DataMixin:
     """
     DataMixin captures the common aspects of evaluating a SAS model for a
     particular data set, including calculating Iq and evaluating the

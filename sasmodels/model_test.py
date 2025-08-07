@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Run model unit tests.
 
@@ -44,7 +43,6 @@ in the parameter list will take on the default parameter value.
 
 Precision defaults to 5 digits (relative).
 """
-from __future__ import print_function
 
 import argparse
 import sys
@@ -70,7 +68,8 @@ from . import product
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Iterator, Callable, Any, Dict, Tuple, Union
+    from typing import List, Callable, Any, Dict, Tuple, Union
+    from collections.abc import Iterator
     from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
     from .kernel import KernelModel
     DType = Union[None, str, np.dtype]

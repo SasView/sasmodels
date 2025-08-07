@@ -6,7 +6,6 @@ Polydispersity is supported by looping over different parameter sets and
 summing the results.  The interface to :class:`PyModel` matches those for
 :class:`.kernelcl.GpuModel` and :class:`.kerneldll.DllModel`.
 """
-from __future__ import division, print_function
 
 import logging
 
@@ -57,7 +56,7 @@ class PyModel(KernelModel):
         pass
 
 
-class PyInput(object):
+class PyInput:
     """
     Make q data available to the gpu.
 

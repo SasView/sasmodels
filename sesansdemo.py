@@ -3,7 +3,6 @@
 # everything is in units of metres except specified otherwise
 # Wim Bouwman (w.g.bouwman@tudelft.nl), June 2013
 
-from __future__ import division
 
 import matplotlib.pyplot as plt
 from numpy import pi, sqrt, sin, cos, exp, log

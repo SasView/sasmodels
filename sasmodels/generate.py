@@ -154,7 +154,6 @@ parameter table to the top.  *make_figure* in *sasmodels/doc/genmodel*
 creates the default figure for the model.  [These two sets of code
 should mignrate into docs.py so docs can be updated in one place].
 """
-from __future__ import print_function
 
 # TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
@@ -175,7 +174,8 @@ from .custom import load_custom_kernel_module
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Sequence, Iterator, Dict, List
+    from typing import Tuple, Dict, List
+    from collections.abc import Sequence, Iterator
     from types import ModuleType
     from .modelinfo import ModelInfo
 except ImportError:

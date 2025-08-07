@@ -8,7 +8,6 @@ Usage:
 If '-v' is given, then list the models containing the parameter in
 addition to just the parameter name.
 """
-from __future__ import print_function
 
 import argparse
 

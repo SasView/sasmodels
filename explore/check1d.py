@@ -9,7 +9,6 @@ the evaluation is restricted to a single radial line for performance reasons,
 with angle set by -angle=alpha in the qx-qy plane.
 """
 
-from __future__ import print_function, division
 
 import sys
 import os

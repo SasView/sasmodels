@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import sys
 # make sure sasmodels is on the path

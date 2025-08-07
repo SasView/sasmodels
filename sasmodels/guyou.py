@@ -35,7 +35,6 @@
 Convert between latitude-longitude and Guyou map coordinates.
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 from numpy import sqrt, pi, tan, cos, sin, sign, radians, degrees

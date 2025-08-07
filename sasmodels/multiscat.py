@@ -92,7 +92,6 @@ Intel HD 4000 graphics.  The single precision numerical artifacts don't
 seem to seriously impact overall accuracy, though they look pretty bad.
 """
 
-from __future__ import print_function, division
 
 import argparse
 #import time
@@ -135,7 +134,7 @@ except ImportError:
 PRECISION = np.dtype('f' if HAVE_OPENCL else 'd')  # 'f' or 'd'
 USE_FAST = True  # OpenCL faster, less accurate math
 
-class ICalculator(object):
+class ICalculator:
     """
     Multiple scattering calculator
     """

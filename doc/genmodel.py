@@ -37,7 +37,6 @@ of parallelism (maybe 2-4 processes), allowing matplotlib to run in
 parallel.  More parallelism won't help, and may overwhelm the GPU if you
 have one.
 """
-from __future__ import print_function
 
 import sys
 import os

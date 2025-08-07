@@ -6,7 +6,6 @@ Defines :class:`ModelInfo` and :class:`ParameterTable` and the routines for
 manipulating them.  In particular, :func:`make_model_info` converts a kernel
 module into the model info block as seen by the rest of the sasmodels library.
 """
-from __future__ import print_function
 
 from copy import copy
 from os.path import abspath, basename, splitext
@@ -19,8 +18,8 @@ import numpy as np  # type: ignore
 # pylint: disable=unused-import
 try:
     from typing import (
-        Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set,
-        Mapping)
+        Tuple, List, Union, Dict, Optional, Any, Callable, Set)
+    from collections.abc import Sequence, Mapping
     from types import ModuleType
     Limits = Tuple[float, float]
     #LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
@@ -238,7 +237,7 @@ def suffix_parameter(par, suffix):
     new_par.id = par.id + suffix
     return new_par
 
-class Parameter(object):
+class Parameter:
     """
     The available kernel parameters are defined as a list, with each parameter
     defined as a sublist with the following elements:
@@ -380,7 +379,7 @@ class Parameter(object):
         # type: () -> str
         return "P<%s>"%self.name
 
-class ParameterTable(object):
+class ParameterTable:
     """
     ParameterTable manages the list of available parameters.
 
@@ -889,7 +888,7 @@ def _find_source_lines(model_info, kernel_module):
     # load the module source if we can
     try:
         source = inspect.getsource(kernel_module)
-    except IOError:
+    except OSError:
         return
 
     # look for symbol at the start of the line
@@ -1012,7 +1011,7 @@ def make_model_info(kernel_module):
     _find_source_lines(info, kernel_module)
     return info
 
-class ModelInfo(object):
+class ModelInfo:
     """
     Interpret the model definition file, categorizing the parameters.
 

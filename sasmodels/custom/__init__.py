@@ -7,7 +7,6 @@ loaded from a file by :func:`sasmodels.generate.load_kernel_module` they are
 loaded as if they exist in *sasmodels.custom*.  This package needs to exist
 for this to occur without error.
 """
-from __future__ import division, print_function
 
 import sys
 import os

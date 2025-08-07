@@ -2,7 +2,6 @@
 SAS distributions for polydispersity.
 """
 # TODO: include dispersion docs with the disperser models
-from __future__ import division, print_function
 
 from math import sqrt  # type: ignore
 from collections import OrderedDict
@@ -20,7 +19,7 @@ except ImportError:
 
 # TODO: include dispersion docs with the disperser models
 
-class Dispersion(object):
+class Dispersion:
     """
     Base dispersion object.
 

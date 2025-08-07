@@ -66,7 +66,6 @@ The global attribute *ALLOW_SINGLE_PRECISION_DLLS* should be set to *False* if
 you wish to prevent single precision floating point evaluation for the compiled
 models, otherwise set it defaults to *True*.
 """
-from __future__ import print_function
 
 import sys
 import os

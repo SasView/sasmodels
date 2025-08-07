@@ -11,7 +11,6 @@ this data.  Use :func:`make_details` to build a *details* object which
 can be passed to one of the computational kernels.
 """
 
-from __future__ import print_function
 
 import numpy as np  # type: ignore
 from numpy import cos, sin, radians
@@ -32,7 +31,8 @@ except Exception:
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Tuple, Sequence
+    from typing import List, Tuple
+    from collections.abc import Sequence
     from .modelinfo import ModelInfo, ParameterTable
     from .kernel import Kernel
 except ImportError:
@@ -40,7 +40,7 @@ except ImportError:
 # pylint: enable=unused-import
 
 
-class CallDetails(object):
+class CallDetails:
     """
     Manage the polydispersity information for the kernel call.
 

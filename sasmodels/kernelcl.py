@@ -50,7 +50,6 @@ drivers produce compiler output even when there is no error.  You
 can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
-from __future__ import print_function
 
 import sys
 import os
@@ -244,7 +243,7 @@ def compile_model(context, source, dtype, fast=False):
 
 # For now, this returns one device in the context.
 # TODO: Create a context that contains all devices on all platforms.
-class GpuEnvironment(object):
+class GpuEnvironment:
     """
     GPU context for OpenCL, with possibly many devices and one queue per device.
     """
@@ -474,7 +473,7 @@ class GpuModel(KernelModel):
 
 
 # TODO: Check that we don't need a destructor for buffers which go out of scope.
-class GpuInput(object):
+class GpuInput:
     """
     Make q data available to the gpu.
 

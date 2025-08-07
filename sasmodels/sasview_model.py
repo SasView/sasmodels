@@ -7,7 +7,6 @@ create a sasview model class to run that kernel as follows::
     from sasmodels.sasview_model import load_custom_model
     CylinderModel = load_custom_model('sasmodels/models/cylinder.py')
 """
-from __future__ import print_function
 
 import math
 from copy import deepcopy
@@ -38,8 +37,9 @@ weights.load_weights()
 
 # pylint: disable=unused-import
 try:
-    from typing import (Dict, Any, Sequence, Tuple, NamedTuple,
+    from typing import (Dict, Any, Tuple, NamedTuple,
                         List, Optional, Union, Callable)
+    from collections.abc import Sequence
     from types import ModuleType
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
@@ -315,7 +315,7 @@ def _generate_model_attributes(model_info):
 
     return attrs
 
-class SasviewModel(object):
+class SasviewModel:
     """
     Sasview wrapper for opencl/ctypes model.
     """

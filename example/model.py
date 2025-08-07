@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from bumps.names import FitProblem
 from sasmodels.core import load_model

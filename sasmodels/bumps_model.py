@@ -10,7 +10,6 @@ the sasview data loader.  *Experiment* takes a *cutoff* parameter controlling
 how far the polydispersity integral extends.
 
 """
-from __future__ import print_function
 
 # Note: exporting BumpsParameter so that the sphinx doc builder can pick it up.
 __all__ = ["Model", "Experiment", "BumpsParameter"]
@@ -84,7 +83,7 @@ def create_parameters(model_info, **kwargs):
 
     return pars, pd_types
 
-class Model(object):
+class Model:
     """
     Bumps wrapper for a SAS model.
 

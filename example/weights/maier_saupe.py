@@ -1,4 +1,3 @@
-from __future__ import print_function
 import numpy as np
 from numpy import exp, sin, degrees, radians, pi, sqrt
 

@@ -112,7 +112,6 @@ The special parameters are:
     be any magnetic S parameters.
 
 """
-from __future__ import print_function, division
 
 from collections import OrderedDict
 
@@ -180,15 +179,15 @@ def make_product_info(p_info, s_info):
     # structure factor calculator.  Structure factors should not
     # have any magnetic parameters
     if not len(s_info.parameters.kernel_parameters) >= 2:
-        raise TypeError("S needs {} and {} as its first parameters".format(RADIUS_ID, VOLFRAC_ID))
+        raise TypeError(f"S needs {RADIUS_ID} and {VOLFRAC_ID} as its first parameters")
     if not s_info.parameters.kernel_parameters[0].id == RADIUS_ID:
-        raise TypeError("S needs {} as first parameter".format(RADIUS_ID))
+        raise TypeError(f"S needs {RADIUS_ID} as first parameter")
     if not s_info.parameters.kernel_parameters[1].id == VOLFRAC_ID:
-        raise TypeError("S needs {} as second parameter".format(VOLFRAC_ID))
+        raise TypeError(f"S needs {VOLFRAC_ID} as second parameter")
     if not s_info.parameters.magnetism_index == []:
         raise TypeError("S should not have SLD parameters")
     if RADIUS_ID in p_info.parameters:
-        raise TypeError("P should not have {}".format(RADIUS_ID))
+        raise TypeError(f"P should not have {RADIUS_ID}")
     p_id, p_name, p_pars = p_info.id, p_info.name, p_info.parameters
     s_id, s_name, s_pars = s_info.id, s_info.name, s_info.parameters
     p_has_volfrac = VOLFRAC_ID in p_info.parameters

@@ -22,7 +22,6 @@ identical for all theta-phi for a given q, so it is useful for checking
 that the normalization constants are correct for the different algorithms.
 """
 
-from __future__ import print_function, division
 
 import os
 import sys

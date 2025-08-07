@@ -102,7 +102,7 @@ def sas_2J1x_x(x):
 
 
 # Gaussians
-class Gauss(object):
+class Gauss:
     """Gauss-Legendre integration weights"""
     def __init__(self, w, z):
         self.n = len(w)

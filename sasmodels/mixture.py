@@ -10,7 +10,6 @@ and the module evaluator (with call, release, etc.).
 To use it, first load form factor P and structure factor S, then create
 *ProductModel(P, S)*.
 """
-from __future__ import print_function
 
 from copy import copy
 from collections import OrderedDict
@@ -248,7 +247,7 @@ class MixtureKernel(Kernel):
 # Note: _MixtureParts doesn't implement iteration correctly, and only allows
 # a single iterator to be active at once.  It doesn't matter in this case
 # since _MixtureParts is only used in one place, but it is not clean style.
-class _MixtureParts(object):
+class _MixtureParts:
     """
     Mixture component iterator.
     """

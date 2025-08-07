@@ -1,7 +1,6 @@
 """
 Core model handling routines.
 """
-from __future__ import print_function
 
 __all__ = [
     "list_models", "load_model", "load_model_info",
@@ -167,7 +166,7 @@ def load_model_info(model_string):
         # Use ModelName to find the path to the custom model file
         model_path = joinpath(CUSTOM_MODEL_PATH, model_name + ".py")
         if not os.path.isfile(model_path):
-            raise ValueError("The model file {} doesn't exist".format(model_path))
+            raise ValueError(f"The model file {model_path} doesn't exist")
         kernel_module = custom.load_custom_kernel_module(model_path)
         return modelinfo.make_model_info(kernel_module)
     kernel_module = generate.load_kernel_module(model_string)
@@ -478,7 +477,7 @@ def test_composite_order():
                for p in fst.info.parameters.kernel_parameters]
         snd = [[x for x in p.name if x == x.lower()]
                for p in snd.info.parameters.kernel_parameters]
-        assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
+        assert sorted(fst) == sorted(snd), f"{fst} != {snd}"
 
     test_models(
         "cylinder+sphere",

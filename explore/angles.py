@@ -19,7 +19,6 @@ Set *OUTPUT* to the type of code you want to see: ccode, python, math
 or any combination.
 """
 
-from __future__ import print_function
 
 import codecs
 import sys
