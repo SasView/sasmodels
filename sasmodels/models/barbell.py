@@ -90,7 +90,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, sin, cos, pi
+from numpy import cos, inf, pi, sin
 
 name = "barbell"
 title = "Cylinder with spherical end caps"

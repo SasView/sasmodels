@@ -51,11 +51,11 @@ can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
 
-import sys
-import os
-import warnings
 import logging
+import os
+import sys
 import time
+import warnings
 
 try:
     from time import perf_counter as clock
@@ -73,6 +73,7 @@ try:
     import pyopencl as cl  # type: ignore
     from pyopencl import mem_flags as mf
     from pyopencl.characterize import get_fast_inaccurate_build_options
+
     # CRUFT: pyopencl<2019.1.2 is breaking on intel drivers for mac
     from pyopencl.version import VERSION_TEXT
     if sys.platform == 'darwin' and VERSION_TEXT < '2019.1.2':
@@ -87,12 +88,12 @@ except Exception as exc:
 
 from . import generate
 from .generate import F32, F64
-from .kernel import KernelModel, Kernel
+from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
 try:
-    from .modelinfo import ModelInfo
     from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import

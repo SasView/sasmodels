@@ -279,7 +279,7 @@ Authorship and Verification
 #
 
 
-from math import fabs, exp, expm1
+from math import exp, expm1, fabs
 
 import numpy as np
 from numpy import inf, nan

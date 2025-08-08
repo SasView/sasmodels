@@ -1,19 +1,19 @@
 
-import cmath
-from copy import copy
-import os
 import argparse
+import cmath
+import os
 from collections import OrderedDict
-from timeit import default_timer as timer
+from copy import copy
 from inspect import getfullargspec
+from timeit import default_timer as timer
 
 import numpy as np
-from numpy import pi, radians, sin, cos, sqrt, clip
-from numpy.random import poisson, uniform, randn, rand
+from numpy import clip, cos, pi, radians, sin, sqrt
 from numpy.polynomial.legendre import leggauss
+from numpy.random import poisson, rand, randn, uniform
 from scipy.integrate import simps
-from scipy.special import j1 as J1
 from scipy.special import gamma
+from scipy.special import j1 as J1
 
 try:
     from numba import njit, prange
@@ -1514,6 +1514,6 @@ if __name__ == "__main__":
         import sasmodels
     except ImportError:
         import sys
-        from os.path import realpath, dirname
+        from os.path import dirname, realpath
         sys.path.insert(0, dirname(dirname(realpath(__file__))))
     main()

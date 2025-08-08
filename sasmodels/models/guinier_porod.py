@@ -73,7 +73,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, sqrt, exp, errstate
+from numpy import errstate, exp, inf, sqrt
 
 name = "guinier_porod"
 title = "Guinier-Porod function"

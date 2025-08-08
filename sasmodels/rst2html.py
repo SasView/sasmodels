@@ -6,12 +6,12 @@ style *\$expression\$*.  Math can be rendered using simple html and
 unicode, or with mathjax.
 """
 
-import re
-from contextlib import contextmanager
-
 # CRUFT: locale.getlocale() fails on some versions of OS X
 # See https://bugs.python.org/issue18378
 import locale
+import re
+from contextlib import contextmanager
+
 if hasattr(locale, '_parse_localename'):
     try:
         locale._parse_localename('UTF-8')
@@ -26,8 +26,8 @@ if hasattr(locale, '_parse_localename'):
         locale._parse_localename = _parse_localename
 
 from docutils.core import publish_parts
-from docutils.writers.html4css1 import HTMLTranslator
 from docutils.nodes import SkipNode
+from docutils.writers.html4css1 import HTMLTranslator
 
 
 def rst2html(rst, part="whole", math_output="mathjax"):
@@ -185,11 +185,11 @@ def qtview(html, url=""):
     # type: (str, str) -> "QWebView"
     """View HTML in a Qt dialog"""
     try:
-        from PyQt5.QtWebKitWidgets import QWebView
         from PyQt5.QtCore import QUrl
+        from PyQt5.QtWebKitWidgets import QWebView
     except ImportError:
-        from PyQt4.QtWebKit import QWebView
         from PyQt4.QtCore import QUrl
+        from PyQt4.QtWebKit import QWebView
     helpView = QWebView()
     helpView.setHtml(html, QUrl(url))
     helpView.show()
@@ -217,11 +217,11 @@ def view_url_qtapp(url):
         from PyQt4.QtGui import QApplication
     app = QApplication([])
     try:
-        from PyQt5.QtWebKitWidgets import QWebView
         from PyQt5.QtCore import QUrl
+        from PyQt5.QtWebKitWidgets import QWebView
     except ImportError:
-        from PyQt4.QtWebKit import QWebView
         from PyQt4.QtCore import QUrl
+        from PyQt4.QtWebKit import QWebView
     frame = QWebView()
     frame.load(QUrl(url))
     frame.show()

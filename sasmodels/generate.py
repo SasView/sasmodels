@@ -158,24 +158,26 @@ should mignrate into docs.py so docs can be updated in one place].
 # TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
-import sys
-from os import environ
-from os.path import abspath, dirname, join as joinpath, exists, getmtime, sep
+import logging
 import re
 import string
-from zlib import crc32
+import sys
 from inspect import currentframe, getframeinfo
-import logging
+from os import environ
+from os.path import abspath, dirname, exists, getmtime, sep
+from os.path import join as joinpath
+from zlib import crc32
 
 import numpy as np  # type: ignore
 
-from .modelinfo import Parameter
 from .custom import load_custom_kernel_module
+from .modelinfo import Parameter
 
 # pylint: disable=unused-import
 try:
-    from collections.abc import Sequence, Iterator
+    from collections.abc import Iterator, Sequence
     from types import ModuleType
+
     from .modelinfo import ModelInfo
 except ImportError:
     pass
@@ -1317,6 +1319,7 @@ def demo_time():
     Show how long it takes to process a model.
     """
     import datetime
+
     from .modelinfo import make_model_info
     from .models import cylinder
 

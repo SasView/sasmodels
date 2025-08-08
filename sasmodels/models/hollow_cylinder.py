@@ -71,7 +71,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sin, cos
+from numpy import cos, inf, pi, sin
 
 name = "hollow_cylinder"
 title = ""

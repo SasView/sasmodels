@@ -125,8 +125,8 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, power, errstate
-from scipy.special import gammainc, gamma
+from numpy import errstate, inf, power
+from scipy.special import gamma, gammainc
 
 name = "polymer_excl_volume"
 title = "Polymer Excluded Volume model"

@@ -1,16 +1,14 @@
 # Make sasmodels available on the path
-import sys
 import os
-
+import sys
 from collections import namedtuple
 
-from matplotlib import pyplot as plt
 import numpy as np
-from numpy import pi, sin, cos, sqrt, fabs
+from matplotlib import pyplot as plt
+from numpy import cos, fabs, inf, pi, sin, sqrt
 from numpy.polynomial.legendre import leggauss
-from scipy.special import j1 as J1
-from numpy import inf
 from scipy.special import gammaln  # type: ignore
+from scipy.special import j1 as J1
 
 BETA_DIR = os.path.dirname(os.path.realpath(__file__))
 SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
@@ -53,7 +51,8 @@ def sas_3j1x_x(x):
 
 #Used to cross check my models with sasview models
 def build_model(model_name, q, **pars):
-    from sasmodels.core import load_model_info, build_model as build_sasmodel
+    from sasmodels.core import build_model as build_sasmodel
+    from sasmodels.core import load_model_info
     from sasmodels.data import empty_data1D
     from sasmodels.direct_model import DirectModel
     model_info = load_model_info(model_name)

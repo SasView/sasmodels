@@ -5,8 +5,8 @@
 
 
 import matplotlib.pyplot as plt
-from numpy import pi, sqrt, sin, cos, exp, log
 import numpy as np
+from numpy import cos, exp, log, pi, sin, sqrt
 from scipy.special import jv as besselj
 
 # q-range parameters

@@ -1,7 +1,8 @@
 import numpy as np
-from numpy import exp, sin, degrees, pi, sqrt
+from numpy import degrees, exp, pi, sin, sqrt
 
 from sasmodels.weights import Dispersion as BaseDispersion
+
 
 class Dispersion(BaseDispersion):
     r"""

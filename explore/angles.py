@@ -23,7 +23,7 @@ or any combination.
 import re
 
 import sympy as sp
-from sympy import pi, sqrt, sin, cos, Matrix, Eq
+from sympy import Eq, Matrix, cos, pi, sin, sqrt
 
 # Select output
 OUTPUT = ""

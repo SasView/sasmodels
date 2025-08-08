@@ -118,7 +118,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, sin, cos, pi
+from numpy import cos, inf, pi, sin
 
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."

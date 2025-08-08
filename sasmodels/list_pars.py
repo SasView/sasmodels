@@ -11,8 +11,9 @@ addition to just the parameter name.
 
 import argparse
 
-from .core import load_model_info, list_models
 from .compare import columnize
+from .core import list_models, load_model_info
+
 
 def find_pars(kind=None):
     """

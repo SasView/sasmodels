@@ -67,16 +67,17 @@ you wish to prevent single precision floating point evaluation for the compiled
 models, otherwise set it defaults to *True*.
 """
 
-import sys
-import os
-from os.path import join as joinpath, splitext
-import subprocess
-import shlex
-import tempfile
-import ctypes as ct  # type: ignore
 import _ctypes as _ct
+import ctypes as ct  # type: ignore
 import logging
+import os
 import platform
+import shlex
+import subprocess
+import sys
+import tempfile
+from os.path import join as joinpath
+from os.path import splitext
 
 import numpy as np  # type: ignore
 
@@ -86,16 +87,17 @@ except ImportError:
     tccbox = None
 
 from . import generate
-from .kernel import KernelModel, Kernel
-from .kernelpy import PyInput
 from .exception import annotate_exception
 from .generate import F16, F32, F64
+from .kernel import Kernel, KernelModel
+from .kernelpy import PyInput
 
 # pylint: disable=unused-import
 try:
     from typing import Callable
-    from .modelinfo import ModelInfo
+
     from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import

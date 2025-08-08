@@ -5,15 +5,16 @@ Explore integration of rotationally symmetric shapes
 
 import os
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import numpy as np
-from numpy import pi, sin, cos, sqrt, degrees
-from numpy.polynomial.legendre import leggauss
-from scipy.integrate import simps, romb, romberg
 import pylab
+from numpy import cos, degrees, pi, sin, sqrt
+from numpy.polynomial.legendre import leggauss
+from scipy.integrate import romb, romberg, simps
 
-from sasmodels.special import sas_2J1x_x, sas_sinx_x, sas_3j1x_x
+from sasmodels.special import sas_2J1x_x, sas_3j1x_x, sas_sinx_x
 
 SLD = 3.0
 SLD_SOLVENT = 6

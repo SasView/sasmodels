@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 from bumps.names import FitProblem
+
+from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
 from sasmodels.data import load_data, set_beam_stop, set_top
 
 """ IMPORT THE DATA USED """

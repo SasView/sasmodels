@@ -11,19 +11,19 @@ To use it, first load form factor P and structure factor S, then create
 *ProductModel(P, S)*.
 """
 
-from copy import copy
 from collections import OrderedDict
+from copy import copy
 
 import numpy as np  # type: ignore
 
-from .modelinfo import Parameter, ParameterTable, ModelInfo
-from .modelinfo import NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, NUM_COMMON_PARS
-from .kernel import KernelModel, Kernel
 from .details import make_details
+from .kernel import Kernel, KernelModel
+from .modelinfo import NUM_COMMON_PARS, NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, ModelInfo, Parameter, ParameterTable
 
 # pylint: disable=unused-import
 try:
-    from typing import Optional, Callable, Any
+    from typing import Any, Callable, Optional
+
     from .details import CallDetails
 except ImportError:
     pass

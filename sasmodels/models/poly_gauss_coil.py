@@ -59,7 +59,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, expm1, power
+from numpy import expm1, inf, power
 
 name = "poly_gauss_coil"
 title = "Scattering from polydisperse polymer coils"

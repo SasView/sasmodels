@@ -3,8 +3,8 @@ SAS distributions for polydispersity.
 """
 # TODO: include dispersion docs with the disperser models
 
-from math import sqrt  # type: ignore
 from collections import OrderedDict
+from math import sqrt  # type: ignore
 
 import numpy as np  # type: ignore
 from scipy.special import gammaln  # type: ignore
@@ -243,11 +243,12 @@ def load_weights(pattern=None):
     """
     Load dispersion distributions matching the given glob pattern
     """
+    import glob
     import logging
     import os
     import os.path
-    import glob
     import traceback
+
     from .custom import load_custom_kernel_module
     if pattern is None:
         path = os.environ.get("SAS_WEIGHTS_PATH", SAS_WEIGHTS_PATH)

@@ -114,20 +114,20 @@ The special parameters are:
 """
 
 from collections import OrderedDict
-
 from copy import copy
+
 import numpy as np  # type: ignore
 
-from .modelinfo import ParameterTable, ModelInfo, parse_parameter
-from .modelinfo import NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, NUM_COMMON_PARS
-from .kernel import KernelModel, Kernel
 from .details import make_details
+from .kernel import Kernel, KernelModel
+from .modelinfo import NUM_COMMON_PARS, NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, ModelInfo, ParameterTable, parse_parameter
 
 # pylint: disable=unused-import
 try:
     from typing import Callable, Union
-    from .modelinfo import Parameter
+
     from .details import CallDetails
+    from .modelinfo import Parameter
     Parts = dict[str, Union[float, np.ndarray, tuple[np.ndarray, np.ndarray]]]
 except ImportError:
     pass

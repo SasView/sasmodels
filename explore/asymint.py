@@ -25,15 +25,16 @@ that the normalization constants are correct for the different algorithms.
 
 import os
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import warnings
 
-import numpy as np
 import mpmath as mp
-from numpy import pi, sin, cos, degrees, log10, arccos
-from numpy.polynomial.legendre import leggauss
-from scipy.integrate import dblquad, simps, romb, romberg
+import numpy as np
 import pylab
+from numpy import arccos, cos, degrees, log10, pi, sin
+from numpy.polynomial.legendre import leggauss
+from scipy.integrate import dblquad, romb, romberg, simps
 
 import sasmodels.special as sp
 
@@ -442,8 +443,16 @@ def quadpy_method(q, rule):
         warnings.warn("use 'pip install quadpy' to enable quadpy.sphere tests")
         return
 
-    from quadpy.sphere import (AlbrechtCollatz, BazantOh, HeoXu,
-        FliegeMaier, Lebedev, McLaren, Stroud, integrate_spherical)
+    from quadpy.sphere import (
+        AlbrechtCollatz,
+        BazantOh,
+        FliegeMaier,
+        HeoXu,
+        Lebedev,
+        McLaren,
+        Stroud,
+        integrate_spherical,
+    )
     RULES = {
         'AlbrechtCollatz': AlbrechtCollatz,
         'BazantOh': BazantOh,

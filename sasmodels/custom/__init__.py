@@ -8,9 +8,10 @@ loaded as if they exist in *sasmodels.custom*.  This package needs to exist
 for this to occur without error.
 """
 
-import sys
 import os
-from os.path import basename, splitext, join as joinpath, exists, dirname
+import sys
+from os.path import basename, dirname, exists, splitext
+from os.path import join as joinpath
 
 # pylint: disable=unused-import
 try:
@@ -22,7 +23,7 @@ except ImportError:
 
 try:
     # Python 3.5 and up
-    from importlib.util import spec_from_file_location, module_from_spec  # type: ignore
+    from importlib.util import module_from_spec, spec_from_file_location  # type: ignore
     def load_module_from_path(fullname, path):
         # type: (str, str) -> ModuleType
         """load module from *path* as *fullname*"""

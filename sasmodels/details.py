@@ -13,9 +13,9 @@ can be passed to one of the computational kernels.
 
 
 import numpy as np  # type: ignore
-from numpy import cos, sin, radians
+from numpy import cos, radians, sin
 
-from .modelinfo import NUM_MAGNETIC_PARS, NUM_COMMON_PARS
+from .modelinfo import NUM_COMMON_PARS, NUM_MAGNETIC_PARS
 
 try:
     np.meshgrid([])
@@ -32,8 +32,9 @@ except Exception:
 # pylint: disable=unused-import
 try:
     from collections.abc import Sequence
-    from .modelinfo import ModelInfo, ParameterTable
+
     from .kernel import Kernel
+    from .modelinfo import ModelInfo, ParameterTable
 except ImportError:
     pass
 # pylint: enable=unused-import

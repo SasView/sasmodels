@@ -88,10 +88,10 @@ or if you are a cluster administrator, into /usr/local/bin.
 ## SBATCH options as comments do not seem to work.  Maybe they neeed to be before 
 ## the doc string?  For now they are hardcoded in the sbatch call in submit_job.
 
-import sys
 import os
-import tempfile
 import shutil
+import sys
+import tempfile
 
 DEFAULT_TIME_LIMIT = 2
 
