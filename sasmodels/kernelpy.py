@@ -23,7 +23,7 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Callable, List
+    from typing import Callable
     from .details import CallDetails
     from .modelinfo import ModelInfo
 except ImportError:
@@ -114,7 +114,7 @@ class PyKernel(Kernel):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, model_info, q_input):
-        # type: (ModelInfo, List[np.ndarray]) -> None
+        # type: (ModelInfo, list[np.ndarray]) -> None
         self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input

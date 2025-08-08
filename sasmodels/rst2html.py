@@ -29,12 +29,6 @@ from docutils.core import publish_parts
 from docutils.writers.html4css1 import HTMLTranslator
 from docutils.nodes import SkipNode
 
-# pylint: disable=unused-import
-try:
-    from typing import Tuple
-except ImportError:
-    pass
-# pylint: enable=unused-import
 
 def rst2html(rst, part="whole", math_output="mathjax"):
     r"""
@@ -157,7 +151,7 @@ def load_rst_as_html(filename):
     return html
 
 def wxview(html, url="", size=(850, 540)):
-    # type: (str, str, Tuple[int, int]) -> "wx.Frame"
+    # type: (str, str, tuple[int, int]) -> "wx.Frame"
     """View HTML in a wx dialog"""
     import wx
     from wx.html2 import WebView

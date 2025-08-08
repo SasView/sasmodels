@@ -23,14 +23,14 @@ from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Tuple, Optional, Callable, Any
+    from typing import Optional, Callable, Any
     from .details import CallDetails
 except ImportError:
     pass
 # pylint: enable=unused-import
 
 def make_mixture_info(parts, operation='+'):
-    # type: (List[ModelInfo], str) -> ModelInfo
+    # type: (list[ModelInfo], str) -> ModelInfo
     """
     Create info block for mixture model.
     """
@@ -156,13 +156,13 @@ class MixtureModel(KernelModel):
     Model definition for mixture of models.
     """
     def __init__(self, model_info, parts):
-        # type: (ModelInfo, List[KernelModel]) -> None
+        # type: (ModelInfo, list[KernelModel]) -> None
         self.info = model_info
         self.parts = parts
         self.dtype = parts[0].dtype
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> MixtureKernel
+        # type: (list[np.ndarray]) -> MixtureKernel
         # Note: may be sending the q_vectors to the n times even though they
         # are only needed once.  It would mess up modularity quite a bit to
         # handle this optimally, especially since there are many cases where
@@ -182,7 +182,7 @@ class MixtureModel(KernelModel):
 
 
 def _intermediates(q, results):
-    # type: (np.ndarray, List[Tuple[Kernel, np.ndarray, Optional[Callable]]]) -> OrderedDict[str, Any]
+    # type: (np.ndarray, list[tuple[Kernel, np.ndarray, Optional[Callable]]]) -> OrderedDict[str, Any]
     """
     Returns intermediate results for mixture model.
     """
@@ -200,7 +200,7 @@ class MixtureKernel(Kernel):
     Instantiated kernel for mixture of models.
     """
     def __init__(self, model_info, kernels, q):
-        # type: (ModelInfo, List[Kernel], Tuple[np.ndarray]) -> None
+        # type: (ModelInfo, list[Kernel], tuple[np.ndarray]) -> None
         self.dim = kernels[0].dim
         self.info = model_info
         self.q = q
@@ -252,7 +252,7 @@ class _MixtureParts:
     Mixture component iterator.
     """
     def __init__(self, model_info, kernels, call_details, values):
-        # type: (ModelInfo, List[Kernel], CallDetails, np.ndarray) -> None
+        # type: (ModelInfo, list[Kernel], CallDetails, np.ndarray) -> None
         self.model_info = model_info
         self.parts = model_info.composition[1]
         self.kernels = kernels
@@ -274,7 +274,7 @@ class _MixtureParts:
         return self
 
     def __next__(self):
-        # type: () -> Tuple[List[Callable], CallDetails, np.ndarray]
+        # type: () -> tuple[list[Callable], CallDetails, np.ndarray]
         if self.part_num >= len(self.parts):
             raise StopIteration()
         info = self.parts[self.part_num]

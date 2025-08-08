@@ -40,10 +40,10 @@ from numpy import sqrt, sin, cos, pi
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Optional, Tuple, Callable
+    from typing import Union, Optional, Callable
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
-    OptLimits = Optional[Tuple[float, float]]
+    OptLimits = Optional[tuple[float, float]]
     OptString = Optional[str]
 except ImportError:
     pass
@@ -299,7 +299,7 @@ class Detector:
     Detector attributes.
     """
     def __init__(self, pixel_size=(None, None), distance=None):
-        # type: (Tuple[float, float], float) -> None
+        # type: (tuple[float, float], float) -> None
         self.pixel_size = Vector(*pixel_size)
         self.distance = distance
 
@@ -705,7 +705,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
 
 @protect
 def _plot_2d_signal(data, signal, vmin=None, vmax=None, view=None):
-    # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> Tuple[float, float]
+    # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> tuple[float, float]
     """
     Plot the target value for the data.  This could be the data itself,
     the theory calculation, or the residuals.

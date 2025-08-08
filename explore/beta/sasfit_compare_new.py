@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 # Make sasmodels available on the path
 import sys
 import os

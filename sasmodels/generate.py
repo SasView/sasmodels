@@ -174,7 +174,6 @@ from .custom import load_custom_kernel_module
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Dict, List
     from collections.abc import Sequence, Iterator
     from types import ModuleType
     from .modelinfo import ModelInfo
@@ -307,7 +306,7 @@ def format_units(units):
 
 
 def make_partable(pars):
-    # type: (List[Parameter]) -> str
+    # type: (list[Parameter]) -> str
     """
     Generate the parameter table to include in the sphinx documentation.
     """
@@ -339,7 +338,7 @@ def make_partable(pars):
 
 
 def _search(search_path, filename):
-    # type: (List[str], str) -> str
+    # type: (list[str], str) -> str
     """
     Find *filename* in *search_path*.
 
@@ -353,7 +352,7 @@ def _search(search_path, filename):
 
 
 def model_sources(model_info):
-    # type: (ModelInfo) -> List[str]
+    # type: (ModelInfo) -> list[str]
     """
     Return a list of the sources file paths for the module.
     """
@@ -631,7 +630,7 @@ def indent(s, depth):
     return spaces + interline_separator.join(s.split("\n"))
 
 
-_template_cache = {}  # type: Dict[str, Tuple[int, str, str]]
+_template_cache = {}  # type: dict[str, tuple[int, str, str]]
 def load_template(filename):
     # type: (str) -> str
     """
@@ -654,7 +653,7 @@ double %(name)s(%(pars)s) {
 
 """
 def _gen_fn(model_info, name, pars):
-    # type: (ModelInfo, str, List[Parameter]) -> str
+    # type: (ModelInfo, str, list[Parameter]) -> str
     """
     Generate a function given pars and body.
 
@@ -677,7 +676,7 @@ def _gen_fn(model_info, name, pars):
 
 
 def _call_pars(pars, subs):
-    # type: (str, List[Parameter]) -> List[str]
+    # type: (str, list[Parameter]) -> list[str]
     """
     Return a list of *prefix+parameter* from parameter items.
 
@@ -842,7 +841,7 @@ def _build_validity_check(eq, table_id, subs):
 _IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ac|abc|xy))\s*[(]",
                            flags=re.MULTILINE)
 def find_xy_mode(source):
-    # type: (List[str]) -> bool
+    # type: (list[str]) -> bool
     """
     Return the xy mode as qa, qac, qabc or qxy.
 
@@ -873,7 +872,7 @@ def find_xy_mode(source):
 # define have_Fq for each form factor is too tedious and error prone.
 _FQ_PATTERN = re.compile(r"(^|\s)void\s+Fq[(]", flags=re.MULTILINE)
 def contains_Fq(source):
-    # type: (List[str]) -> bool
+    # type: (list[str]) -> bool
     """
     Return True if C source defines "void Fq(".
     """
@@ -885,7 +884,7 @@ def contains_Fq(source):
 _SHELL_VOLUME_PATTERN = re.compile(r"(^|\s)double\s+shell_volume[(]",
                                    flags=re.MULTILINE)
 def contains_shell_volume(source):
-    # type: (List[str]) -> bool
+    # type: (list[str]) -> bool
     """
     Return True if C source defines "double shell_volume(".
     """
@@ -928,7 +927,7 @@ def read_text(f):
         return fid.read()
 
 def make_source(model_info):
-    # type: (ModelInfo) -> Dict[str, str]
+    # type: (ModelInfo) -> dict[str, str]
     """
     Generate the OpenCL/ctypes kernel from the module info.
 
@@ -1122,7 +1121,7 @@ def make_source(model_info):
 
 
 def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
-    # type: (Dict[str, str], str, str, str, str, str) -> List[str]
+    # type: (dict[str, str], str, str, str, str, str) -> list[str]
     code = kernel[0]
     path = _clean_source_filename(kernel[1])
     iq = [

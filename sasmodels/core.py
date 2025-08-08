@@ -26,7 +26,6 @@ from . import custom
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Tuple
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
 except ImportError:
@@ -54,7 +53,7 @@ if CUSTOM_MODEL_PATH == "":
 KINDS = ("all", "py", "c", "double", "single", "opencl", "1d", "2d",
          "nonmagnetic", "magnetic")
 def list_models(kind=None):
-    # type: (str) -> List[str]
+    # type: (str) -> list[str]
     """
     Return the list of available models on the model path.
 
@@ -345,7 +344,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
 def precompile_dlls(path, dtype="double"):
-    # type: (str, str) -> List[str]
+    # type: (str, str) -> list[str]
     """
     Precompile the dlls for all builtin models, returning a list of dll paths.
 
@@ -376,7 +375,7 @@ def precompile_dlls(path, dtype="double"):
     return compiled_dlls
 
 def parse_dtype(model_info, dtype=None, platform=None):
-    # type: (ModelInfo, str, str) -> Tuple[np.dtype, bool, str]
+    # type: (ModelInfo, str, str) -> tuple[np.dtype, bool, str]
     """
     Interpret dtype string, returning np.dtype, fast flag and platform.
 

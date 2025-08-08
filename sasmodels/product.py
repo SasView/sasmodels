@@ -125,10 +125,10 @@ from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Union, List, Dict
+    from typing import Callable, Union
     from .modelinfo import Parameter
     from .details import CallDetails
-    Parts = Dict[str, Union[float, np.ndarray, Tuple[np.ndarray, np.ndarray]]]
+    Parts = dict[str, Union[float, np.ndarray, tuple[np.ndarray, np.ndarray]]]
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -144,7 +144,7 @@ RADIUS_MODE_ID = "radius_effective_mode"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
-    # type: (ModelInfo) -> List[Parameter]
+    # type: (ModelInfo) -> list[Parameter]
     """
     Create parameters for structure factor and effective radius modes.
     """
@@ -337,7 +337,7 @@ class ProductModel(KernelModel):
         self.dtype = P.dtype  # type: np.dtype
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> Kernel
+        # type: (list[np.ndarray]) -> Kernel
         # Note: may be sending the q_vectors to the GPU twice even though they
         # are only needed once.  It would mess up modularity quite a bit to
         # handle this optimally, especially since there are many cases where
@@ -364,7 +364,7 @@ class ProductKernel(Kernel):
     Instantiated kernel for product model.
     """
     def __init__(self, model_info, p_kernel, s_kernel, q):
-        # type: (ModelInfo, Kernel, Kernel, Tuple[np.ndarray]) -> None
+        # type: (ModelInfo, Kernel, Kernel, tuple[np.ndarray]) -> None
         self.info = model_info
         self.q = q
         self.p_kernel = p_kernel

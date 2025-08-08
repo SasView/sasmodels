@@ -40,23 +40,13 @@ have one.
 
 import sys
 import os
+from os import makedirs
 from os.path import basename, dirname, realpath, join as joinpath, exists
 import math
 import re
 import shutil
 import argparse
 import subprocess
-
-# CRUFT: python 2.7 backport of makedirs(path, exist_ok=False)
-if sys.version_info[0] >= 3:
-    from os import makedirs
-else:
-    def makedirs(path, exist_ok=False):
-        try:
-            os.makedirs(path)
-        except Exception:
-            if not exist_ok or not exists(path):
-                raise
 
 import numpy as np
 
@@ -67,8 +57,7 @@ from sasmodels.direct_model import DirectModel, call_profile
 from sasmodels.data import empty_data1D, empty_data2D
 
 try:
-    from typing import Dict, Any
-    #from matplotlib.axes import Axes
+    from typing import Any
     from sasmodels.kernel import KernelModel
     from sasmodels.modelinfo import ModelInfo
 except ImportError:
@@ -80,7 +69,7 @@ except ImportError:
 TARGET_DIR = "model" # relative to current path
 
 def plot_1d(model, opts, ax):
-    # type: (KernelModel, Dict[str, Any], Axes) -> None
+    # type: (KernelModel, dict[str, Any], Axes) -> None
     """
     Create a 1-D image.
     """
@@ -100,7 +89,7 @@ def plot_1d(model, opts, ax):
     #ax.legend(loc='best')
 
 def plot_2d(model, opts, ax):
-    # type: (KernelModel, Dict[str, Any], Axes) -> None
+    # type: (KernelModel, dict[str, Any], Axes) -> None
     """
     Create a 2-D image.
     """
@@ -142,7 +131,7 @@ def figfile(model_info):
     return model_info.id + '_autogenfig.png'
 
 def make_figure(model_info, opts):
-    # type: (ModelInfo, Dict[str, Any]) -> None
+    # type: (ModelInfo, dict[str, Any]) -> None
     """
     Generate the figure file to include in the docs.
     """

@@ -17,18 +17,17 @@ import numpy as np  # type: ignore
 # Optional typing
 # pylint: disable=unused-import
 try:
-    from typing import (
-        Tuple, List, Union, Dict, Optional, Any, Callable, Set)
+    from typing import Union, Optional, Any, Callable
     from collections.abc import Sequence, Mapping
     from types import ModuleType
-    Limits = Tuple[float, float]
-    #LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
-    ParameterDef = Tuple[str, str, float, Limits, str, str]
-    ParameterSetUser = Mapping[str, Union[float, List[float]]]
+    Limits = tuple[float, float]
+    #LimitsOrChoice = Union[Limits, tuple[Sequence[str]]]
+    ParameterDef = tuple[str, str, float, Limits, str, str]
+    ParameterSetUser = Mapping[str, Union[float, list[float]]]
     ParameterSet = Mapping[str, float]
-    TestInput = Union[str, float, List[float], Tuple[float, float], List[Tuple[float, float]]]
-    TestValue = Union[float, List[float]]
-    TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
+    TestInput = Union[str, float, list[float], tuple[float, float], list[tuple[float, float]]]
+    TestValue = Union[float, list[float]]
+    TestCondition = tuple[ParameterSetUser, TestInput, TestValue]
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -61,7 +60,7 @@ assert (len(COMMON_PARAMETERS) == NUM_COMMON_PARS
 
 
 def make_parameter_table(pars):
-    # type: (List[ParameterDef]) -> ParameterTable
+    # type: (list[ParameterDef]) -> ParameterTable
     """
     Construct a parameter table from a list of parameter definitions.
 
@@ -94,7 +93,7 @@ def parse_parameter(name, units='', default=np.nan,
         raise ValueError("expected units to be a string for %s"%name)
 
     # Process limits as [float, float] or [[str, str, ...]]
-    choices = []  # type: List[str]
+    choices = []  # type: list[str]
     if user_limits is None:
         limits = (-np.inf, np.inf)
     elif not isinstance(user_limits, (tuple, list)):
@@ -341,7 +340,7 @@ class Parameter:
         self.relative_pd = False             # type: bool
 
         # choices are also set externally.
-        self.choices = []                    # type: List[str]
+        self.choices = []                    # type: list[str]
 
     def as_definition(self):
         # type: () -> str
@@ -436,7 +435,7 @@ class ParameterTable:
     parameters don't use vector notation, and instead use p1, p2, ...
     """
     def __init__(self, parameters):
-        # type: (List[Parameter]) -> None
+        # type: (list[Parameter]) -> None
 
         # scale and background are implicit parameters
         # Need them to be unique to each model in case they have different
@@ -621,7 +620,7 @@ class ParameterTable:
         return defaults
 
     def _get_call_parameters(self):
-        # type: () -> List[Parameter]
+        # type: () -> list[Parameter]
         full_list = self.common_parameters[:]
         for p in self.kernel_parameters:
             if p.length == 1:
@@ -661,7 +660,7 @@ class ParameterTable:
         return full_list
 
     def user_parameters(self, pars, is2d=True):
-        # type: (Dict[str, float], bool) -> List[Parameter]
+        # type: (dict[str, float], bool) -> list[Parameter]
         """
         Return the list of parameters for the given data type.
 
@@ -701,14 +700,14 @@ class ParameterTable:
         control = [p for p in self.kernel_parameters if p.is_control]
 
         # Gather entries such as name[n] into groups of the same n
-        dependent = {} # type: Dict[str, List[Parameter]]
+        dependent = {} # type: dict[str, list[Parameter]]
         dependent.update((p.id, []) for p in control)
         for p in self.kernel_parameters:
             if p.length_control is not None:
                 dependent[p.length_control].append(p)
 
         # Gather entries such as name[4] into groups of the same length
-        fixed_length = {}  # type: Dict[int, List[Parameter]]
+        fixed_length = {}  # type: dict[int, list[Parameter]]
         for p in self.kernel_parameters:
             if p.length > 1 and p.length_control is None:
                 fixed_length.setdefault(p.length, []).append(p)
@@ -836,7 +835,7 @@ def _insert_after(parameters, insert, remove, insert_after):
     return new_list
 
 def derive_table(table, insert, remove, insert_after=None):
-    # type: (ParameterTable, List[str], List[Parameter], Optional[Dict[str, str]]) -> ParameterTable
+    # type: (ParameterTable, list[str], list[Parameter], Optional[dict[str, str]]) -> ParameterTable
     """
     Create a derived parameter table.
 
@@ -1060,7 +1059,7 @@ class ModelInfo:
     #: *composition* is not given in the model definition file, but instead
     #: arises when the model is constructed using names such as
     #: *sphere*hardsphere* or *cylinder+sphere*.
-    composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
+    composition = None      # type: Optional[tuple[str, list[ModelInfo]]]
     #: Different variants require different parameters.  In order to show
     #: just the parameters needed for the variant selected,
     #: you should provide a function *hidden(control) -> set(['a', 'b', ...])*
@@ -1069,7 +1068,7 @@ class ModelInfo:
     #: its number.  So for example, if variant "a" uses only *sld1* and *sld2*,
     #: then *sld3*, *sld4* and *sld5* of multiplicity parameter *sld[5]*
     #: should be in the hidden set.
-    hidden = None           # type: Optional[Callable[[int], Set[str]]]
+    hidden = None           # type: Optional[Callable[[int], set[str]]]
     #: Doc string from the top of the model file.  This should be formatted
     #: using ReStructuredText format, with latex markup in ".. math"
     #: environments, or in dollar signs.  This will be automatically
@@ -1100,13 +1099,13 @@ class ModelInfo:
     have_Fq = False
     #: List of options for computing the effective radius of the shape,
     #: or None if the model is not usable as a form factor model.
-    radius_effective_modes = None   # type: List[str]
+    radius_effective_modes = None   # type: list[str]
     #: List of C source files used to define the model.  The source files
     #: should define the *Iq* function, and possibly *Iqac* or *Iqabc* if the
     #: model defines orientation parameters. Files containing the most basic
     #: functions must appear first in the list, followed by the files that
     #: use those functions.
-    source = None           # type: List[str]
+    source = None           # type: list[str]
     #: inline source code, added after all elements of source
     c_code = None           # type: Optional[str]
     #: Expression which evaluates to True if the input parameters are valid
@@ -1165,17 +1164,17 @@ class ModelInfo:
     profile = None          # type: Optional[Callable[[np.ndarray], None]]
     #: Axis labels for the :attr:`profile` plot.  The default is *['x', 'y']*.
     #: Only the *x* component is used for now.
-    profile_axes = None     # type: Tuple[str, str]
+    profile_axes = None     # type: tuple[str, str]
     #: Returns *sesans(z, a, b, ...)* for models which can directly compute
     #: the SESANS correlation function.  Note: not currently implemented.
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
     #: Returns a random parameter set for the model
-    random = None           # type: Optional[Callable[[], Dict[str, float]]]
+    random = None           # type: Optional[Callable[[], dict[str, float]]]
     #: Line numbers for symbols defining C code
-    lineno = None           # type: Dict[str, int]
+    lineno = None           # type: dict[str, int]
     #: The set of tests that must pass.  The format of the tests is described
     #: in :mod:`.model_test`.
-    tests = None            # type: List[TestCondition]
+    tests = None            # type: list[TestCondition]
 
     def __init__(self):
         # type: () -> None

@@ -125,7 +125,6 @@ except ImportError:
 
 # pylint: disable=unused-import,ungrouped-imports
 try:
-    from typing import Dict
     from sasmodels.modelinfo import ModelInfo
 except ImportError:
     pass
@@ -650,7 +649,7 @@ def rebin(x, I, xo):
 
 
 def parse_pars(model, opts):
-    # type: (ModelInfo, argparse.Namespace) -> Dict[str, float]
+    # type: (ModelInfo, argparse.Namespace) -> dict[str, float]
     """
     Parse par=val arguments from the command line.
     """
