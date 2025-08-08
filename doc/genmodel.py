@@ -38,26 +38,28 @@ parallel.  More parallelism won't help, and may overwhelm the GPU if you
 have one.
 """
 
-import sys
-import os
-from os import makedirs
-from os.path import basename, dirname, realpath, join as joinpath, exists
+import argparse
 import math
+import os
 import re
 import shutil
-import argparse
 import subprocess
+import sys
+from os import makedirs
+from os.path import basename, dirname, exists, realpath
+from os.path import join as joinpath
 
 import numpy as np
 
 # TODO: Remove this line when genmodel is moved to the sasmodels directory.
 sys.path.insert(0, realpath(joinpath(dirname(__file__), '..')))
-from sasmodels import generate, core
-from sasmodels.direct_model import DirectModel, call_profile
+from sasmodels import core, generate
 from sasmodels.data import empty_data1D, empty_data2D
+from sasmodels.direct_model import DirectModel, call_profile
 
 try:
     from typing import Any
+
     from sasmodels.kernel import KernelModel
     from sasmodels.modelinfo import ModelInfo
 except ImportError:

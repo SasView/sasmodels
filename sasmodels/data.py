@@ -36,11 +36,11 @@ import traceback
 from functools import wraps
 
 import numpy as np  # type: ignore
-from numpy import sqrt, sin, cos, pi
+from numpy import cos, pi, sin, sqrt
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Optional, Callable
+    from typing import Callable, Optional, Union
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
     OptLimits = Optional[tuple[float, float]]
@@ -496,7 +496,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
     Plot the data and residuals for 1D data.
     """
     import matplotlib.pyplot as plt  # type: ignore
-    from numpy.ma import masked_array, masked  # type: ignore
+    from numpy.ma import masked, masked_array  # type: ignore
 
     # Default to 'log' view
     if view is None:

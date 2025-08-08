@@ -43,7 +43,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, exp
+from numpy import exp, inf
 
 name = "gauss_lorentz_gel"
 title = "Gauss Lorentz Gel model of scattering from a gel structure"

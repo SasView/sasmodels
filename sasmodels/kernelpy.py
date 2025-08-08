@@ -11,6 +11,7 @@ import logging
 
 import numpy as np  # type: ignore
 from numpy import pi
+
 try:
     from numpy import cbrt
 except ImportError:
@@ -19,11 +20,12 @@ except ImportError:
         return x ** (1.0/3.0)
 
 from .generate import F64
-from .kernel import KernelModel, Kernel
+from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
 try:
     from typing import Callable
+
     from .details import CallDetails
     from .modelinfo import ModelInfo
 except ImportError:

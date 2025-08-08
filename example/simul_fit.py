@@ -1,7 +1,8 @@
-from bumps.names import FitProblem, FreeVariables
 import numpy as np
+from bumps.names import FitProblem, FreeVariables
+
+from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
 from sasmodels.data import load_data
 
 # latex data, same sample usans and sans

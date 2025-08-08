@@ -167,6 +167,7 @@ line-length = 120
 # The ruff rules are available at: https://docs.astral.sh/ruff/rules/
 select = ["E",       # pycodestyle errors
           "F",       # pyflakes
+          "I",       # isort
           "UP",      # pyupgrade
           "SIM118",  # Use `key in dict` instead of `key in dict.keys()`
           "SIM300"]  # Yoda condition detected
@@ -174,3 +175,10 @@ select = ["E",       # pycodestyle errors
 ignore = ["E501",    # line too long (leave to formatter)
           "UP008",   # Use `super()` instead of `super(__class__, self)`
           "UP031"]   # Use format specifiers instead of percent format
+
+[tool.ruff.lint.isort.sections]
+# Group all SasView and SasData imports into a separate section.
+"sas" = ["sas", "sasdata"]
+
+[tool.ruff.lint.isort]
+section-order = ["future", "standard-library", "third-party", "sas", "first-party", "local-folder"]

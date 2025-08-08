@@ -1,9 +1,9 @@
-from bumps.names import FitProblem
 import numpy as np
+from bumps.names import FitProblem
 
-from sasmodels.data import load_data
+from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
+from sasmodels.data import load_data
 
 # Spherical particle data, not ellipsoids
 sans, usans = load_data('latex_smeared.xml', index='all')

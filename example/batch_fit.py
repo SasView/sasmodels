@@ -47,11 +47,11 @@ Note:
     environment variable to set them.
 """
 
-import sys
 import os
+import sys
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from bumps.dream.views import tile_axes  # make a grid of plots
 
 # GET INPUT AND ENSURE MODEL AND DATA FILES ARE DEFINED

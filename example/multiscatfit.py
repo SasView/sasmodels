@@ -27,10 +27,10 @@ same directory).  You probably need a command such as::
 """
 
 from bumps.names import FitProblem
-from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
-from sasmodels.data import load_data
 
+from sasmodels.bumps_model import Experiment, Model
+from sasmodels.core import load_model
+from sasmodels.data import load_data
 from sasmodels.multiscat import MultipleScattering
 
 ## Load the data

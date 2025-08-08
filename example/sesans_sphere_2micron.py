@@ -1,9 +1,8 @@
 """
 This is a data file used to load in sesans data and fit it using the bumps engine
 """
-from bumps.names import Parameter
-
 import sesansfit
+from bumps.names import Parameter
 
 # Enter the model name to use
 model_name = "sphere"

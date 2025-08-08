@@ -46,8 +46,8 @@ Precision defaults to 5 digits (relative).
 
 import argparse
 import sys
-import unittest
 import traceback
+import unittest
 
 try:
     from StringIO import StringIO
@@ -58,20 +58,21 @@ except ImportError:
 
 import numpy as np  # type: ignore
 
-from .core import list_models, load_model_info, build_model
-from .direct_model import call_kernel, call_Fq
+from . import product
+from .core import build_model, list_models, load_model_info
+from .direct_model import call_Fq, call_kernel
 from .exception import annotate_exception
-from .modelinfo import expand_pars
 from .kernelcl import use_opencl
 from .kernelcuda import use_cuda
-from . import product
+from .modelinfo import expand_pars
 
 # pylint: disable=unused-import
 try:
-    from typing import Callable, Any, Union
     from collections.abc import Iterator
-    from .modelinfo import ParameterTable, TestCondition, ModelInfo
+    from typing import Any, Callable, Union
+
     from .kernel import KernelModel
+    from .modelinfo import ModelInfo, ParameterTable, TestCondition
     DType = Union[None, str, np.dtype]
 except ImportError:
     pass

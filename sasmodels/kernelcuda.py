@@ -56,21 +56,20 @@ can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
 
-import os
-import logging
-import time
-import re
 import atexit
+import logging
+import os
+import re
+import time
 
 import numpy as np  # type: ignore
-
 
 # Attempt to setup CUDA. This may fail if the pycuda package is not
 # installed or if it is installed but there are no devices available.
 try:
     import pycuda.driver as cuda  # type: ignore
     from pycuda.compiler import SourceModule
-    from pycuda.tools import make_default_context, clear_context_caches
+    from pycuda.tools import clear_context_caches, make_default_context
     # Ask CUDA for the default context (so that we know that one exists)
     # then immediately throw it away in case the user doesn't want it.
     # Note: cribbed from pycuda.autoinit
@@ -86,12 +85,12 @@ except Exception as exc:
     CUDA_ERROR = str(exc)
 
 from . import generate
-from .kernel import KernelModel, Kernel
+from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
 try:
-    from .modelinfo import ModelInfo
     from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import

@@ -27,10 +27,10 @@ def data_files():
     The format is a list of (directory, [files...]) pairs which can be
     used directly in setup(...,data_files=...) for setup.py.
     """
-    from os.path import join as joinpath
     import glob
+    from os.path import join as joinpath
 
-    from .generate import EXTERNAL_DIR, DATA_PATH
+    from .generate import DATA_PATH, EXTERNAL_DIR
 
     def _expand_patterns(path, patterns):
         target_path = joinpath(EXTERNAL_DIR, *path)

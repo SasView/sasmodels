@@ -18,9 +18,7 @@ import traceback
 import numpy as np  # type: ignore
 
 from . import core
-from .compare import (
-    randomize_pars, suppress_pd, make_data, make_engine, get_pars,
-    constrain_pars)
+from .compare import constrain_pars, get_pars, make_data, make_engine, randomize_pars, suppress_pd
 
 MODELS = core.list_models()
 

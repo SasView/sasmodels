@@ -6,6 +6,7 @@ Generate the Gauss-Legendre integration points and save them as a C file.
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 
+
 def gengauss(n, path):
     """
     Save the Gauss-Legendre integration points for length *n* into file *path*.

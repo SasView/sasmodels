@@ -48,7 +48,7 @@ From a jupyter cell::
 import argparse
 
 import numpy as np
-from numpy import pi, cos, sin, sqrt, exp, log, degrees, radians, arccos, arctan2
+from numpy import arccos, arctan2, cos, degrees, exp, log, pi, radians, sin, sqrt
 
 # Too many complaints about variable names from pylint:
 #    a, b, c, u, v, x, y, z, dx, dy, dz, px, py, pz, R, Rx, Ry, Rz, ...
@@ -864,7 +864,8 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     for plotting.  See the :class:`.direct_model.DirectModel` class
     for details.
     """
-    from sasmodels.core import load_model_info, build_model as build_sasmodel
+    from sasmodels.core import build_model as build_sasmodel
+    from sasmodels.core import load_model_info
     from sasmodels.data import empty_data2D
     from sasmodels.direct_model import DirectModel
 
@@ -1028,9 +1029,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
     # an issue since we are lazy-loading the package on a path that isn't tested.
     # Importing mplot3d adds projection='3d' option to subplot
-    import mpl_toolkits.mplot3d # noqa: F401
     import matplotlib as mpl
     import matplotlib.pyplot as plt
+    import mpl_toolkits.mplot3d  # noqa: F401
     from matplotlib.widgets import Slider
 
     ## create the plot window
@@ -1312,9 +1313,9 @@ def ipv_axes():
     return Axes()
 
 def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
-    from IPython.display import display
-    import ipywidgets as widgets
     import ipyvolume as ipv
+    import ipywidgets as widgets
+    from IPython.display import display
 
     axes = ipv_axes()
 

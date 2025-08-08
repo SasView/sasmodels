@@ -7,19 +7,19 @@ manipulating them.  In particular, :func:`make_model_info` converts a kernel
 module into the model info block as seen by the rest of the sasmodels library.
 """
 
-from copy import copy
-from os.path import abspath, basename, splitext
 import inspect
 import logging
+from copy import copy
+from os.path import abspath, basename, splitext
 
 import numpy as np  # type: ignore
 
 # Optional typing
 # pylint: disable=unused-import
 try:
-    from typing import Union, Optional, Any, Callable
-    from collections.abc import Sequence, Mapping
+    from collections.abc import Mapping, Sequence
     from types import ModuleType
+    from typing import Any, Callable, Optional, Union
     Limits = tuple[float, float]
     #LimitsOrChoice = Union[Limits, tuple[Sequence[str]]]
     ParameterDef = tuple[str, str, float, Limits, str, str]

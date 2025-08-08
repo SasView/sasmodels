@@ -21,7 +21,8 @@ from .direct_model import DataMixin
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Any, Optional
+    from typing import Any, Optional, Union
+
     from .data import Data1D, Data2D
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
@@ -34,7 +35,8 @@ except ImportError:
 try:
     # Optional import. This allows the doc builder and tests to run even
     # when bumps is not on the path.
-    from bumps.parameter import Parameter as BumpsParameter, Reference # type: ignore
+    from bumps.parameter import Parameter as BumpsParameter  # type: ignore
+    from bumps.parameter import Reference
 except ImportError:
     class BumpsParameter:
         """See parameter.Parameter in the bumps documentation."""

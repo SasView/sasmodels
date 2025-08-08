@@ -241,7 +241,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, expm1, sqrt
+from numpy import expm1, inf, sqrt
 from scipy.special import erf
 
 name = "spherical_sld"

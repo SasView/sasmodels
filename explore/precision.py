@@ -29,16 +29,19 @@ expansions from sympy:
     # and mpmath that may be helpful.
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
+import scipy.special
+
 # Note: mpmath.pi and numpy.pi are not interchangeable; don't import pi from
 # numpy as we usually do, but instead be explicit about which one we want each
 # time it we use it.
 from numpy import inf
-import scipy.special
+
 try:
     from mpmath import mp
 except ImportError:
@@ -48,6 +51,7 @@ except ImportError:
 import pylab
 
 from sasmodels import core, data, direct_model, modelinfo
+
 
 class Comparator:
     def __init__(self, name, mp_function, np_function, ocl_function, xaxis, limits):

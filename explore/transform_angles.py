@@ -9,8 +9,9 @@ Usage: python explore/transform_angles.py theta phi psi
 import sys
 
 import numpy as np
-from numpy import cos, sin, radians
+from numpy import cos, radians, sin
 from scipy.optimize import fmin
+
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations

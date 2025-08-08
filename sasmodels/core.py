@@ -7,22 +7,19 @@ __all__ = [
     "build_model", "precompile_dlls", "reparameterize",
     ]
 
-import os
-from os.path import basename, join as joinpath
-from glob import glob
-import re
 import copy
+import os
+import re
+from glob import glob
+from os.path import basename
+from os.path import join as joinpath
 
-import numpy as np # type: ignore
+import numpy as np  # type: ignore
 
 # NOTE: delay loading of kernelcl, kernelcuda, kerneldll and kernelpy
 # cl and cuda in particular take awhile since they try to establish a
 # connection with the card to verify that the environment works.
-from . import generate
-from . import modelinfo
-from . import product
-from . import mixture
-from . import custom
+from . import custom, generate, mixture, modelinfo, product
 
 # pylint: disable=unused-import
 try:
@@ -509,7 +506,7 @@ def test_composite_order():
 def test_composite():
     # type: () -> None
     """Check that model load works"""
-    from .product import RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID
+    from .product import RADIUS_ID, RADIUS_MODE_ID, STRUCTURE_MODE_ID, VOLFRAC_ID
     #Test the the model produces the parameters that we would expect
     model = load_model("cylinder@hardsphere*sphere")
     actual = [p.name for p in model.info.parameters.kernel_parameters]

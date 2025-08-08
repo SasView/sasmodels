@@ -1,9 +1,12 @@
 import logging
-import numpy as np
 
+import numpy as np
 from bumps.names import FitProblem
-from sasmodels import core, bumps_model
+
 from sasdata.dataloader.loader import Loader
+
+from sasmodels import bumps_model, core
+
 
 def get_bumps_model(model_name):
     kernel = core.load_model(model_name)

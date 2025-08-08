@@ -26,15 +26,17 @@ import os
 import numpy as np  # type: ignore
 
 # TODO: fix sesans module
-from . import sesans  # type: ignore
-from . import weights
-from . import resolution
-from . import resolution2d
+from . import (
+    resolution,
+    resolution2d,
+    sesans,  # type: ignore
+    weights,
+)
+from .data import Data
 from .details import make_kernel_args
+from .kernel import KernelModel
 from .product import RADIUS_MODE_ID
 
-from .data import Data
-from .kernel import KernelModel
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
@@ -390,8 +392,9 @@ def test_reparameterize():
     """Check simple reparameterized models will load and build"""
     from numpy import inf, pi
     from numpy.linalg import norm
+
+    from .core import build_model, load_model_info, reparameterize
     from .data import empty_data1D
-    from .core import load_model_info, build_model, reparameterize
     parameters = [
         ["volume", "Ang^3", 1e5, [0, inf], "volume", "ellipsoid volume"],
         ["eccentricity", "", 1, [0, inf], "volume", "polar:equatorial radius"],
@@ -451,7 +454,7 @@ def test_reparameterize():
         pass
 
 def _direct_calculate(model, data, pars):
-    from .core import load_model_info, build_model
+    from .core import build_model, load_model_info
     model_info = load_model_info(model)
     kernel = build_model(model_info)
     calculator = DirectModel(data, kernel)

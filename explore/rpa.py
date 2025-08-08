@@ -1,6 +1,7 @@
 from collections import namedtuple
+
 import numpy as np
-from numpy import sqrt, exp, expm1
+from numpy import exp, expm1, sqrt
 
 AVOGADRO = 6.022e23
 
@@ -141,10 +142,10 @@ def build_pars(case_num, polys, **interactions):
     return pars
 
 def sasmodels_rpa(q, pars):
-    from sasmodels.models import rpa
     from sasmodels.core import load_model
-    from sasmodels.direct_model import DirectModel
     from sasmodels.data import empty_data1D
+    from sasmodels.direct_model import DirectModel
+    from sasmodels.models import rpa
     data = empty_data1D(q, resolution=0.0)
     model = load_model(rpa, dtype="double", platform="dll")
     #model = load_model(rpa, dtype="single", platform="ocl")
@@ -152,9 +153,9 @@ def sasmodels_rpa(q, pars):
     return M(**pars)
 
 def sasview_rpa(q, pars):
-    from sasmodels.models import rpa
     from sasmodels.compare import eval_sasview
     from sasmodels.data import empty_data1D
+    from sasmodels.models import rpa
     data = empty_data1D(q, resolution=0.0)
     M = eval_sasview(rpa, data)
     return M(**pars)

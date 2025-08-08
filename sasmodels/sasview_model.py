@@ -8,12 +8,13 @@ create a sasview model class to run that kernel as follows::
     CylinderModel = load_custom_model('sasmodels/models/cylinder.py')
 """
 
-import math
-from copy import deepcopy
 import collections
-import traceback
 import logging
-from os.path import basename, splitext, abspath
+import math
+import traceback
+from copy import deepcopy
+from os.path import abspath, basename, splitext
+
 try:
     import _thread as thread
 except ImportError:
@@ -21,14 +22,8 @@ except ImportError:
 
 import numpy as np  # type: ignore
 
-from . import core
-from . import custom
-from . import kernelcl
-from . import product
-from . import generate
-from . import weights
-from . import modelinfo
-from .details import make_kernel_args, dispersion_mesh
+from . import core, custom, generate, kernelcl, modelinfo, product, weights
+from .details import dispersion_mesh, make_kernel_args
 
 # Hack: load in any custom distributions
 # Uses ~/.sasview/weights/*.py unless SASMODELS_WEIGHTS is set in the environ.
@@ -37,11 +32,12 @@ weights.load_weights()
 
 # pylint: disable=unused-import
 try:
-    from typing import Any, NamedTuple, Optional, Union, Callable
     from collections.abc import Sequence
     from types import ModuleType
-    from .modelinfo import ModelInfo, Parameter
+    from typing import Any, Callable, NamedTuple, Optional, Union
+
     from .kernel import KernelModel
+    from .modelinfo import ModelInfo, Parameter
     MultiplicityInfoType = NamedTuple(
         'MultiplicityInfo',
         [("number", int), ("control", str), ("choices", list[str]),
@@ -213,11 +209,13 @@ def _register_old_models():
     is available to the plugin modules.
     """
     import sys
-    import sas   # needed in order to set sas.models
+
+    import sas  # needed in order to set sas.models
     import sas.sascalc.fit
     sys.modules['sas.models'] = sas.sascalc.fit
     sas.models = sas.sascalc.fit
     import sas.models
+
     from sasmodels.conversion_table import CONVERSION_TABLE
 
     for new_name, conversion in CONVERSION_TABLE.get((3, 1, 2), {}).items():
@@ -958,8 +956,8 @@ def test_structure_factor_background():
     """
     Check that sasview model and direct model match, with background=0.
     """
+    from .core import build_model, load_model_info
     from .data import empty_data1D
-    from .core import load_model_info, build_model
     from .direct_model import DirectModel
 
     model_name = "hardsphere"

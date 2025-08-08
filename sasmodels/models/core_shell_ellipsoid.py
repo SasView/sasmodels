@@ -105,7 +105,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, sin, cos, pi
+from numpy import cos, inf, pi, sin
 
 name = "core_shell_ellipsoid"
 title = "Form factor for an spheroid ellipsoid particle with a core shell structure."

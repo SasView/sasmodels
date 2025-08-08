@@ -26,28 +26,23 @@ On Windows you will need to remove the quotes.
 """
 
 
-import sys
-import os
-import math
 import datetime
-import traceback
+import math
+import os
 import re
-
-import numpy as np  # type: ignore
-
-from . import core
-from . import weights
-from . import kerneldll
-from . import kernelcl
-from . import kernelcuda
-from .data import plot_theory, empty_data1D, empty_data2D, empty_sesans, load_data
-from .direct_model import DirectModel, get_mesh
-from .generate import FLOAT_RE, set_integration_size
+import sys
+import traceback
 
 # pylint: disable=unused-import
 from typing import Callable
+
+import numpy as np  # type: ignore
+
+from . import core, kernelcl, kernelcuda, kerneldll, weights
+from .data import Data, empty_data1D, empty_data2D, empty_sesans, load_data, plot_theory
+from .direct_model import DirectModel, get_mesh
+from .generate import FLOAT_RE, set_integration_size
 from .modelinfo import ModelInfo, ParameterSet
-from .data import Data
 
 try:
     # With python 3.8+ we can indicate that calculator takes floats.
@@ -1063,7 +1058,8 @@ def columnize(items, indent="", width=None):
     """
     # Use the columnize package (pycolumize) if it is available
     try:
-        from columnize import columnize as _columnize, default_opts
+        from columnize import columnize as _columnize
+        from columnize import default_opts
         if width is None:
             width = default_opts['displaywidth']
         return _columnize(list(items), displaywidth=width, lineprefix=indent)
@@ -1558,8 +1554,8 @@ def show_docs(opts):
     """
     show html docs for the model
     """
-    from .generate import make_html
     from . import rst2html
+    from .generate import make_html
 
     info = opts['info'][0]
     html = make_html(info)
@@ -1573,9 +1569,9 @@ def explore(opts):
     explore the model using the bumps gui.
     """
     import wx  # type: ignore
-    from bumps.names import FitProblem  # type: ignore
-    from bumps.gui.app_frame import AppFrame  # type: ignore
     from bumps.gui import signal
+    from bumps.gui.app_frame import AppFrame  # type: ignore
+    from bumps.names import FitProblem  # type: ignore
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
@@ -1608,6 +1604,7 @@ class Explore:
     def __init__(self, opts):
         # type: (Dict[str, Any]) -> None
         from bumps.cli import config_matplotlib  # type: ignore
+
         from . import bumps_model
         config_matplotlib()
         self.opts = opts

@@ -83,7 +83,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sin, cos
+from numpy import cos, inf, pi, sin
 
 name = "core_shell_cylinder"
 title = "Right circular cylinder with a core-shell scattering length density profile."

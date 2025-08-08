@@ -94,17 +94,16 @@ seem to seriously impact overall accuracy, though they look pretty bad.
 
 
 import argparse
-#import time
 
+#import time
 import numpy as np
 from numpy import pi
 from scipy.special import gamma
 
-from sasmodels import core
-from sasmodels import compare
-from sasmodels.resolution import Resolution, bin_edges
-from sasmodels.direct_model import call_kernel
 import sasmodels.kernelcl
+from sasmodels import compare, core
+from sasmodels.direct_model import call_kernel
+from sasmodels.resolution import Resolution, bin_edges
 
 # TODO: select fast and accurate fft library
 # clFFT: https://github.com/clMathLibraries/clFFT (AMD's OpenCL)

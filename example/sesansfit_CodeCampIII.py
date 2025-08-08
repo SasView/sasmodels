@@ -1,7 +1,7 @@
-from bumps.names import FitProblem, Parameter
 import numpy as np
+from bumps.names import FitProblem, Parameter
 
-from sasmodels import core, bumps_model
+from sasmodels import bumps_model, core
 
 if True: # fix when data loader exists
 #    from sas.dataloader.readers\
