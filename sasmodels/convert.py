@@ -169,7 +169,7 @@ def _hand_convert(name, oldpars, version=(3, 1, 2)):
     if version < (4, 2, 0):
         oldpars = _rename_magnetic_pars(oldpars)
     if version <= (5, 0, 4):
-        oldpars = _rename_magnetic_angles(oldpars)    
+        oldpars = _rename_magnetic_angles(oldpars)
     return oldpars
 
 def _rename_magnetic_pars(pars):
@@ -193,11 +193,11 @@ def _rename_magnetic_angles(pars):
     """
     Change name of magnetic angle.
     """
-    if 'up_angle' in pars:      
+    if 'up_angle' in pars:
         pars['up_theta'] = 90
         pars['up_phi'] = pars['up_angle']
-        pars.pop('up_angle') 
-    return pars    
+        pars.pop('up_angle')
+    return pars
 
 def _hand_convert_3_1_2_to_4_1(name, oldpars):
     if name == 'core_shell_parallelepiped':

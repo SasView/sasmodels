@@ -568,7 +568,7 @@ def test_simple_interface():
     assert near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.3663431784535172])
     # simple sphere in 2D (perfect, pinhole)
     assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
-    assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars), 
+    assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars),
         [0.8167780778578667])
     # sesans (no background or scale)
     assert near(Gxi('sphere', [100], **pars), [-0.19146959126623486])

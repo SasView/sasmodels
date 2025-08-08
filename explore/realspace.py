@@ -201,7 +201,7 @@ class Superball(Shape):
         # Sample from cube[-a/2, a/2]
         num_points = poisson(density*self.a**3)
         points = uniform(-1, 1, size=(num_points, 3))
-        # Trim points outside maximum "squared radius", x^2p + y^2p + z^2p < 1 
+        # Trim points outside maximum "squared radius", x^2p + y^2p + z^2p < 1
         radius_sq = np.sum((points**2)**self.p, axis=1)
         points = points[radius_sq <= 1]
         values = self.value.repeat(points.shape[0])
