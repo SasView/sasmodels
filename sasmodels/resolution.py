@@ -34,7 +34,7 @@ class Resolution:
 
     *apply* is the method to call with I(q_calc) to compute the resolution
     smeared theory I(q).
-    
+
     """
 
     q = None  # type: np.ndarray

@@ -31,7 +31,7 @@ P=(3.*(sin(qr)-qr*cos(qr)) / qr**3)**2
 # Structure factor dilute
 S=1.
 #2 PHASE SYSTEM
-# scattered intensity [m^-1] in absolute units according to SANS 
+# scattered intensity [m^-1] in absolute units according to SANS
 I=phi*(1-phi)*V*(DeltaRho**2)*P*S
 
 plt.clf()
