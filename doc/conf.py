@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Periodic Table documentation build configuration file, created by
 # sphinx-quickstart on Tue Jun  2 11:16:08 2009.

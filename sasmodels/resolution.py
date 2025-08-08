@@ -3,7 +3,6 @@ Define the resolution functions for the data.
 
 This defines classes for 1D and 2D resolution calculations.
 """
-from __future__ import division
 
 import unittest
 
@@ -24,7 +23,7 @@ MINIMUM_ABSOLUTE_Q = 0.02  # relative to the minimum q in the data
 # it is better to use asymmetric bounds (2.5, 3.0)
 PINHOLE_N_SIGMA = (2.5, 3.0)
 
-class Resolution(object):
+class Resolution:
     """
     Abstract base class defining a 1D resolution function.
 

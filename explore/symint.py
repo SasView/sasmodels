@@ -2,7 +2,6 @@
 Explore integration of rotationally symmetric shapes
 """
 
-from __future__ import print_function, division
 
 import os
 import sys

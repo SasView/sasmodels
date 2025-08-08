@@ -10,7 +10,7 @@ if True: # fix when data loader exists
     filename = 'sphere.ses'
     data = loader.load(filename)
     if data is None:
-        raise IOError("Could not load file %r"%(filename,))
+        raise OSError("Could not load file %r"%(filename,))
     data.x /= 10
 #    print data
 #    data = load_sesans('mydatfile.pz')

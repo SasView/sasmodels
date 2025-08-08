@@ -11,7 +11,6 @@ as bad and written to the output, along with the random seed used to
 generate that parameter value.  This seed can be used with :mod:`.compare`
 to reload and display the details of the model.
 """
-from __future__ import print_function
 
 import sys
 import traceback
@@ -241,11 +240,11 @@ def main(argv):
     try:
         model_list = [target] if target in MODELS else core.list_models(target)
     except ValueError:
-        msg = """\
+        msg = f"""\
 Bad model {target}. Use available model or model type.
   available models: ./sascomp -models
   model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic\
-""".format(target=target)
+"""
         print(msg, file=sys.stderr)
         return
     try:

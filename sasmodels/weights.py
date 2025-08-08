@@ -2,7 +2,6 @@
 SAS distributions for polydispersity.
 """
 # TODO: include dispersion docs with the disperser models
-from __future__ import division, print_function
 
 from math import sqrt  # type: ignore
 from collections import OrderedDict
@@ -12,7 +11,6 @@ from scipy.special import gammaln  # type: ignore
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, List
     from .modelinfo import ModelInfo
 except ImportError:
     pass
@@ -20,7 +18,7 @@ except ImportError:
 
 # TODO: include dispersion docs with the disperser models
 
-class Dispersion(object):
+class Dispersion:
     """
     Base dispersion object.
 
@@ -293,7 +291,7 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
 
 
 def plot_weights(model_info, mesh):
-    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> None
+    # type: (ModelInfo, list[tuple[float, np.ndarray, np.ndarray]]) -> None
     """
     Plot the weights returned by :func:`get_weights`.
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Jitter Explorer
 ===============
@@ -45,7 +44,6 @@ From a jupyter cell::
     #filename = projection+('_theta' if dview[0] == 180 else '_phi' if dview[1] == 180 else '')
     #ipv.savefig(filename+'.png')
 """
-from __future__ import division, print_function
 
 import argparse
 
@@ -680,7 +678,7 @@ def orient_relative_to_beam_quaternion(view, points):
 # representation problem.  Leave it here in case we want to revisit this later.
 
 #import numpy as np
-class Quaternion(object):
+class Quaternion:
     r"""
     Quaternion(w, r) = w + ir[0] + jr[1] + kr[2]
 
@@ -1057,9 +1055,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     axes_theta = plt.axes([0.05, 0.15, 0.50, 0.04], **props)
     axes_phi = plt.axes([0.05, 0.10, 0.50, 0.04], **props)
     axes_psi = plt.axes([0.05, 0.05, 0.50, 0.04], **props)
-    stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
-    sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
-    spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
+    stheta = Slider(axes_theta, 'θ', -90, 90, valinit=0)
+    sphi = Slider(axes_phi, 'φ', -180, 180, valinit=0)
+    spsi = Slider(axes_psi, 'ψ', -180, 180, valinit=0)
 
     axes_dtheta = plt.axes([0.70, 0.15, 0.20, 0.04], **props)
     axes_dphi = plt.axes([0.70, 0.1, 0.20, 0.04], **props)
@@ -1069,9 +1067,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
     dlimit = DIST_LIMITS[dist]
-    sdtheta = Slider(axes_dtheta, u'Δθ', 0, 2*dlimit, valinit=0)
-    sdphi = Slider(axes_dphi, u'Δφ', 0, 2*dlimit, valinit=0)
-    sdpsi = Slider(axes_dpsi, u'Δψ', 0, 2*dlimit, valinit=0)
+    sdtheta = Slider(axes_dtheta, 'Δθ', 0, 2*dlimit, valinit=0)
+    sdphi = Slider(axes_dphi, 'Δφ', 0, 2*dlimit, valinit=0)
+    sdpsi = Slider(axes_dpsi, 'Δψ', 0, 2*dlimit, valinit=0)
 
     ## initial view and jitter
     theta, phi, psi = view
@@ -1221,7 +1219,7 @@ def ipv_axes():
     """
     import ipyvolume as ipv
 
-    class Axes(object):
+    class Axes:
         """
         Matplotlib Axes3D style interface to ipyvolume renderer.
         """
@@ -1385,12 +1383,12 @@ def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
             readout=True,
             readout_format='.1f',
             )
-    theta = _slider(u'θ', trange, view[0])
-    phi = _slider(u'φ', prange, view[1])
-    psi = _slider(u'ψ', prange, view[2])
-    dtheta = _slider(u'Δθ', dtrange, jitter[0])
-    dphi = _slider(u'Δφ', dprange, jitter[1])
-    dpsi = _slider(u'Δψ', dprange, jitter[2])
+    theta = _slider('θ', trange, view[0])
+    phi = _slider('φ', prange, view[1])
+    psi = _slider('ψ', prange, view[2])
+    dtheta = _slider('Δθ', dtrange, jitter[0])
+    dphi = _slider('Δφ', dprange, jitter[1])
+    dpsi = _slider('Δψ', dprange, jitter[2])
     fields = {
         'theta': theta, 'phi': phi, 'psi': psi,
         'dtheta': dtheta, 'dphi': dphi, 'dpsi': dpsi,

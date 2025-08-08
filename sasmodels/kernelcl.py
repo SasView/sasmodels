@@ -50,7 +50,6 @@ drivers produce compiler output even when there is no error.  You
 can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
-from __future__ import print_function
 
 import sys
 import os
@@ -92,7 +91,6 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, List, Dict
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
@@ -244,7 +242,7 @@ def compile_model(context, source, dtype, fast=False):
 
 # For now, this returns one device in the context.
 # TODO: Create a context that contains all devices on all platforms.
-class GpuEnvironment(object):
+class GpuEnvironment:
     """
     GPU context for OpenCL, with possibly many devices and one queue per device.
     """
@@ -345,7 +343,7 @@ def _create_some_context():
 
 
 def _get_default_context():
-    # type: () -> List[cl.Context]
+    # type: () -> list[cl.Context]
     """
     Get an OpenCL context, preferring GPU over CPU, and preferring Intel
     drivers over AMD drivers.
@@ -421,10 +419,10 @@ class GpuModel(KernelModel):
     dtype = None  # type: np.dtype
     fast = False  # type: bool
     _program = None  # type: cl.Program
-    _kernels = None  # type: Dict[str, cl.Kernel]
+    _kernels = None  # type: dict[str, cl.Kernel]
 
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
-        # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
+        # type: (dict[str,str], ModelInfo, np.dtype, bool) -> None
         #print("create model", id(self))
         self.info = model_info
         self.source = source
@@ -433,16 +431,16 @@ class GpuModel(KernelModel):
         # TODO: can a model be freed?
 
     def __getstate__(self):
-        # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
+        # type: () -> tuple[ModelInfo, str, np.dtype, bool]
         return self.info, self.source, self.dtype, self.fast
 
     def __setstate__(self, state):
-        # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
+        # type: (tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
         self._program = self._kernels = None
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> "GpuKernel"
+        # type: (list[np.ndarray]) -> "GpuKernel"
         return GpuKernel(self, q_vectors)
 
     def get_function(self, name):
@@ -474,7 +472,7 @@ class GpuModel(KernelModel):
 
 
 # TODO: Check that we don't need a destructor for buffers which go out of scope.
-class GpuInput(object):
+class GpuInput:
     """
     Make q data available to the gpu.
 
@@ -499,7 +497,7 @@ class GpuInput(object):
     q = None
     q_b = None
     def __init__(self, q_vectors, dtype=generate.F32):
-        # type: (List[np.ndarray], np.dtype) -> None
+        # type: (list[np.ndarray], np.dtype) -> None
         #print("create input", id(self))
         # TODO: Do we ever need double precision q?
         self.nq = q_vectors[0].size
@@ -573,7 +571,7 @@ class GpuKernel(Kernel):
     _result_b = None # type: cl.Buffer
 
     def __init__(self, model, q_vectors):
-        # type: (GpuModel, List[np.ndarray]) -> None
+        # type: (GpuModel, list[np.ndarray]) -> None
         #print("create kernel", id(self))
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)

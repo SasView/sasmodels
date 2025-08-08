@@ -25,7 +25,6 @@ and tell you which string to use for the SAS_OPENCL variable.
 On Windows you will need to remove the quotes.
 """
 
-from __future__ import print_function, division
 
 import sys
 import os
@@ -181,7 +180,7 @@ else:
         return dt.total_seconds()
 
 
-class push_seed(object):
+class push_seed:
     """
     Set the seed value for the random number generator.
 
@@ -1599,7 +1598,7 @@ def explore(opts):
     if app:
         app.MainLoop()
 
-class Explore(object):
+class Explore:
     """
     Bumps wrapper for a SAS model comparison.
 

@@ -7,7 +7,6 @@ loaded from a file by :func:`sasmodels.generate.load_kernel_module` they are
 loaded as if they exist in *sasmodels.custom*.  This package needs to exist
 for this to occur without error.
 """
-from __future__ import division, print_function
 
 import sys
 import os
@@ -15,7 +14,6 @@ from os.path import basename, splitext, join as joinpath, exists, dirname
 
 # pylint: disable=unused-import
 try:
-    from typing import Dict, List, Tuple
     from types import ModuleType
 except ImportError:
     pass
@@ -47,9 +45,9 @@ except ImportError:
         module = imp.load_source(fullname, os.path.expanduser(path))
         return module
 
-_MODULE_CACHE = {}  # type: Dict[str, Tuple[ModuleType, int]]
-_MODULE_DEPENDS = {}  # type: Dict[str, List[str]]
-_MODULE_DEPENDS_STACK = []  # type: List[str]
+_MODULE_CACHE = {}  # type: dict[str, tuple[ModuleType, int]]
+_MODULE_DEPENDS = {}  # type: dict[str, list[str]]
+_MODULE_DEPENDS_STACK = []  # type: list[str]
 def load_custom_kernel_module(path):
     # type: (str) -> ModuleType
     """load SAS kernel from *path* as *sasmodels.custom.modelname*"""
@@ -116,7 +114,7 @@ def need_reload(path):
     return any(cache_time < os.path.getmtime(p) for p in depends)
 
 def _find_sources(path, source_list):
-    # type: (str, List[str]) -> List[str]
+    # type: (str, list[str]) -> list[str]
     """
     Return a list of the sources relative to base file; ignore any that
     are not found.

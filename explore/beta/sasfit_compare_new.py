@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 # Make sasmodels available on the path
 import sys
 import os
@@ -579,7 +578,7 @@ def data_file(name):
 
 def load_sasfit(path):
     data = np.loadtxt(path, dtype=str, delimiter=';').T
-    data = np.vstack((list(map(float, v)) for v in data[0:2]))
+    data = np.vstack(list(map(float, v)) for v in data[0:2])
     return data
 
 COMPARISON = {}  # Type: Dict[(str,str,str)] -> Callable[(), None]

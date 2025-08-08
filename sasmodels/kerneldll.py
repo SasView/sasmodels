@@ -66,7 +66,6 @@ The global attribute *ALLOW_SINGLE_PRECISION_DLLS* should be set to *False* if
 you wish to prevent single precision floating point evaluation for the compiled
 models, otherwise set it defaults to *True*.
 """
-from __future__ import print_function
 
 import sys
 import os
@@ -94,7 +93,7 @@ from .generate import F16, F32, F64
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, List
+    from typing import Callable
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
@@ -349,7 +348,7 @@ class DllModel(KernelModel):
         self.info = model_info
         self.dllpath = dllpath
         self._dll = None  # type: ct.CDLL
-        self._kernels = None  # type: List[Callable, Callable]
+        self._kernels = None  # type: list[Callable, Callable]
         self.dtype = np.dtype(dtype)
 
     def _load_dll(self):
@@ -373,16 +372,16 @@ class DllModel(KernelModel):
             k.argtypes = argtypes
 
     def __getstate__(self):
-        # type: () -> Tuple[ModelInfo, str]
+        # type: () -> tuple[ModelInfo, str]
         return self.info, self.dllpath
 
     def __setstate__(self, state):
-        # type: (Tuple[ModelInfo, str]) -> None
+        # type: (tuple[ModelInfo, str]) -> None
         self.info, self.dllpath = state
         self._dll = None
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> DllKernel
+        # type: (list[np.ndarray]) -> DllKernel
         q_input = PyInput(q_vectors, self.dtype)
         # Note: DLL is lazy loaded.
         if self._dll is None:

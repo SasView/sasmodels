@@ -29,12 +29,6 @@ from docutils.core import publish_parts
 from docutils.writers.html4css1 import HTMLTranslator
 from docutils.nodes import SkipNode
 
-# pylint: disable=unused-import
-try:
-    from typing import Tuple
-except ImportError:
-    pass
-# pylint: enable=unused-import
 
 def rst2html(rst, part="whole", math_output="mathjax"):
     r"""
@@ -127,25 +121,25 @@ def test_dollar():
     """
     Test substitution of dollar signs with equivalent RST math markup
     """
-    assert replace_dollar(u"no dollar") == u"no dollar"
-    assert replace_dollar(u"$only$") == u":math:`only`"
-    assert replace_dollar(u"$first$ is good") == u":math:`first` is good"
-    assert replace_dollar(u"so is $last$") == u"so is :math:`last`"
-    assert replace_dollar(u"and $mid$ too") == u"and :math:`mid` too"
-    assert replace_dollar(u"$first$, $mid$, $last$") == u":math:`first`, :math:`mid`, :math:`last`"
-    assert replace_dollar(u"dollar\\$ escape") == u"dollar$ escape"
-    assert replace_dollar(u"dollar \\$escape\\$ too") == u"dollar $escape$ too"
-    assert replace_dollar(u"spaces $in the$ math") == u"spaces :math:`in the` math"
-    assert replace_dollar(u"emb\\ $ed$\\ ed") == u"emb\\ :math:`ed`\\ ed"
-    assert replace_dollar(u"$first$a") == u"$first$a"
-    assert replace_dollar(u"a$last$") == u"a$last$"
-    assert replace_dollar(u"$37") == u"$37"
-    assert replace_dollar(u"($37)") == u"($37)"
-    assert replace_dollar(u"$37 - $43") == u"$37 - $43"
-    assert replace_dollar(u"($37, $38)") == u"($37, $38)"
-    assert replace_dollar(u"a $mid$dle a") == u"a $mid$dle a"
-    assert replace_dollar(u"a ($in parens$) a") == u"a (:math:`in parens`) a"
-    assert replace_dollar(u"a (again $in parens$) a") == u"a (again :math:`in parens`) a"
+    assert replace_dollar("no dollar") == "no dollar"
+    assert replace_dollar("$only$") == ":math:`only`"
+    assert replace_dollar("$first$ is good") == ":math:`first` is good"
+    assert replace_dollar("so is $last$") == "so is :math:`last`"
+    assert replace_dollar("and $mid$ too") == "and :math:`mid` too"
+    assert replace_dollar("$first$, $mid$, $last$") == ":math:`first`, :math:`mid`, :math:`last`"
+    assert replace_dollar("dollar\\$ escape") == "dollar$ escape"
+    assert replace_dollar("dollar \\$escape\\$ too") == "dollar $escape$ too"
+    assert replace_dollar("spaces $in the$ math") == "spaces :math:`in the` math"
+    assert replace_dollar("emb\\ $ed$\\ ed") == "emb\\ :math:`ed`\\ ed"
+    assert replace_dollar("$first$a") == "$first$a"
+    assert replace_dollar("a$last$") == "a$last$"
+    assert replace_dollar("$37") == "$37"
+    assert replace_dollar("($37)") == "($37)"
+    assert replace_dollar("$37 - $43") == "$37 - $43"
+    assert replace_dollar("($37, $38)") == "($37, $38)"
+    assert replace_dollar("a $mid$dle a") == "a $mid$dle a"
+    assert replace_dollar("a ($in parens$) a") == "a (:math:`in parens`) a"
+    assert replace_dollar("a (again $in parens$) a") == "a (again :math:`in parens`) a"
 
 def load_rst_as_html(filename):
     # type: (str) -> str
@@ -157,7 +151,7 @@ def load_rst_as_html(filename):
     return html
 
 def wxview(html, url="", size=(850, 540)):
-    # type: (str, str, Tuple[int, int]) -> "wx.Frame"
+    # type: (str, str, tuple[int, int]) -> "wx.Frame"
     """View HTML in a wx dialog"""
     import wx
     from wx.html2 import WebView

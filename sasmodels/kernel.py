@@ -9,9 +9,8 @@ on the given set of *q_vector* inputs.  On completion of the computation,
 the kernel should be released, which also releases the inputs.
 """
 
-from __future__ import division, print_function
 
-class KernelModel(object):
+class KernelModel:
     """
     Model definition for the compute engine.
     """
@@ -33,7 +32,7 @@ class KernelModel(object):
         pass
 
 
-class Kernel(object):
+class Kernel:
     """
     Instantiated model for the compute engine, applied to a particular *q*.
 

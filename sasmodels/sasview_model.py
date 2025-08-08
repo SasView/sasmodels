@@ -7,7 +7,6 @@ create a sasview model class to run that kernel as follows::
     from sasmodels.sasview_model import load_custom_model
     CylinderModel = load_custom_model('sasmodels/models/cylinder.py')
 """
-from __future__ import print_function
 
 import math
 from copy import deepcopy
@@ -38,14 +37,14 @@ weights.load_weights()
 
 # pylint: disable=unused-import
 try:
-    from typing import (Dict, Any, Sequence, Tuple, NamedTuple,
-                        List, Optional, Union, Callable)
+    from typing import Any, NamedTuple, Optional, Union, Callable
+    from collections.abc import Sequence
     from types import ModuleType
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
         'MultiplicityInfo',
-        [("number", int), ("control", str), ("choices", List[str]),
+        [("number", int), ("control", str), ("choices", list[str]),
          ("x_axis_label", str)])
     SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
@@ -67,13 +66,13 @@ MultiplicityInfo = collections.namedtuple(
 )
 
 #: set of defined models (standard and custom)
-MODELS = {}  # type: Dict[str, SasviewModelType]
+MODELS = {}  # type: dict[str, SasviewModelType]
 # TODO: remove unused MODEL_BY_PATH cache once sasview no longer references it
 #: custom model {path: model} mapping so we can check timestamps
-MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
+MODEL_BY_PATH = {}  # type: dict[str, SasviewModelType]
 #: Track modules that we have loaded so we can determine whether the model
 #: has changed since we last reloaded.
-_CACHED_MODULE = {}  # type: Dict[str, ModuleType]
+_CACHED_MODULE = {}  # type: dict[str, ModuleType]
 
 def reset_environment():
     # type: () -> None
@@ -105,7 +104,7 @@ def find_model(modelname):
 
 # TODO: figure out how to say that the return type is a subclass
 def load_standard_models():
-    # type: () -> List[SasviewModelType]
+    # type: () -> list[SasviewModelType]
     """
     Load and return the list of predefined models.
 
@@ -244,7 +243,7 @@ def MultiplicationModel(form_factor, structure_factor):
 
 
 def _generate_model_attributes(model_info):
-    # type: (ModelInfo) -> Dict[str, Any]
+    # type: (ModelInfo) -> dict[str, Any]
     """
     Generate the class attributes for the model.
 
@@ -260,7 +259,7 @@ def _generate_model_attributes(model_info):
     control_pars = [p.id for p in model_info.parameters.kernel_parameters
                     if p.is_control]
     control_id = control_pars[0] if control_pars else None
-    non_fittable = []  # type: List[str]
+    non_fittable = []  # type: list[str]
     xlabel = model_info.profile_axes[0] if model_info.profile is not None else ""
     variants = MultiplicityInfo(0, "", [], xlabel)
     for p in model_info.parameters.kernel_parameters:
@@ -297,7 +296,7 @@ def _generate_model_attributes(model_info):
 
 
     # Build class dictionary
-    attrs = {}  # type: Dict[str, Any]
+    attrs = {}  # type: dict[str, Any]
     attrs['_model_info'] = model_info
     attrs['name'] = model_info.name
     attrs['id'] = model_info.id
@@ -315,7 +314,7 @@ def _generate_model_attributes(model_info):
 
     return attrs
 
-class SasviewModel(object):
+class SasviewModel:
     """
     Sasview wrapper for opencl/ctypes model.
     """
@@ -335,11 +334,11 @@ class SasviewModel(object):
     category = None     # type: str
 
     #: names of the orientation parameters in the order they appear
-    orientation_params = None # type: List[str]
+    orientation_params = None # type: list[str]
     #: names of the magnetic parameters in the order they appear
-    magnetic_params = None    # type: List[str]
+    magnetic_params = None    # type: list[str]
     #: names of the fittable parameters
-    fixed = None              # type: List[str]
+    fixed = None              # type: list[str]
     # TODO: the attribute fixed is ill-named
 
     # Axis labels
@@ -366,16 +365,16 @@ class SasviewModel(object):
 
     # Per-instance variables
     #: parameter {name: value} mapping
-    params = None      # type: Dict[str, float]
+    params = None      # type: dict[str, float]
     #: values for dispersion width, npts, nsigmas and type
-    dispersion = None  # type: Dict[str, Any]
+    dispersion = None  # type: dict[str, Any]
     #: units and limits for each parameter
-    details = None     # type: Dict[str, Sequence[Any]]
-    #                  # actual type is Dict[str, List[str, float, float]]
+    details = None     # type: dict[str, Sequence[Any]]
+    #                  # actual type is dict[str, list[str, float, float]]
     #: multiplicity value, or None if no multiplicity on the model
     multiplicity = None     # type: Optional[int]
     #: memory for polydispersity array if using ArrayDispersion (used by sasview).
-    _persistency_dict = None # type: Dict[str, Tuple[np.ndarray, np.ndarray]]
+    _persistency_dict = None # type: dict[str, tuple[np.ndarray, np.ndarray]]
 
     def __init__(self, multiplicity=None):
         # type: (Optional[int]) -> None
@@ -431,7 +430,7 @@ class SasviewModel(object):
                 }
 
     def __get_state__(self):
-        # type: () -> Dict[str, Any]
+        # type: () -> dict[str, Any]
         state = self.__dict__.copy()
         state.pop('_model')
         # May need to reload model info on set state since it has pointers
@@ -440,7 +439,7 @@ class SasviewModel(object):
         return state
 
     def __set_state__(self, state):
-        # type: (Dict[str, Any]) -> None
+        # type: (dict[str, Any]) -> None
         self.__dict__ = state  # pylint: disable=attribute-defined-outside-init
         self._model = None
 
@@ -464,14 +463,14 @@ class SasviewModel(object):
 
 
     def getProfile(self):
-        # type: () -> Tuple[np.ndarray, np.ndarray]
+        # type: () -> tuple[np.ndarray, np.ndarray]
         """
         Get SLD profile
 
         : return: (z, beta) where z is a list of depth of the transition points
                 beta is a list of the corresponding SLD values
         """
-        args = {} # type: Dict[str, Any]
+        args = {} # type: dict[str, Any]
         for p in self._model_info.parameters.kernel_parameters:
             if p.id == self.multiplicity_info.control:
                 value = float(self.multiplicity)
@@ -564,7 +563,7 @@ class SasviewModel(object):
         return deepcopy(self)
 
     def run(self, x=0.0):
-        # type: (Union[float, Tuple[float, float], Sequence[float]]) -> float
+        # type: (Union[float, tuple[float, float], Sequence[float]]) -> float
         """
         Evaluate the model
 
@@ -603,7 +602,7 @@ class SasviewModel(object):
             return result[0]
 
     def evalDistribution(self, qdist):
-        # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]]) -> np.ndarray
+        # type: (Union[np.ndarray, tuple[np.ndarray, np.ndarray], list[np.ndarray]]) -> np.ndarray
         r"""
         Evaluate a distribution of q-values.
 
@@ -690,7 +689,7 @@ class SasviewModel(object):
             return None
 
     def calculate_Iq(self, qx, qy=None):
-        # type: (Sequence[float], Optional[Sequence[float]]) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
+        # type: (Sequence[float], Optional[Sequence[float]]) -> tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
 
@@ -817,7 +816,7 @@ class SasviewModel(object):
                              % parameter)
 
     def _dispersion_mesh(self):
-        # type: () -> List[Tuple[np.ndarray, np.ndarray]]
+        # type: () -> list[tuple[np.ndarray, np.ndarray]]
         """
         Create a mesh grid of dispersion parameters and weights.
 
@@ -831,7 +830,7 @@ class SasviewModel(object):
         return dispersion_mesh(self._model_info, pars)
 
     def _get_weights(self, par):
-        # type: (Parameter) -> Tuple[np.ndarray, np.ndarray]
+        # type: (Parameter) -> tuple[np.ndarray, np.ndarray]
         """
         Return dispersion weights for parameter
         """

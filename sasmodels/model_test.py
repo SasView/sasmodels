@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Run model unit tests.
 
@@ -44,7 +43,6 @@ in the parameter list will take on the default parameter value.
 
 Precision defaults to 5 digits (relative).
 """
-from __future__ import print_function
 
 import argparse
 import sys
@@ -70,8 +68,9 @@ from . import product
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Iterator, Callable, Any, Dict, Tuple, Union
-    from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
+    from typing import Callable, Any, Union
+    from collections.abc import Iterator
+    from .modelinfo import ParameterTable, TestCondition, ModelInfo
     from .kernel import KernelModel
     DType = Union[None, str, np.dtype]
 except ImportError:
@@ -79,7 +78,7 @@ except ImportError:
 # pylint: enable=unused-import
 
 def make_suite(loaders, models):
-    # type: (List[str], List[str]) -> unittest.TestSuite
+    # type: (list[str], list[str]) -> unittest.TestSuite
     """
     Construct the pyunit test suite.
 
@@ -196,7 +195,7 @@ def _hide_model_case_from_nose():
         """
         def __init__(self, test_name, model_info, test_method_name,
                      platform, dtype, stash):
-            # type: (str, ModelInfo, str, str, DType, List[Any]) -> None
+            # type: (str, ModelInfo, str, str, DType, list[Any]) -> None
             self.test_name = test_name
             self.info = model_info
             self.platform = platform
@@ -418,7 +417,7 @@ def _hide_model_case_from_nose():
     return ModelTestCase
 
 def invalid_pars(partable, pars):
-    # type: (ParameterTable, Dict[str, float]) -> List[str]
+    # type: (ParameterTable, dict[str, float]) -> list[str]
     """
     Return a list of parameter names that are not part of the model.
     """
@@ -492,7 +491,7 @@ def run_one(model_name):
     return output
 
 def check_model(model_info):
-    # type: (ModelInfo) -> Tuple[bool, str]
+    # type: (ModelInfo) -> tuple[bool, str]
     """
     Run the tests for a single model, capturing the output.
 

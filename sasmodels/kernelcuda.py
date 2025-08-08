@@ -55,7 +55,6 @@ drivers produce compiler output even when there is no error.  You
 can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
-from __future__ import print_function
 
 import os
 import logging
@@ -91,7 +90,6 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Dict, List
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
@@ -235,7 +233,7 @@ def compile_model(source, dtype, fast=False):
 
 # For now, this returns one device in the context.
 # TODO: Create a context that contains all devices on all platforms.
-class GpuEnvironment(object):
+class GpuEnvironment:
     """
     GPU context for CUDA.
     """
@@ -317,26 +315,26 @@ class GpuModel(KernelModel):
     dtype = None  # type: np.dtype
     fast = False  # type: bool
     _program = None  # type: SourceModule
-    _kernels = None  # type: Dict[str, cuda.Function]
+    _kernels = None  # type: dict[str, cuda.Function]
 
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
-        # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
+        # type: (dict[str,str], ModelInfo, np.dtype, bool) -> None
         self.info = model_info
         self.source = source
         self.dtype = dtype
         self.fast = fast
 
     def __getstate__(self):
-        # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
+        # type: () -> tuple[ModelInfo, str, np.dtype, bool]
         return self.info, self.source, self.dtype, self.fast
 
     def __setstate__(self, state):
-        # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
+        # type: (tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
         self._program = self._kernels = None
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> "GpuKernel"
+        # type: (list[np.ndarray]) -> "GpuKernel"
         return GpuKernel(self, q_vectors)
 
     def get_function(self, name):
@@ -368,7 +366,7 @@ class GpuModel(KernelModel):
 
 
 # TODO: Check that we don't need a destructor for buffers which go out of scope.
-class GpuInput(object):
+class GpuInput:
     """
     Make q data available to the gpu.
 
@@ -388,7 +386,7 @@ class GpuInput(object):
     buffer will be released when the data object is freed.
     """
     def __init__(self, q_vectors, dtype=generate.F32):
-        # type: (List[np.ndarray], np.dtype) -> None
+        # type: (list[np.ndarray], np.dtype) -> None
         # TODO: Do we ever need double precision q?
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
@@ -450,7 +448,7 @@ class GpuKernel(Kernel):
     result = None  # type: np.ndarray
 
     def __init__(self, model, q_vectors):
-        # type: (GpuModel, List[np.ndarray]) -> None
+        # type: (GpuModel, list[np.ndarray]) -> None
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
         self._model = model

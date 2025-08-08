@@ -53,7 +53,6 @@ Authorship and Verification
 * **Last Modified by:** Paul Butler **Date:** March 12, 2017
 * **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
 """
-from __future__ import division
 
 import numpy as np
 from numpy import inf

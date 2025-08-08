@@ -19,10 +19,7 @@ Set *OUTPUT* to the type of code you want to see: ccode, python, math
 or any combination.
 """
 
-from __future__ import print_function
 
-import codecs
-import sys
 import re
 
 import sympy as sp
@@ -37,8 +34,6 @@ REUSE_SINCOS = True
 QC_ONLY = True # show only what is needed for dqc in the symmetric case
 
 # include unicode symbols in output, even if piping to a pager
-if sys.version_info[0] < 3:
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 sp.init_printing(use_unicode=True)
 
 def subs(s):

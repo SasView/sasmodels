@@ -5,7 +5,6 @@ new angle definition in SasView 4.x and above.
 
 Usage: python explore/transform_angles.py theta phi psi
 """
-from __future__ import print_function, division
 
 import sys
 
