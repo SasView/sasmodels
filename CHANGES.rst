@@ -1,6 +1,13 @@
 Release notes
 =============
 
+v1.0.11 2025-08-19
+------------------
+
+* Integration of Ruff linting into CI
+* Code cleanup to fix linting errors
+* Fix map() bug in "sasfit_compare"
+
 v1.0.10 2025-06-25
 ------------------
 * Reorganisation of project structure for wheel support
