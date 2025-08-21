@@ -1,13 +1,14 @@
 import numpy as np
 from bumps.names import FitProblem, FreeVariables
 
+import sasdata
 from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
 from sasmodels.data import load_data
 
 # latex data, same sample usans and sans
 # particles radius ~2300, uniform dispersity
-datasets = load_data('latex_smeared.xml', index='all')
+datasets = load_data(str(sasdata.data_path / '1d_data' / 'latex_smeared.xml'), index='all')
 #[print(data) for data in datasets]
 
 # A single sphere model to share between the datasets.  We will use
@@ -57,7 +58,9 @@ free.background.range(-np.inf, np.inf)
 #    model1.background.range(0, 2)
 #    model2.background.range(0, 2)
 
+# Set data fitting limits
+#datasets[1].qmin, datasets[1].qmax = 1e-4, 4e-3
+
 # Setup the experiments, sharing the same model across all datasets.
 M = [Experiment(data=data, model=model, name=data.run[0]) for data in datasets]
-
 problem = FitProblem(M, freevars=free)
