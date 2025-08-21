@@ -2,6 +2,7 @@ import numpy as np
 from bumps.names import FitProblem, FreeVariables
 
 import sasdata
+
 from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
 from sasmodels.data import load_data
