@@ -40,10 +40,11 @@ from numpy import cos, pi, sin, sqrt
 
 # pylint: disable=unused-import
 try:
-    from typing import Callable, Optional, Union
+    from typing import Optional, Union
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
     OptLimits = Optional[tuple[float, float]]
+    OptIndex = np.ndarray | slice | None
     OptString = Optional[str]
 except ImportError:
     pass
@@ -414,7 +415,7 @@ def empty_data2D(qx, qy=None, resolution=0.0):
 
 
 def plot_data(data, view=None, limits=None, index=None):
-    # type: (Data, str, OptLimits) -> None
+    # type: (Data, str, OptLimits, OptIndex) -> None
     """
     Plot data loaded by the sasview loader.
 
@@ -438,7 +439,7 @@ def plot_data(data, view=None, limits=None, index=None):
 
 def plot_theory(data, theory, resid=None, view=None, use_data=True,
                 limits=None, Iq_calc=None, index=None):
-    # type: (Data, OptArray, OptArray, OptString, bool, OptLimits, OptArray) -> None
+    # type: (Data, OptArray, OptArray, OptString, bool, OptLimits, OptArray, OptIndex) -> None
     """
     Plot theory calculation.
 
