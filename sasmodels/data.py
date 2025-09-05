@@ -59,6 +59,7 @@ def load_data(filename, index=0):
     except ImportError as ie:
         raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     loader = Loader()
+    filename = str(filename)  # In case a Path was given.
     # Allow for one part in multipart file
     if '[' in filename:
         filename, indexstr = filename[:-1].split('[')
@@ -344,10 +345,14 @@ def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     r"""
     Create empty 1D data using the given *q* as the x value.
 
-    rms *resolution* $\Delta q/q$ defaults to 0%.  If wavelength *L* and rms
-    wavelength divergence *dL* are defined, then *resolution* defines
-    rms $\Delta \theta/\theta$ for the lowest *q*, with $\theta$ derived from
-    $q = 4\pi/\lambda \sin(\theta)$.
+    rms *resolution* $\Delta q/q$ defaults to 0.0. Note that this is
+    expressed as a fraction rather than a percentage.
+
+    If wavelength *L* and rms wavelength divergence *dL* are given, then
+    angle *theta* is infered from $q = 4\pi/\lambda \sin(\theta)$, and
+    the *resolution* term applies to rms $\Delta \theta/\theta$ instead
+    of $\Delta q/q$. Resolution $\Delta q$ is then calculated from wavelength
+    and angular resolution.
     """
 
     #Iq = 100 * np.ones_like(q)
@@ -378,7 +383,7 @@ def empty_data2D(qx, qy=None, resolution=0.0):
 
     If *qy* is missing, create a square mesh with *qy=qx*.
 
-    *resolution* dq/q defaults to 5%.
+    *resolution* dq/q defaults to 0.0.
     """
     if qy is None:
         qy = qx
