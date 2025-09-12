@@ -94,7 +94,7 @@ Authorship and Verification
 from numpy import inf
 
 # TODO: pep8 says packages and modules should not use camel case
-from sasmodels.TwoYukawa.CalTYSk import CalTYSk, K_MIN, Z_MIN, Z_MIN_DIFF
+from sasmodels.TwoYukawa.CalTYSk import K_MIN, Z_MIN, Z_MIN_DIFF, CalTYSk
 
 # If you want a customized version of two_yukawa as a plugin (for example,
 # because you want to use the high precision polynomial root solver from mpmath)
@@ -104,9 +104,9 @@ from sasmodels.TwoYukawa.CalTYSk import CalTYSk, K_MIN, Z_MIN, Z_MIN_DIFF
 #     https://github.com/SasView/sasmodels/tree/master/sasmodels/models/two_yukawa.py
 #     https://github.com/SasView/sasmodels/tree/master/sasmodels/TwoYukawa
 if 0:
+    import importlib.util
     import sys
     from pathlib import Path
-    import importlib.util
 
     # Remove existing TwoYukawa from sys.modules to force a reload
     remove = [modname for modname in sys.modules if modname.startswith('TwoYukawa.') or modname == 'TwoYukawa']
@@ -121,7 +121,7 @@ if 0:
     sys.modules['TwoYukawa'] = module
 
     # Override sasmodels library symbols with the local symbols.
-    from TwoYukawa.CalTYSk import CalTYSk, K_MIN, Z_MIN, Z_MIN_DIFF
+    from TwoYukawa.CalTYSk import K_MIN, Z_MIN, Z_MIN_DIFF, CalTYSk
 
 name = "two_yukawa"
 title = "User model for two Yukawa structure factor (S(q))"

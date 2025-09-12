@@ -1,7 +1,7 @@
 from typing import Callable, Tuple
 
 import numpy as np
-from numpy import exp, pi, cos, sin, cosh
+from numpy import cos, cosh, exp, pi, sin
 from numpy.typing import NDArray
 
 # CalCoeff.m
@@ -194,17 +194,17 @@ def calculate_coefficients(self):
               Ccd2_22*Cdd1_12*d1*d2**2 -
               Ccd1_21*Cdd2_22*d1*d2**2 -
               Ccd2_22*d2*k1 + Ccd1_21*d1*k2)))/
-        ((d1*((
+        (d1*(
               (-Ccd1_21)*Ccd2_12*d2 +
-                Ccd1_11*Ccd2_22*d2)))))
+                Ccd1_11*Ccd2_22*d2)))
         C2 = ((-((Ccd2_12*d2*
                 (((-Cd1_1)*d1 - Cdd1_11*d1**2 -
                     Cdd1_12*d1*d2 + k1)) -
               Ccd1_11*d1*
                 (((-Cd2_2)*d2 - Cdd2_12*d1*d2 -
                     Cdd2_22*d2**2 + k2))))) /
-        (((-Ccd1_21)*Ccd2_12*d1*d2 +
-            Ccd1_11*Ccd2_22*d1*d2)))
+        ((-Ccd1_21)*Ccd2_12*d1*d2 +
+            Ccd1_11*Ccd2_22*d1*d2))
         return A, B, C1, C2
     self.ABC12 = ABC12
 
@@ -370,10 +370,10 @@ def calculate_coefficients(self):
 
     E1d02 = 12*c1F01*phi*sigma_d01(z1) - 12*c1F01*exp(-z1)*phi*tau_d01(z1)
 
-    E1d11 = (((12*c1F10*phi*sigma_d01(z1) + \
+    E1d11 = (12*c1F10*phi*sigma_d01(z1) + \
           12*c1F01*phi*sigma_d10(z1) - \
           12*c1F10*exp(-z1)*phi*tau_d01(z1) - \
-          12*c1F01*exp(-z1)*phi*tau_d10(z1))))
+          12*c1F01*exp(-z1)*phi*tau_d10(z1))
     E1d12 = (-c1F01 + 12*c1F11*phi*sigma_d01(z1) +
              12*c1F01*phi*sigma_d11(z1) -
              12*c1F11*exp(-z1)*phi*tau_d01(z1) -
