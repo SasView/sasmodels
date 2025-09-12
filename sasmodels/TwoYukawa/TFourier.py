@@ -1,5 +1,6 @@
-from numpy import exp, pi, arange, linspace, abs, ceil, log2, interp
+from numpy import abs, arange, ceil, exp, interp, linspace, log2, pi
 from numpy.fft import fft
+
 
 def TFourier(x, y, deltaX):
     """
