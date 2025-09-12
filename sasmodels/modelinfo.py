@@ -641,9 +641,9 @@ class ParameterTable:
                           'magnetic', 'fraction of spin up incident'),
                 Parameter('up_frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
-                Parameter('up_theta', 'degrees', 90., [0., 360.],
+                Parameter('up_theta', 'degrees', 90., [-360., 360.],
                           'magnetic', 'polarization axis rotation angle'),
-                Parameter('up_phi', 'degrees', 0., [0., 180.],
+                Parameter('up_phi', 'degrees', 0., [-360., 360.],
                           'magnetic', 'polarization axis inclination angle'),
             ])
             slds = [p for p in full_list if p.type == 'sld']
@@ -651,9 +651,9 @@ class ParameterTable:
                 full_list.extend([
                     Parameter(p.id+'_M0', '1e-6/Ang^2', 0., [-np.inf, np.inf],
                               'magnetic', 'magnetic amplitude for '+p.description),
-                    Parameter(p.id+'_mtheta', 'degrees', 0., [-90., 90.],
+                    Parameter(p.id+'_mtheta', 'degrees', 0., [-360., 360.],
                               'magnetic', 'magnetic latitude for '+p.description),
-                    Parameter(p.id+'_mphi', 'degrees', 0., [-180., 180.],
+                    Parameter(p.id+'_mphi', 'degrees', 0., [-360., 360.],
                               'magnetic', 'magnetic longitude for '+p.description),
                 ])
         #print("call parameters", full_list)
