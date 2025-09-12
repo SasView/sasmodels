@@ -112,7 +112,7 @@ parameters = [
     ["radius_bell", "Ang",         40, [0, inf],    "volume",      "Spherical bell radius"],
     ["radius",      "Ang",         20, [0, inf],    "volume",      "Cylindrical bar radius"],
     ["length",      "Ang",        400, [0, inf],    "volume",      "Cylinder bar length"],
-    ["theta",       "degrees",     60, [-360, 360], "orientation", "Barbell axis to beam angle"],
+    ["theta",       "degrees",     60, [-180, 180], "orientation", "Barbell axis to beam angle"],
     ["phi",         "degrees",     60, [-360, 360], "orientation", "Rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
