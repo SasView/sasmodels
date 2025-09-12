@@ -16,6 +16,17 @@ __all__ = ["Model", "Experiment", "BumpsParameter"]
 
 import numpy as np  # type: ignore
 
+try:
+    # Optional import. This allows the doc builder and tests to run even
+    # when bumps is not on the path.
+    from bumps.parameter import Parameter as BumpsParameter  # type: ignore
+    from bumps.parameter import Reference
+except ImportError:
+    class BumpsParameter:
+        """See parameter.Parameter in the bumps documentation."""
+    class Reference:
+        """See parameter.Reference in the bumps documentation."""
+
 from .data import plot_theory
 from .direct_model import DataMixin
 
@@ -61,22 +72,34 @@ def create_parameters(model_info, **kwargs):
     parameters for each model parameter, and a dictionary of
     *{name: str}* containing the polydispersity distribution types.
     """
-    pars = {}     # type: dict[str, BumpsParameter]
-    pd_types = {} # type: dict[str, str]
+    def addpar(name: str, default: float, limits: tuple[float]) -> None:
+        value = kwargs.pop(name, default)
+        pars[name] = BumpsParameter.default(value, name=name, limits=limits)
+
+    pars: dict[str, BumpsParameter] = {}
+    pd_types: dict[str, str] = {}
     for p in model_info.parameters.call_parameters:
-        value = kwargs.pop(p.name, p.default)
-        pars[p.name] = BumpsParameter.default(value, name=p.name, limits=p.limits)
+        # To check the limits on parameters in sasmodels, the following
+        # regex captures most (all?) parameter definition lines:
+        #    grep "^\(parameters *= *\[\)\? *\[['\"]" sasmodels/models/*.py
+        # Skip those which have inf, 360 or 180 in the definition:
+        #    ... | grep -v inf | grep -v 360 | grep -v 180
+        # Looking at the remaining values they all represent hard limits on
+        # the model parameter that should not be exceeded by the fitter.
+
+        # Bumps respects hard limits, so make sure they are big enough. We probably don't
+        # need to do this since the values in the models should be set right.
+        #   angular = (p.type == "orientation") or (p.type == "magnetic" and p.units == "degrees")
+        #   limits = p.limits if not angular else (-180, 180) if "theta" in p.name else (-360, 360)
+        addpar(p.name, p.default, p.limits)
         if p.polydisperse:
-            pd_limits = (-360.0, 360.0) if p.type == "orientation" else (0., 1.)
-            for part, default, limits in [
-                    ('_pd', 0., pd_limits),
-                    ('_pd_n', 35., (0, 1000)),
-                    ('_pd_nsigma', 3., (0, 10)),
-                ]:
-                name = p.name + part
-                value = kwargs.pop(name, default)
-                pars[name] = BumpsParameter.default(value, name=name, limits=limits)
+            addpar(f"{p.name}_pd", 0., limits=(0.0, np.inf))
+            addpar(f"{p.name}_pd_n", 35, limits=(0, 1000))
+            addpar(f"{p.name}_pd_nsigma", 3., limits=(0.0, 10.0))
             name = p.name + '_pd_type'
+            # If angular we should be defaulting to a cyclic gaussian, but this is not
+            # yet in sasmodels. There is an implementation in the example/weights directory.
+            # When we do add it be sure to update orientation.rst describing how to use it.
             pd_types[name] = str(kwargs.pop(name, 'gaussian'))
 
     if kwargs:  # args not corresponding to parameters
