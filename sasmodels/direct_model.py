@@ -275,8 +275,8 @@ class DataMixin:
 
             res = resolution2d.Slit2D(
                 data.x[index],
-                qx_width=data.dxw[index],
-                qy_width=data.dxl[index])
+                q_width=data.dxw[index],
+                q_length=data.dxl[index])
         else:
             raise ValueError("Unknown data type") # never gets here
 
