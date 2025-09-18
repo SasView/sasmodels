@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
+
 #from numba import njit
 #@njit(cache=True)
 def make_poly(Ecoefficient:NDArray) -> NDArray:
@@ -432,8 +433,8 @@ def make_poly(Ecoefficient:NDArray) -> NDArray:
     gE1d02*gE1d11*gE2d23*gE2d33**6)
 
     polyd2_19 = (7*gE1d02**2*gE2d31*gE2d33**6 +
-    3*gE1d13**2*gE2d31*gE2d33**4*((5*gE2d13*gE2d31 + 2*gE2d11*gE2d33)) +
-    gE2d33*(((-9)*gE1d12*gE1d42*gE2d13*gE2d23*gE2d24**2*gE2d31**2 -
+    3*gE1d13**2*gE2d31*gE2d33**4*(5*gE2d13*gE2d31 + 2*gE2d11*gE2d33) +
+    gE2d33*((-9)*gE1d12*gE1d42*gE2d13*gE2d23*gE2d24**2*gE2d31**2 -
           3*gE1d11*gE1d42*gE2d13*gE2d24**3*gE2d31**2 +
           3*gE1d42**2*gE2d13**4*gE2d31*gE2d33 -
           3*gE1d32*gE1d42*gE2d13**3*gE2d23*gE2d31*gE2d33 -
@@ -498,38 +499,38 @@ def make_poly(Ecoefficient:NDArray) -> NDArray:
           2*gE1d11*gE1d31*gE2d13**2*gE2d33**4 +
           6*gE1d12**2*gE2d13*gE2d31*gE2d33**4 + gE1d12**2*gE2d11*gE2d33**5 +
           gE1d11**2*gE2d13*gE2d33**5 +
-          gE1d22**2*gE2d13*gE2d33**3*((5*gE2d13*gE2d31 +
-                2*gE2d11*gE2d33)) +
-          3*gE1d33**2*gE2d13*gE2d33*((2*gE2d13**2*gE2d31**2 +
-                4*gE2d11*gE2d13*gE2d31*gE2d33 + gE2d11**2*gE2d33**2)) -
-          gE1d22*((gE2d33**2*((gE1d32*gE2d13*((4*gE2d13*gE2d23*gE2d31 +
-                            gE2d13*gE2d21*gE2d33 + 2*gE2d11*gE2d23*gE2d33)) +
-                      gE1d31*gE2d13*((4*gE2d13*gE2d24*gE2d31 +
-                            gE2d13*gE2d22*gE2d33 + 2*gE2d11*gE2d24*gE2d33)) +
-                      gE2d33*((5*gE1d12*gE2d13*gE2d23*gE2d31 +
+          gE1d22**2*gE2d13*gE2d33**3*(5*gE2d13*gE2d31 +
+                2*gE2d11*gE2d33) +
+          3*gE1d33**2*gE2d13*gE2d33*(2*gE2d13**2*gE2d31**2 +
+                4*gE2d11*gE2d13*gE2d31*gE2d33 + gE2d11**2*gE2d33**2) -
+          gE1d22*(gE2d33**2*(gE1d32*gE2d13*(4*gE2d13*gE2d23*gE2d31 +
+                            gE2d13*gE2d21*gE2d33 + 2*gE2d11*gE2d23*gE2d33) +
+                      gE1d31*gE2d13*(4*gE2d13*gE2d24*gE2d31 +
+                            gE2d13*gE2d22*gE2d33 + 2*gE2d11*gE2d24*gE2d33) +
+                      gE2d33*(5*gE1d12*gE2d13*gE2d23*gE2d31 +
                             5*gE1d11*gE2d13*gE2d24*gE2d31 +
                             gE1d12*gE2d13*gE2d21*gE2d33 +
                             gE1d11*gE2d13*gE2d22*gE2d33 +
                             gE1d12*gE2d11*gE2d23*gE2d33 +
-                            gE1d11*gE2d11*gE2d24*gE2d33)))) +
-                gE1d42*(((-gE2d11**2)*gE2d24**2*gE2d33**2 +
+                            gE1d11*gE2d11*gE2d24*gE2d33)) +
+                gE1d42*((-gE2d11**2)*gE2d24**2*gE2d33**2 +
                       8*gE2d13**3*gE2d31*gE2d33**2 -
-                      2*gE2d11*gE2d13*gE2d33*((3*gE2d24**2*gE2d31 +
-                            gE2d23**2*gE2d33 + 2*gE2d22*gE2d24*gE2d33)) -
-                      gE2d13**2*((3*gE2d24**2*gE2d31**2 +
-                            2*gE2d24*gE2d33*((3*gE2d22*gE2d31 +
-                                  gE2d20*gE2d33)) +
-                            gE2d33*((3*gE2d23**2*gE2d31 +
+                      2*gE2d11*gE2d13*gE2d33*(3*gE2d24**2*gE2d31 +
+                            gE2d23**2*gE2d33 + 2*gE2d22*gE2d24*gE2d33) -
+                      gE2d13**2*(3*gE2d24**2*gE2d31**2 +
+                            2*gE2d24*gE2d33*(3*gE2d22*gE2d31 +
+                                  gE2d20*gE2d33) +
+                            gE2d33*(3*gE2d23**2*gE2d31 +
                                   2*gE2d21*gE2d23*gE2d33 +
-                                  gE2d33*((gE2d22**2 -
-                                        6*gE2d11*gE2d33)))))))))) +
-          gE1d33*(((-gE1d42)*gE2d13*((3*gE2d11**2*gE2d24*gE2d33**2 +
-                      3*gE2d11*gE2d13*gE2d33*((3*gE2d24*gE2d31 +
-                            gE2d22*gE2d33)) +
-                      gE2d13**2*((3*gE2d24*gE2d31**2 +
-                            gE2d33*((3*gE2d22*gE2d31 +
-                                  gE2d20*gE2d33)))))) +
-                gE2d33*((6*gE1d11*gE2d13*gE2d24**2*gE2d31**2 +
+                                  gE2d33*(gE2d22**2 -
+                                        6*gE2d11*gE2d33))))) +
+          gE1d33*((-gE1d42)*gE2d13*(3*gE2d11**2*gE2d24*gE2d33**2 +
+                      3*gE2d11*gE2d13*gE2d33*(3*gE2d24*gE2d31 +
+                            gE2d22*gE2d33) +
+                      gE2d13**2*(3*gE2d24*gE2d31**2 +
+                            gE2d33*(3*gE2d22*gE2d31 +
+                                  gE2d20*gE2d33))) +
+                gE2d33*(6*gE1d11*gE2d13*gE2d24**2*gE2d31**2 +
                       8*gE1d31*gE2d13**3*gE2d31*gE2d33 +
                       4*gE1d11*gE2d13*gE2d23**2*gE2d31*gE2d33 +
                       8*gE1d11*gE2d13*gE2d22*gE2d24*gE2d31*gE2d33 +
@@ -542,148 +543,148 @@ def make_poly(Ecoefficient:NDArray) -> NDArray:
                       2*gE1d11*gE2d11*gE2d22*gE2d24*gE2d33**2 -
                       10*gE1d11*gE2d13**2*gE2d31*gE2d33**2 -
                       4*gE1d11*gE2d11*gE2d13*gE2d33**3 -
-                      gE1d22*((gE2d11**2*gE2d24*gE2d33**2 +
-                            2*gE2d11*gE2d13*gE2d33*((4*gE2d24*gE2d31 +
-                                  gE2d22*gE2d33)) +
-                            gE2d13**2*((6*gE2d24*gE2d31**2 +
+                      gE1d22*(gE2d11**2*gE2d24*gE2d33**2 +
+                            2*gE2d11*gE2d13*gE2d33*(4*gE2d24*gE2d31 +
+                                  gE2d22*gE2d33) +
+                            gE2d13**2*(6*gE2d24*gE2d31**2 +
                                   4*gE2d22*gE2d31*gE2d33 +
-                                  gE2d20*gE2d33**2)))) +
-                      2*gE1d12*((gE2d11*gE2d33*((4*gE2d23*gE2d24*gE2d31 +
+                                  gE2d20*gE2d33**2)) +
+                      2*gE1d12*(gE2d11*gE2d33*(4*gE2d23*gE2d24*gE2d31 +
                                   gE2d22*gE2d23*gE2d33 +
-                                  gE2d21*gE2d24*gE2d33)) +
-                            gE2d13*((gE2d21*gE2d33*((4*gE2d24*gE2d31 +
-                                        gE2d22*gE2d33)) +
-                                  gE2d23*((6*gE2d24*gE2d31**2 +
+                                  gE2d21*gE2d24*gE2d33) +
+                            gE2d13*(gE2d21*gE2d33*(4*gE2d24*gE2d31 +
+                                        gE2d22*gE2d33) +
+                                  gE2d23*(6*gE2d24*gE2d31**2 +
                                         4*gE2d22*gE2d31*gE2d33 +
-                                        gE2d20*gE2d33**2)))))))))))) +
-    gE1d13*((gE1d42*((3*gE2d13**2*gE2d33**2*((6*gE2d24*gE2d31**2 +
-                      gE2d33*((4*gE2d22*gE2d31 + gE2d20*gE2d33)))) +
-                3*gE2d11*gE2d33*(((-gE2d24**3)*gE2d31**2 -
+                                        gE2d20*gE2d33**2)))))) +
+    gE1d13*(gE1d42*(3*gE2d13**2*gE2d33**2*(6*gE2d24*gE2d31**2 +
+                      gE2d33*(4*gE2d22*gE2d31 + gE2d20*gE2d33)) +
+                3*gE2d11*gE2d33*((-gE2d24**3)*gE2d31**2 -
                       gE2d22*gE2d23**2*gE2d33**2 -
-                      gE2d24**2*gE2d33*((3*gE2d22*gE2d31 + gE2d20*gE2d33)) -
-                      gE2d24*gE2d33*((3*gE2d23**2*gE2d31 +
+                      gE2d24**2*gE2d33*(3*gE2d22*gE2d31 + gE2d20*gE2d33) -
+                      gE2d24*gE2d33*(3*gE2d23**2*gE2d31 +
                             2*gE2d21*gE2d23*gE2d33 +
-                            gE2d33*((gE2d22**2 - gE2d11*gE2d33)))))) -
-                gE2d13*((gE2d24**3*gE2d31**3 +
-                      9*gE2d24**2*gE2d31*gE2d33*((gE2d22*gE2d31 +
-                            gE2d20*gE2d33)) +
-                      3*gE2d24*gE2d33*((3*gE2d23**2*gE2d31**2 +
+                            gE2d33*(gE2d22**2 - gE2d11*gE2d33))) -
+                gE2d13*(gE2d24**3*gE2d31**3 +
+                      9*gE2d24**2*gE2d31*gE2d33*(gE2d22*gE2d31 +
+                            gE2d20*gE2d33) +
+                      3*gE2d24*gE2d33*(3*gE2d23**2*gE2d31**2 +
                             6*gE2d21*gE2d23*gE2d31*gE2d33 +
-                            gE2d33*((3*gE2d22**2*gE2d31 + gE2d21**2*gE2d33 +
+                            gE2d33*(3*gE2d22**2*gE2d31 + gE2d21**2*gE2d33 +
                                   2*gE2d20*gE2d22*gE2d33 -
-                                  8*gE2d11*gE2d31*gE2d33)))) +
-                      gE2d33**2*((gE2d22**3*gE2d33 +
+                                  8*gE2d11*gE2d31*gE2d33)) +
+                      gE2d33**2*(gE2d22**3*gE2d33 +
                             3*gE2d20*gE2d23**2*gE2d33 +
-                            gE2d22*((9*gE2d23**2*gE2d31 +
+                            gE2d22*(9*gE2d23**2*gE2d31 +
                                   6*gE2d21*gE2d23*gE2d33 -
-                                  6*gE2d11*gE2d33**2)))))))) +
-          gE2d33*((gE1d33*(((-20)*gE2d13**2*gE2d31**2*gE2d33**2 +
-                      gE2d11*gE2d33*((6*gE2d24**2*gE2d31**2 +
-                            2*gE2d24*gE2d33*((4*gE2d22*gE2d31 +
-                                  gE2d20*gE2d33)) +
-                            gE2d33*((4*gE2d23**2*gE2d31 +
+                                  6*gE2d11*gE2d33**2)))) +
+          gE2d33*(gE1d33*((-20)*gE2d13**2*gE2d31**2*gE2d33**2 +
+                      gE2d11*gE2d33*(6*gE2d24**2*gE2d31**2 +
+                            2*gE2d24*gE2d33*(4*gE2d22*gE2d31 +
+                                  gE2d20*gE2d33) +
+                            gE2d33*(4*gE2d23**2*gE2d31 +
                                   2*gE2d21*gE2d23*gE2d33 +
-                                  gE2d33*((gE2d22**2 -
-                                        2*gE2d11*gE2d33)))))) +
-                      gE2d13*((4*gE2d24**2*gE2d31**3 +
-                            4*gE2d24*gE2d31*gE2d33*((3*gE2d22*gE2d31 +
-                                  2*gE2d20*gE2d33)) +
-                            gE2d33*((6*gE2d23**2*gE2d31**2 +
+                                  gE2d33*(gE2d22**2 -
+                                        2*gE2d11*gE2d33))) +
+                      gE2d13*(4*gE2d24**2*gE2d31**3 +
+                            4*gE2d24*gE2d31*gE2d33*(3*gE2d22*gE2d31 +
+                                  2*gE2d20*gE2d33) +
+                            gE2d33*(6*gE2d23**2*gE2d31**2 +
                                   8*gE2d21*gE2d23*gE2d31*gE2d33 +
-                                  gE2d33*((4*gE2d22**2*gE2d31 +
+                                  gE2d33*(4*gE2d22**2*gE2d31 +
                                         gE2d21**2*gE2d33 +
                                         2*gE2d20*gE2d22*gE2d33 -
-                                        20*gE2d11*gE2d31*gE2d33)))))))) +
-                gE2d33*((2*gE1d32*((gE2d11*gE2d33*((4*gE2d23*gE2d24*
-gE2d31 + gE2d22*gE2d23*gE2d33 + gE2d21*gE2d24*gE2d33)) +
-                            gE2d13*((gE2d21*gE2d33*((4*gE2d24*gE2d31 +
-                                        gE2d22*gE2d33)) +
-                                  gE2d23*((6*gE2d24*gE2d31**2 +
+                                        20*gE2d11*gE2d31*gE2d33)))) +
+                gE2d33*(2*gE1d32*(gE2d11*gE2d33*(4*gE2d23*gE2d24*
+gE2d31 + gE2d22*gE2d23*gE2d33 + gE2d21*gE2d24*gE2d33) +
+                            gE2d13*(gE2d21*gE2d33*(4*gE2d24*gE2d31 +
+                                        gE2d22*gE2d33) +
+                                  gE2d23*(6*gE2d24*gE2d31**2 +
                                         4*gE2d22*gE2d31*gE2d33 +
-                                        gE2d20*gE2d33**2)))))) +
-                      gE2d33*(((-gE1d22)*((gE2d11*gE2d33*((5*gE2d24*
-gE2d31 + gE2d22*gE2d33)) + gE2d13*((10*gE2d24*gE2d31**2 +
+                                        gE2d20*gE2d33**2))) +
+                      gE2d33*((-gE1d22)*(gE2d11*gE2d33*(5*gE2d24*
+gE2d31 + gE2d22*gE2d33) + gE2d13*(10*gE2d24*gE2d31**2 +
                                         5*gE2d22*gE2d31*gE2d33 +
-                                        gE2d20*gE2d33**2)))) -
-                            gE2d33*(((-2)*gE1d11*gE2d33*((6*gE2d13*
-gE2d31 + gE2d11*gE2d33)) + gE1d02*((15*gE2d24*gE2d31**2 +
+                                        gE2d20*gE2d33**2)) -
+                            gE2d33*((-2)*gE1d11*gE2d33*(6*gE2d13*
+gE2d31 + gE2d11*gE2d33) + gE1d02*(15*gE2d24*gE2d31**2 +
                                         6*gE2d22*gE2d31*gE2d33 +
-                                        gE2d20*gE2d33**2)))))) +
-                      gE1d31*(((-10)*gE2d13**2*gE2d31*gE2d33**2 +
-                            gE2d11*gE2d33*((4*gE2d24**2*gE2d31 +
+                                        gE2d20*gE2d33**2))) +
+                      gE1d31*((-10)*gE2d13**2*gE2d31*gE2d33**2 +
+                            gE2d11*gE2d33*(4*gE2d24**2*gE2d31 +
                                   gE2d23**2*gE2d33 +
-                                  2*gE2d22*gE2d24*gE2d33)) +
-                            gE2d13*((6*gE2d24**2*gE2d31**2 +
-                                  2*gE2d24*gE2d33*((4*gE2d22*gE2d31 +
-                                        gE2d20*gE2d33)) +
-                                  gE2d33*((4*gE2d23**2*gE2d31 +
+                                  2*gE2d22*gE2d24*gE2d33) +
+                            gE2d13*(6*gE2d24**2*gE2d31**2 +
+                                  2*gE2d24*gE2d33*(4*gE2d22*gE2d31 +
+                                        gE2d20*gE2d33) +
+                                  gE2d33*(4*gE2d23**2*gE2d31 +
                                         2*gE2d21*gE2d23*gE2d33 +
-                                        gE2d33*((gE2d22**2 -
-                                        4*gE2d11*gE2d33))))))))))))))
-+ gE1d02*((gE1d42*((gE2d24**4*gE2d31**3 +
-                12*gE2d24**3*gE2d31*gE2d33*((gE2d22*gE2d31 +
-                      gE2d20*gE2d33)) +
-                gE2d33**2*((3*gE2d23**4*gE2d31 + 4*gE2d21*gE2d23**3*gE2d33 -
+                                        gE2d33*(gE2d22**2 -
+                                        4*gE2d11*gE2d33)))))))
++ gE1d02*(gE1d42*(gE2d24**4*gE2d31**3 +
+                12*gE2d24**3*gE2d31*gE2d33*(gE2d22*gE2d31 +
+                      gE2d20*gE2d33) +
+                gE2d33**2*(3*gE2d23**4*gE2d31 + 4*gE2d21*gE2d23**3*gE2d33 -
                       8*gE2d13*gE2d21*gE2d23*gE2d33**2 +
-                      2*gE2d13*gE2d33**2*(((-2)*gE2d22**2 +
-                            5*gE2d13*gE2d31 + 2*gE2d11*gE2d33)) -
-                      2*gE2d23**2*gE2d33*(((-3)*gE2d22**2 +
-                            8*gE2d13*gE2d31 + 2*gE2d11*gE2d33)))) +
-                2*gE2d24**2*gE2d33*((9*gE2d23**2*gE2d31**2 +
+                      2*gE2d13*gE2d33**2*((-2)*gE2d22**2 +
+                            5*gE2d13*gE2d31 + 2*gE2d11*gE2d33) -
+                      2*gE2d23**2*gE2d33*((-3)*gE2d22**2 +
+                            8*gE2d13*gE2d31 + 2*gE2d11*gE2d33)) +
+                2*gE2d24**2*gE2d33*(9*gE2d23**2*gE2d31**2 +
                       18*gE2d21*gE2d23*gE2d31*gE2d33 +
-                      gE2d33*((9*gE2d22**2*gE2d31 - 12*gE2d13*gE2d31**2 +
+                      gE2d33*(9*gE2d22**2*gE2d31 - 12*gE2d13*gE2d31**2 +
                             3*gE2d21**2*gE2d33 + 6*gE2d20*gE2d22*gE2d33 -
-                            8*gE2d11*gE2d31*gE2d33)))) +
-                4*gE2d24*gE2d33**2*((gE2d22**3*gE2d33 +
-                      gE2d20*gE2d33*((3*gE2d23**2 - 2*gE2d13*gE2d33)) +
-                      gE2d22*((9*gE2d23**2*gE2d31 + 6*gE2d21*gE2d23*gE2d33 -
-                            2*gE2d33*((4*gE2d13*gE2d31 +
-                                  gE2d11*gE2d33)))))))) -
-          gE2d33*((gE1d33*((4*gE2d24**3*gE2d31**3 +
-                      6*gE2d24**2*gE2d31*gE2d33*((3*gE2d22*gE2d31 +
-                            2*gE2d20*gE2d33)) +
-                      3*gE2d24*gE2d33*((6*gE2d23**2*gE2d31**2 +
+                            8*gE2d11*gE2d31*gE2d33)) +
+                4*gE2d24*gE2d33**2*(gE2d22**3*gE2d33 +
+                      gE2d20*gE2d33*(3*gE2d23**2 - 2*gE2d13*gE2d33) +
+                      gE2d22*(9*gE2d23**2*gE2d31 + 6*gE2d21*gE2d23*gE2d33 -
+                            2*gE2d33*(4*gE2d13*gE2d31 +
+                                  gE2d11*gE2d33)))) -
+          gE2d33*(gE1d33*(4*gE2d24**3*gE2d31**3 +
+                      6*gE2d24**2*gE2d31*gE2d33*(3*gE2d22*gE2d31 +
+                            2*gE2d20*gE2d33) +
+                      3*gE2d24*gE2d33*(6*gE2d23**2*gE2d31**2 +
                             8*gE2d21*gE2d23*gE2d31*gE2d33 +
-                            gE2d33*((4*gE2d22**2*gE2d31 -
+                            gE2d33*(4*gE2d22**2*gE2d31 -
                                   10*gE2d13*gE2d31**2 + gE2d21**2*gE2d33 +
                                   2*gE2d20*gE2d22*gE2d33 -
-                                  5*gE2d11*gE2d31*gE2d33)))) +
-                      gE2d33**2*((gE2d22**3*gE2d33 +
-                            3*gE2d20*gE2d33*((gE2d23**2 - gE2d13*gE2d33)) +
-                            3*gE2d22*((4*gE2d23**2*gE2d31 +
+                                  5*gE2d11*gE2d31*gE2d33)) +
+                      gE2d33**2*(gE2d22**3*gE2d33 +
+                            3*gE2d20*gE2d33*(gE2d23**2 - gE2d13*gE2d33) +
+                            3*gE2d22*(4*gE2d23**2*gE2d31 +
                                   2*gE2d21*gE2d23*gE2d33 -
-                                  gE2d33*((5*gE2d13*gE2d31 +
-                                        gE2d11*gE2d33)))))))) +
-                gE2d33*((3*gE1d31*((2*gE2d24**3*gE2d31**2 +
-                            gE2d22*gE2d33**2*((gE2d23**2 - gE2d13*gE2d33)) +
-                            gE2d24**2*gE2d33*((4*gE2d22*gE2d31 +
-                                  gE2d20*gE2d33)) +
-                            gE2d24*gE2d33*((4*gE2d23**2*gE2d31 +
+                                  gE2d33*(5*gE2d13*gE2d31 +
+                                        gE2d11*gE2d33)))) +
+                gE2d33*(3*gE1d31*(2*gE2d24**3*gE2d31**2 +
+                            gE2d22*gE2d33**2*(gE2d23**2 - gE2d13*gE2d33) +
+                            gE2d24**2*gE2d33*(4*gE2d22*gE2d31 +
+                                  gE2d20*gE2d33) +
+                            gE2d24*gE2d33*(4*gE2d23**2*gE2d31 +
                                   2*gE2d21*gE2d23*gE2d33 +
-                                  gE2d33*((gE2d22**2 - 5*gE2d13*gE2d31 -
-                                        gE2d11*gE2d33)))))) +
-                      gE1d32*((4*gE2d23**3*gE2d31*gE2d33 +
+                                  gE2d33*(gE2d22**2 - 5*gE2d13*gE2d31 -
+                                        gE2d11*gE2d33))) +
+                      gE1d32*(4*gE2d23**3*gE2d31*gE2d33 +
                             3*gE2d21*gE2d23**2*gE2d33**2 +
-                            3*gE2d21*gE2d33*((4*gE2d24**2*gE2d31 +
+                            3*gE2d21*gE2d33*(4*gE2d24**2*gE2d31 +
                                   2*gE2d22*gE2d24*gE2d33 -
-                                  gE2d13*gE2d33**2)) +
-                            3*gE2d23*((6*gE2d24**2*gE2d31**2 +
-                                  gE2d33**2*((gE2d22**2 - 5*gE2d13*gE2d31 -
-                                        gE2d11*gE2d33)) +
-                                  2*gE2d24*gE2d33*((4*gE2d22*gE2d31 +
-                                        gE2d20*gE2d33)))))) +
-                      gE2d33*((gE2d33**2*((6*gE1d12*gE2d23*gE2d31 +
+                                  gE2d13*gE2d33**2) +
+                            3*gE2d23*(6*gE2d24**2*gE2d31**2 +
+                                  gE2d33**2*(gE2d22**2 - 5*gE2d13*gE2d31 -
+                                        gE2d11*gE2d33) +
+                                  2*gE2d24*gE2d33*(4*gE2d22*gE2d31 +
+                                        gE2d20*gE2d33))) +
+                      gE2d33*(gE2d33**2*(6*gE1d12*gE2d23*gE2d31 +
                                   6*gE1d11*gE2d24*gE2d31 +
                                   gE1d12*gE2d21*gE2d33 +
-                                  gE1d11*gE2d22*gE2d33)) -
-                            gE1d22*((10*gE2d24**2*gE2d31**2 +
-                                  2*gE2d24*gE2d33*((5*gE2d22*gE2d31 +
-                                        gE2d20*gE2d33)) +
-                                  gE2d33*((5*gE2d23**2*gE2d31 +
+                                  gE1d11*gE2d22*gE2d33) -
+                            gE1d22*(10*gE2d24**2*gE2d31**2 +
+                                  2*gE2d24*gE2d33*(5*gE2d22*gE2d31 +
+                                        gE2d20*gE2d33) +
+                                  gE2d33*(5*gE2d23**2*gE2d31 +
                                         2*gE2d21*gE2d23*gE2d33 +
-                                        gE2d33*((gE2d22**2 -
+                                        gE2d33*(gE2d22**2 -
                                         12*gE2d13*gE2d31 -
-                                        2*gE2d11*gE2d33)))))))))))))))
+                                        2*gE2d11*gE2d33))))))))
 
     polyd2_18 = ((-3)*gE1d13*gE1d42*gE2d13*gE2d23*gE2d24**2*gE2d31**3 -
     gE1d12*gE1d42*gE2d13*gE2d24**3*gE2d31**3 +
