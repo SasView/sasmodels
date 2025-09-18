@@ -960,6 +960,9 @@ def plot_models(opts, result, limits=None, setnum=0):
             plot_theory(comp_data, base_value, view=view, use_data=use_data, limits=limits)
         plot_theory(comp_data, comp_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
+        #plt.gca().tick_params(labelbottom=False, labelleft=False)
+        plt.gca().set_yticks([])
+        plt.ylabel('')
         #cbar_title = "log I"
     if have_base and have_comp:
         plt.subplot(133)
@@ -977,9 +980,10 @@ def plot_models(opts, result, limits=None, setnum=0):
         # Note: base_data only since base and comp have same q values (though
         # perhaps different resolution), and we are plotting the difference
         # at each q
-        plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
+        plot_theory(base_data, err, view=errview, use_data=use_data)
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
+        plt.ylabel(errstr)
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
     #    h = plt.colorbar()
