@@ -1,45 +1,54 @@
 """
 This is a data file used to load in sesans data and fit it using the bumps engine
+
+Usage:
+
+    bumps sesans_sphere_2micron.py
 """
-import sesansfit
-from bumps.names import Parameter
+from bumps.names import FitProblem, Parameter
 
-# Enter the model name to use
+from sasdata import data_path
+
+from sasmodels.bumps_model import Experiment, Model
+from sasmodels.core import load_model
+from sasmodels.data import load_data
+
+# Enter the model name and the datafile path
 model_name = "sphere"
+data_file = data_path / "sesans_data" / "sphere2micron.ses"
 
-# DO NOT MODIFY THIS LINE
-model = sesansfit.get_bumps_model(model_name)
-
-# Enter any custom parameters
+# Custom parameters for use in expressions
 # name = Parameter(initial_value, name='name')
-phi = Parameter(0.0855, name='phi')
-# Add the parameters to this list that should be displayed in the fitting window
-custom_params = {"phi" : phi}
+phi = Parameter(0.0855, name='phi')  # scale = phi*(1-phi)
 
-# SESANS data file name
-sesans_file = "spheres2micron.ses"
-
-# Initial parameter values (if other than defaults)
-# "model_parameter_name" : value
-initial_vals = {
+# Initial parameter values and expressions (if other than defaults)
+# "model_parameter_name" : value or expression
+pars = {
+    "scale": phi*(1-phi),
     "sld" : 1.41,
     "radius" : 10000,
     "sld_solvent" : 2.70,
 }
 
-# Ranges for parameters if other than default
-# "model_parameter_name" : [min, max]
-param_range = {
-    "phi" : [0.001, 0.5],
-    "radius" : [100, 100000]
-}
+# DO NOT MODIFY THIS LINE
+model = Model(load_model(model_name), **pars)
 
-# Constraints
+# Bounds constraints
 # model.param_name = f(other params)
-# EXAMPLE: model.scale = model.radius*model.radius*(1 - phi) - where radius
-# and scale are model functions and phi is a custom parameter
-model.scale = phi*(1-phi)
+model.radius.range(100, 100000)
+phi.range(0.001, 0.5)
+
 
 # Send to the fitting engine
-# DO NOT MODIFY THIS LINE
-problem = sesansfit.sesans_fit(sesans_file, model, initial_vals, custom_params, param_range)
+# DO NOT MODIFY THESE LINES
+data = load_data(str(data_file))
+M = Experiment(data=data, model=model)
+problem = FitProblem([M])
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    print(f"==== {model_name} model for {data_file.name} has χ² = {problem.chisq_str()} ====")
+    print(problem.summarize())
+    problem.plot()
+    plt.show()
