@@ -49,6 +49,10 @@ except ImportError:
     pass
 # pylint: enable=unused-import
 
+RESID_RATIO = 0.25
+"""Portion of the graph area to use for the residuals plot"""
+
+
 def load_data(filename, index=0):
     # type: (str, int) -> Data
     """
@@ -523,7 +527,6 @@ def get_data_label(data):
         run = run[0]
     return run if run else filename if filename else title if title else "data"
 
-RESID_RATIO = 0.15
 def _plot_result1D(
         data, theory, resid, view, use_data,
         limits=None, Iq_calc=None, label='theory',
@@ -640,6 +643,7 @@ def _plot_result1D(
             fig.add_hline(y=1, line=dict(color='black', dash='dot'), row=2, col=1)
             fig.add_hline(y=-1, line=dict(color='black', dash='dot'), row=2, col=1)
             fig.update_yaxes(title_text='resid', type='linear', row=2, col=1)
+            fig.update_xaxes(type=xscale, row=2, col=1)
             fig.update_xaxes(title_text=xlabel, row=2, col=1)
         else:
             fig.update_xaxes(title_text=xlabel, row=1, col=1)
