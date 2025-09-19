@@ -950,6 +950,8 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
         scale = 1e8*(data.qx_data**2+data.qy_data**2)**2
     else:
         scale = 1
+    if view == "log" and limits is not None:
+        limits = np.log10(limits[0]), np.log10(limits[1])
     if use_data and limits is None:
         # TODO: do we want log(q^4 Iq) = 4 log q + log Iq
         if view == 'log':
