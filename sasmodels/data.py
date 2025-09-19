@@ -703,7 +703,6 @@ def _plot_result1D(
         ax0.set_yscale(yscale)
         ax0.set_ylabel(ylabel)
         ax0.legend()
-
         if use_resid:
             # Inset plot would use the following
             #   location = [0, -resid_ratio/(1-resid_ratio), 1, resid_ratio/(1-resid_ratio)]
@@ -743,7 +742,6 @@ def _plot_result1D(
             inset_calc_2D(ax0, Iq_calc)
 
         plt.tight_layout()
-        return plt.gcf()
 
 
 def inset_calc_2D(ax0, Iqxy_calc, alpha=0.8, portion=0.3, logz=True):
