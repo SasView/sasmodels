@@ -274,12 +274,12 @@ class Experiment(DataMixin):
         fig = plot_theory(data, theory, resid, view, Iq_calc=Iq_calc, label=label, backend=backend)
         return fig
 
-    # def plot(self, view=None):
-    #     return self._plot(view=view, backend='matplotlib')
+    def plot(self, view=None):
+        return self._plot(view=view, backend='matplotlib')
 
-    # Bumps doesn't yet support 2D plots with plotly.
-    def plotly(self, view=None):
-        return self._plot(view=view, backend='plotly')
+    # # Bumps doesn't yet support 2D plots with plotly.
+    # def plotly(self, view=None):
+    #     return self._plot(view=view, backend='plotly')
 
     def simulate_data(self, noise=None):
         # type: (float) -> None
