@@ -1,8 +1,8 @@
 import numpy as np
-from numpy import pi, mean
+from numpy import mean, pi
 
-from .Ecoefficient import TYCoeff
 from .CalcRealRoot import CalRealRoot
+from .Ecoefficient import TYCoeff
 from .TInvFourier import TInvFourier
 
 # Supplied Q vector must go out to at least this value to calculate g(r).
