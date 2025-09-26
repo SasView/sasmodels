@@ -995,9 +995,9 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
     # histogramming and interpolation algorithm to rebuild a grid.
     active_data = data.data[~data.mask]
 
-    zlabel = 'log I(q)' if view == 'log' else '10⁸q⁴I(q)' if view == 'q4' else 'I(q)'
     theory_label = label
-    data_label = f"{zlabel} data"
+    zprefix = 'log10 ' if view == 'log' else '10⁸q⁴ ' if view == 'q4' else ''
+    data_label = f"{zprefix}{get_data_label(data)}"
     resid_label = '(I(q) - y)/Δy'
 
     if backend == "plotly":
@@ -1013,11 +1013,13 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
             if num_plots == 1:
                 trace.update(colorbar=colorbar)
                 fig.add_trace(trace)
+                fig.update_xaxes(scaleanchor=f"y{row}", scaleratio=1)
+                fig.update_yaxes(scaleanchor=f"x{col}", scaleratio=1)
             else:
                 trace.update(colorbar=dict(x=col/2-0.05, y=1-(row/2-0.05), len=0.45, **colorbar))
                 fig.add_trace(trace, row=row, col=col)
-            fig.update_xaxes(row=row, col=col, scaleanchor=f"y{row}", scaleratio=1)
-            fig.update_yaxes(row=row, col=col, scaleanchor=f"x{col}", scaleratio=1)
+                fig.update_xaxes(row=row, col=col, scaleanchor=f"y{row}", scaleratio=1)
+                fig.update_yaxes(row=row, col=col, scaleanchor=f"x{col}", scaleratio=1)
 
         fig = make_subplots(rows=2, cols=2) if num_plots > 1 else go.Figure()
         if use_data:
@@ -1037,35 +1039,37 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
 
     else: # backend == "matplotlib"
         import matplotlib.pyplot as plt  # type: ignore
-        def maybe_hide_labels(row, col):
-            if num_plots == 1:
-                return
-            if row == 1 and col == 2:
+        def maybe_hide_labels():
+            if num_plots > 1:
                 plt.gca().set_xticks([])
                 plt.xlabel('')
                 plt.gca().set_yticks([])
                 plt.ylabel('')
 
-        # plot theory
-        if use_theory:
-            if num_plots > 1:
-                plt.subplot(2, 2, 2)
-            _plot_2d_signal(data, theory, label=theory_label, view=view, limits=limits, backend=backend)
-            maybe_hide_labels(1, 2)
+        fig = plt.gcf()
+        if num_plots > 1:
+            # add grid specifications
+            gs = fig.add_gridspec(2, 3)
 
         # Plot data
         if use_data:
             if num_plots > 1:
-                plt.subplot(2, 2, 1)
+                fig.add_subplot(gs[0:2, 0:2])
             _plot_2d_signal(data, active_data, label=data_label, view=view, limits=limits, backend=backend)
-            maybe_hide_labels(1, 1)
+
+        # plot theory
+        if use_theory:
+            if num_plots > 1:
+                fig.add_subplot(gs[0, 2])
+            _plot_2d_signal(data, theory, label=theory_label, view=view, limits=limits, backend=backend)
+            maybe_hide_labels()
 
         # plot resid
         if use_resid:
             if num_plots > 1:
-                plt.subplot(2, 2, 4)
+                fig.add_subplot(gs[1, 2])
             _plot_2d_signal(data, resid, label=resid_label, view='linear', limits=rlimits, backend=backend)
-            maybe_hide_labels(2, 2)
+            maybe_hide_labels()
 
 
 @protect
@@ -1115,8 +1119,9 @@ def _plot_2d_signal(data, signal, limits=None, view=None, label=None, backend='m
                 vmin=limits[0], vmax=limits[1])
         plt.xlabel("q_x/Å")
         plt.ylabel("q_y/Å")
+        plt.title(label)
         h = plt.colorbar(location='right')
-        h.set_label(label)
+        #h.set_label(label)
 
 
 # === The following is modified from sas.sasgui.plottools.PlotPanel
