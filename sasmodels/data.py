@@ -1056,6 +1056,8 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
             if num_plots > 1:
                 fig.add_subplot(gs[0:2, 0:2])
             _plot_2d_signal(data, active_data, label=data_label, view=view, limits=limits, backend=backend)
+            if num_plots == 1:
+                plt.colorbar(location='right')
 
         # plot theory
         if use_theory:
@@ -1063,6 +1065,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
                 fig.add_subplot(gs[0, 2])
             _plot_2d_signal(data, theory, label=theory_label, view=view, limits=limits, backend=backend)
             maybe_hide_labels()
+            plt.colorbar(location='right')
 
         # plot resid
         if use_resid:
@@ -1070,6 +1073,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
                 fig.add_subplot(gs[1, 2])
             _plot_2d_signal(data, resid, label=resid_label, view='linear', limits=rlimits, backend=backend)
             maybe_hide_labels()
+            plt.colorbar(location='right')
 
 
 @protect
@@ -1119,8 +1123,25 @@ def _plot_2d_signal(data, signal, limits=None, view=None, label=None, backend='m
                 vmin=limits[0], vmax=limits[1])
         plt.xlabel("q_x/Å")
         plt.ylabel("q_y/Å")
-        plt.title(label)
-        h = plt.colorbar(location='right')
+
+        # When plotting in bumps webview with mpld3 the chisq value is printed
+        # above the right hand corner of the data graph. Move the labels for the
+        # graphs to the left hand side to avoid collision. Unfortunately, mpld3
+        # doesn't understand title with loc="left", so do the label as a text string
+        # on the axes.
+        if 0:
+            #plt.title(label, loc="left")
+            plt.title(label)
+        else:
+            ax = plt.gca()
+            transform = ax.transAxes
+            h_ex = 30  # assume we are 50 lines tall, so that 2/30 ~ 0.08
+            text_offset = 0.5 / h_ex  # 1/2 ex above and below the text
+            x, y = text_offset, 1 + text_offset
+            ha, va = "left", "bottom"
+            ax.text(x, y, label, transform=transform, va=va, ha=ha)
+
+        #h = plt.colorbar(location='right')
         #h.set_label(label)
 
 
