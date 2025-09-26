@@ -66,7 +66,7 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["coefficent_1", "",       1.0, [-inf, inf], "", "coefficent A in low Q region"],
+    ["coefficient_1", "",      1.0, [-inf, inf], "", "coefficient A in low Q region"],
     ["crossover",    "1/Ang",  0.04,[0, inf],    "", "crossover location"],
     ["power_1",      "",       1.0, [0, inf],    "", "power law exponent at low Q"],
     ["power_2",      "",       4.0, [0, inf],    "", "power law exponent at high Q"],
@@ -75,14 +75,14 @@ parameters = [
 
 
 def Iq(q,
-       coefficent_1=1.0,
+       coefficient_1=1.0,
        crossover=0.04,
        power_1=1.0,
        power_2=4.0,
       ):
     """
     :param q:                   Input q-value (float or [float, float])
-    :param coefficent_1:        Scaling coefficent at low Q
+    :param coefficient_1:        Scaling coefficient at low Q
     :param crossover:           Crossover location
     :param power_1:             Exponent of power law function at low Q
     :param power_2:             Exponent of power law function at high Q
@@ -91,9 +91,9 @@ def Iq(q,
     result = empty(q.shape, 'd')
     index = (q <= crossover)
     with errstate(divide='ignore'):
-        coefficent_2 = coefficent_1 * power(crossover, power_2 - power_1)
-        result[index] = coefficent_1 * power(q[index], -power_1)
-        result[~index] = coefficent_2 * power(q[~index], -power_2)
+        coefficient_2 = coefficient_1 * power(crossover, power_2 - power_1)
+        result[index] = coefficient_1 * power(q[index], -power_1)
+        result[~index] = coefficient_2 * power(q[~index], -power_2)
     return result
 
 Iq.vectorized = True  # Iq accepts an array of q values
@@ -115,28 +115,28 @@ def random():
 
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
-    [{'coefficent_1':     1.0,
+    [{'coefficient_1':     1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
      }, 0.001, 1000],
 
-    [{'coefficent_1':     1.0,
+    [{'coefficient_1':     1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
      }, 0.150141, 0.125945],
 
-    [{'coefficent_1':    1.0,
+    [{'coefficient_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
      }, 0.442528, 0.00166884],
 
-    [{'coefficent_1':    1.0,
+    [{'coefficient_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
