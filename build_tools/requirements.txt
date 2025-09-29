@@ -2,6 +2,7 @@ bumps
 columnize
 matplotlib
 numpy
+pre-commit
 scipy
 siphash24
 tccbox
