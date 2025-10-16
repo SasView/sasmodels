@@ -31,6 +31,7 @@ jobs:
 
     env:
        BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14') && 'true' || '' }}
+       PYTHONUNBUFFERED: "1"
 
     steps:
 
