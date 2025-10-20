@@ -26,11 +26,11 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
 
     env:
-       BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12') && 'true' || '' }}
+       BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14') && 'true' || '' }}
 
     steps:
 
