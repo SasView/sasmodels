@@ -70,6 +70,7 @@ files = [ "build_tools/requirements.txt" ]
 
 [tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
 test = [ "build_tools/requirements-test.txt" ]
+dev = [ "build_tools/requirements-dev.txt" ]
 server = [ "build_tools/requirements-server.txt" ]
 OpenCL = [ "build_tools/requirements-opencl.txt" ]
 CUDA = [ "build_tools/requirements-cuda.txt" ]
