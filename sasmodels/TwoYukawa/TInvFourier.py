@@ -1,5 +1,6 @@
-from numpy import exp, ceil, log2, pi, arange, interp
+from numpy import arange, ceil, exp, interp, log2, pi
 from numpy.fft import fft
+
 
 def TInvFourier(x, y, deltaX):
     """
