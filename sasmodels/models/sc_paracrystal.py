@@ -183,7 +183,7 @@ parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "N
               ["radius",      "Ang",        40.0, [0.0, inf],  "volume",      "Radius of sphere"],
               ["sld",  "1e-6/Ang^2",         3.0, [0.0, inf],  "sld",         "Sphere scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  6.3, [0.0, inf],  "sld",         "Solvent scattering length density"],
-              ["theta",       "degrees",    0,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["theta",       "degrees",    0,    [-180, 180], "orientation", "c axis to beam angle"],
               ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
               ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about c axis"]
              ]
