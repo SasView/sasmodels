@@ -271,7 +271,7 @@ class Experiment(DataMixin):
     def simulate_data(self, noise=None):
         # type: (float) -> None
         """
-        Generate simulated data.
+        Generate simulated data. *noise* is the fractional uncertainty in percent.
         """
         Iq = self.theory()
         self._set_data(Iq, noise)
