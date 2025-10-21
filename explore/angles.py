@@ -223,8 +223,8 @@ if 1:
     )
 
     comment("\n**** qab from qc ****")
-    # The indirect calculation of qab is better than directly c
-    # alculating qab^2 = qa^2 + qb^2 since qc can be computed
+    # The indirect calculation of qab is better than directly
+    # calculating qab^2 = qa^2 + qb^2 since qc can be computed
     # as qc = M31*qx + M32*qy, thus requiring only two elements
     # of the rotation matrix.
     #vprint(qab, sqrt(qa**2 + qb**2), "Direct calculation of qab")
