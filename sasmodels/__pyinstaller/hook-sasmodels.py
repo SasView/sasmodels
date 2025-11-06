@@ -24,6 +24,13 @@ try:
         "sasmodels.list_pars",
         "sasmodels.multiscat",
         "sasmodels.special",
+        "sasmodels.TwoYukawa.__init__",
+        "sasmodels.TwoYukawa.CalcRealRoot",
+        "sasmodels.TwoYukawa.CalTYSk",
+        "sasmodels.TwoYukawa.Ecoefficient",
+        "sasmodels.TwoYukawa.Epoly",
+        "sasmodels.TwoYukawa.TFourier",
+        "sasmodels.TwoYukawa.TInvFourier",
     ]
     module_collection_mode = "py"
 
