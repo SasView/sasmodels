@@ -79,6 +79,15 @@ jobs:
         path: ${{ env.SASMODELS_BUILD_CACHE }}
         key: ${{ steps.build-tools.outputs.details }}-${{ hashFiles('doc/genmodel.py') }}
 
+    - name: Report cache status
+      if: env.BUILD_WHEEL
+      run: |
+        if [ "${{ steps.cache-figures.outputs.cache-hit }}" == "true" ]; then
+          echo "Figure cache hit - using cached figures"
+        else
+          echo "Figure cache miss - will generate new figures"
+        fi
+
     - name: Build sasmodels
       if: env.BUILD_WHEEL
       run: |
