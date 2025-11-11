@@ -31,6 +31,7 @@ jobs:
 
     env:
        BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14') && 'true' || '' }}
+       PYTHONUNBUFFERED: "1"
 
     steps:
 
@@ -57,6 +58,35 @@ jobs:
     #     large-packages: false
 
     ### Build sasmodels
+
+
+    - name: Record figure building tools
+      if: env.BUILD_WHEEL
+      id: build-tools
+      run: |
+        echo "details=$(
+          python -m pip index versions matplotlib --json | python -c "import json; print(json.loads(input())['latest'])"
+        )" >> $GITHUB_OUTPUT
+        SASMODELS_BUILD_CACHE=~/.cache/sasmodels-figures
+        mkdir -p $SASMODELS_BUILD_CACHE
+        echo "SASMODELS_BUILD_CACHE=$SASMODELS_BUILD_CACHE" >> $GITHUB_ENV
+
+    - name: Cache figures in documentation
+      if: env.BUILD_WHEEL
+      id: cache-figures
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.SASMODELS_BUILD_CACHE }}
+        key: ${{ steps.build-tools.outputs.details }}-${{ hashFiles('doc/genmodel.py') }}
+
+    - name: Report cache status
+      if: env.BUILD_WHEEL
+      run: |
+        if [ "${{ steps.cache-figures.outputs.cache-hit }}" == "true" ]; then
+          echo "Figure cache hit - using cached figures"
+        else
+          echo "Figure cache miss - will generate new figures"
+        fi
 
     - name: Build sasmodels
       if: env.BUILD_WHEEL
