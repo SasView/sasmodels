@@ -116,7 +116,7 @@ Validation
 
 Validation of the code is made using numerical checks.
 Comparisons with Debye formula calculations were made using DebyeCalcultor library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
-Good agreement was found at q < 0.1 1/Angstrom. 
+Good agreement was found at q < 0.1 1/Angstrom.
 
 References
 ----------
@@ -158,12 +158,12 @@ description = """
 
 normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
 Qx = q * sin_theta * cos_phi;
-    	    Qy = q * sin_theta * sin_phi;
-    	    Qz = q * cos_theta;
-    	    qx = Qx * length_a;
-    	    qy = Qy * length_b;
-    	    qz = Qz * length_c;
-    	    0 < t < 1
+Qy = q * sin_theta * sin_phi;
+Qz = q * cos_theta;
+qx = Qx * length_a;
+qy = Qy * length_b;
+qz = Qz * length_c;
+0 < t < 1
 
 """
 category = "shape:parallelepiped"
