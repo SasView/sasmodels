@@ -9,7 +9,7 @@ It includes the possibility to add an adjustable square truncation at all the si
 This model includes the general cuboctahedron shape for the maximum value of truncation.
 The form factor expression is obtained by analytical integration over the volume of the shape.
 This model is constructed in a similar way as the rectangular prism model.
-It contains both the form factor for a fixed orientation and the 1D form factor after orientation average (Gauss).
+It contains both the form factor for a fixed orientation and the 1D form factor after orientation average (Gaus-Legendre).
 
 Definition
 ----------
@@ -104,27 +104,12 @@ is the scattering length inside the volume, $\rho_\text{solvent}$
 is the scattering length of the solvent, and (if the data are in absolute
 units) *scale* represents the volume fraction (which is unitless).
 
-For 2d data the orientation of the particle is required, described using
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
-The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
-$\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
 
-For 2d, constraints must be applied during fitting to ensure that the inequality
-$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
-but the results may be not correct.
+.. figure:: img/octa-truncated.png
+    Truncated octahedron shape.
 
-.. figure:: img/parallelepiped_angle_definition.png
-
-    Definition of the angles for oriented core-shell parallelepipeds.
-    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
-    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the cylinder.
-    The neutron or X-ray beam is along the $z$ axis.
-
-.. figure:: img/parallelepiped_angle_projection.png
-
-    Examples of the angles for oriented rectangular prisms against the
-    detector plane.
+.. figure:: img/octahedrons_intensity_plot.png
+    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=1) of a = 300 Angstroms.
 
 Validation
 ----------
