@@ -152,6 +152,7 @@ name = "octahedron_truncated"
 title = "Truncated Octahedron."
 description = """
             AP = 6./(1.-3(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
+
             AA = 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qx)*sin(qy*(1.-t)-qx*t)+(qy+qx)*sin(qy*(1.-t)+qx*t))+
                                 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy))*((qz-qx)*sin(qz*(1.-t)-qx*t)+(qz+qx)*sin(qz*(1.-t)+qx*t));
 
