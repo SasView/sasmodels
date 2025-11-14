@@ -195,8 +195,8 @@ source = ["lib/gauss20.c", "octahedron_truncated.c"]
 have_Fq = True
 
 tests = [
-    [{"background": 0, "scale": 1, "length_a": 10, "t": 1, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "length_a": 100, "t": 1, "sld": 1., "sld_solvent": 0.},
      0.000001, 133.33291411431952],
-    [{"background": 0, "scale": 1, "length_a": 10, "t": 1, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "length_a": 100, "t": 1, "sld": 1., "sld_solvent": 0.},
      [0.000001, 0.01, 0.1], [133.33291411431952, 120.75883610389545, 0.3741758252985113]],
 ]
