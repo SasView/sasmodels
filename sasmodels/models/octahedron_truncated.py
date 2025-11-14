@@ -164,14 +164,14 @@ The amplitude AP is defined as follows::
     CC = 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz))*((qx-qz)*sin(qx*(1.-t)-qz*t)+(qx+qz)*sin(qx*(1.-t)+qz*t))+
          1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qz)*sin(qy*(1.-t)-qz*t)+(qy+qz)*sin(qy*(1.-t)+qz*t));
 
-Normalisation to 1 of AP at q = 0 (division by factor 4/3).
+Normalisation to 1 of AP at q = 0 (division by factor 4/3)::
 
-Qx = q * sin_theta * cos_phi;
-Qy = q * sin_theta * sin_phi;
-Qz = q * cos_theta;
-qx = Qx * length_a;
-qy = Qy * length_b;
-qz = Qz * length_c;
+    Qx = q * sin_theta * cos_phi;
+    Qy = q * sin_theta * sin_phi;
+    Qz = q * cos_theta;
+    qx = Qx * length_a;
+    qy = Qy * length_b;
+    qz = Qz * length_c;
 
 0 < t < 1
 """
