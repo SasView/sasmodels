@@ -51,6 +51,7 @@ V = (4/3) * length_a * (length_a*b2a_ratio) * (length_a*c2a_ratio)*(1-3(1-t)^3)
 
 The general octahedron is made of eight triangular faces.
 The three lengths A_edge, B_edge and C_edge of their edges are equal to:
+
     A_edge^2 = length_a^2+length_b^2
     B_edge^2 = length_a^2+length_c^2
     C_edge^2 = length_b^2+length_c^2
@@ -106,9 +107,11 @@ units) *scale* represents the volume fraction (which is unitless).
 
 
 .. figure:: img/octa-truncated.png
+
     Truncated octahedron shape.
 
 .. figure:: img/octahedrons_intensity_plot.png
+
     Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=1) of a = 300 Angstroms.
 
 Validation
@@ -133,13 +136,15 @@ References
 Authorship and Verification
 ----------------------------
 
-* **Authors: Marianne Imperor-Clerc (marianne.imperor@universite-paris-saclay.fr)
+* **Authors:** Marianne Imperor-Clerc (marianne.imperor@universite-paris-saclay.fr)
              Helen Ibrahim (helenibrahim1@outlook.com)
-             Sara Mokhtari (smokhtari@insa-toulouse.fr)**
-* **Last Modified by SM: 13 November 2025**
-* **Last Reviewed by SM: November 2025**
-"""
+             Sara Mokhtari (smokhtari@insa-toulouse.fr)
 
+* **Last Modified by:** SM **Date:** 13 November 2025
+
+* **Last Reviewed by:** SM **Date:** November 2025
+
+"""
 
 from numpy import inf
 
