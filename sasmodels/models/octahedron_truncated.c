@@ -172,13 +172,6 @@ Fq(double q,
     // Convert from [1e-12 A-1] to [cm-1] and account for SLD units (1e-6/Ang^2)
     *F1 = 1e-2 * s * outer_sum_F1;
     *F2 = 1e-4 * s * s * outer_sum_F2;
-    
-    if (isnan(*F1) || isinf(*F1)) {
-        *F1 = 0.0;
-    }
-    if (isnan(*F2) || isinf(*F2)) {
-        *F2 = 0.0;
-    }
 }
 
 
@@ -216,11 +209,5 @@ Iqabc(double qa, double qb, double qc,
 
 
     // Convert from [1e-12 A-1] to [cm-1]
-    double result = 1.0e-4 * square(s * AP);
-    
-    if (isnan(result) || isinf(result)) {
-        return 0.0;
-    }
-    
-    return result;
+    return 1.0e-4 * square(s * AP);
 }
