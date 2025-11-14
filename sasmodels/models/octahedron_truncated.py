@@ -151,6 +151,7 @@ from numpy import inf
 name = "octahedron_truncated"
 title = "Truncated Octahedron."
 description = """
+
             AP = 6./(1.-3(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
 
             AA = 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qx)*sin(qy*(1.-t)-qx*t)+(qy+qx)*sin(qy*(1.-t)+qx*t))+
