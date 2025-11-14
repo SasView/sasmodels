@@ -62,27 +62,29 @@ For a regular shape:
     length_a = length_b = length_c = A_edge/sqrt(2)
     V = (4/3) * length_a^3 = (sqrt(2)/3) * A_edge^3 * (1-3(1-t)^3)
 
-Amplitude of the form factor AP for the fixed orientation of the shape reads:
-    AP = 6./(1.-3(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
+Amplitude of the form factor AP for the fixed orientation of the shape reads::
 
-    with:
+.. code-block:: text
 
-    AA = 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qx)*sin(qy*(1.-t)-qx*t)+(qy+qx)*sin(qy*(1.-t)+qx*t))+ \
-                1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy))*((qz-qx)*sin(qz*(1.-t)-qx*t)+(qz+qx)*sin(qz*(1.-t)+qx*t));
+    AP = 6./(1.-3*(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
 
-    BB = 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy))*((qz-qy)*sin(qz*(1.-t)-qy*t)+(qz+qy)*sin(qz*(1.-t)+qy*t))+ \
-                1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz))*((qx-qy)*sin(qx*(1.-t)-qy*t)+(qx+qy)*sin(qx*(1.-t)+qy*t));
+    AA = 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qx)*sin(qy*(1.-t)-qx*t)+(qy+qx)*sin(qy*(1.-t)+qx*t)) +
+        1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy))*((qz-qx)*sin(qz*(1.-t)-qx*t)+(qz+qx)*sin(qz*(1.-t)+qx*t));
 
-    CC = 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz))*((qx-qz)*sin(qx*(1.-t)-qz*t)+(qx+qz)*sin(qx*(1.-t)+qz*t))+ \
-                1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qz)*sin(qy*(1.-t)-qz*t)+(qy+qz)*sin(qy*(1.-t)+qz*t));
+    BB = 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy))*((qz-qy)*sin(qz*(1.-t)-qy*t)+(qz+qy)*sin(qz*(1.-t)+qy*t)) +
+        1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz))*((qx-qy)*sin(qx*(1.-t)-qy*t)+(qx+qy)*sin(qx*(1.-t)+qy*t));
+
+    CC = 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz))*((qx-qz)*sin(qx*(1.-t)-qz*t)+(qx+qz)*sin(qx*(1.-t)+qz*t)) +
+        1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qz)*sin(qy*(1.-t)-qz*t)+(qy+qz)*sin(qy*(1.-t)+qz*t));
 
     and:
-            Qx = q * sin_theta * cos_phi;
-            Qy = q * sin_theta * sin_phi
-            Qz = q * cos_theta
-            qx = Qx * length_a
-            qy = Qy * length_b
-            qz = Qz * length_c
+
+    Qx = q * sin_theta * cos_phi;
+    Qy = q * sin_theta * sin_phi;
+    Qz = q * cos_theta;
+    qx = Qx * length_a;
+    qy = Qy * length_b;
+    qz = Qz * length_c
 
 $\theta$ is the angle between the scattering vector and the $z$ axis of the octahedron ($length_c$).
 $\phi$ is the angle between the scattering vector (lying in the $xy$ plane) and the $x$ axis ($length_a$).
@@ -157,7 +159,7 @@ The amplitude AP is defined as follows::
 
     AA = 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qx)*sin(qy*(1.-t)-qx*t)+(qy+qx)*sin(qy*(1.-t)+qx*t))+
          1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy))*((qz-qx)*sin(qz*(1.-t)-qx*t)+(qz+qx)*sin(qz*(1.-t)+qx*t));
-
+                                                                                                       
     BB = 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy))*((qz-qy)*sin(qz*(1.-t)-qy*t)+(qz+qy)*sin(qz*(1.-t)+qy*t))+
          1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz))*((qx-qy)*sin(qx*(1.-t)-qy*t)+(qx+qy)*sin(qx*(1.-t)+qy*t));
 
@@ -173,7 +175,7 @@ Normalisation to 1 of AP at q = 0 (division by factor 4/3)::
     qy = Qy * length_b;
     qz = Qz * length_c;
 
-0 < t < 1
+where 0 < t < 1.
 """
 
 category = "shape:parallelepiped"
