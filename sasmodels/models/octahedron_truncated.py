@@ -196,7 +196,7 @@ qz = Qz * length_c
 Valid truncation parameter range: 0 < t < 1.
 """
 
-category = "shape:parallelepiped"
+category = "shape:polyhedron"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
