@@ -77,7 +77,7 @@ Amplitude of the form factor AP for the fixed orientation of the shape reads::
     CC = 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz))*((qx-qz)*sin(qx*(1.-t)-qz*t)+(qx+qz)*sin(qx*(1.-t)+qz*t)) +
         1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qz)*sin(qy*(1.-t)-qz*t)+(qy+qz)*sin(qy*(1.-t)+qz*t));
 
-where:
+where
 
 .. code-block:: text
 
