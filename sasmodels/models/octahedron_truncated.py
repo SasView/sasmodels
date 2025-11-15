@@ -127,12 +127,15 @@ Good agreement was found at q < 0.1 1/Angstrom.
 
 References
 ----------
+
 1. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
    In: Journal of Applied Crystallography - J APPL CRYST 44 (June 2011).
    DOI: 10.1107/S0021889811011691
+   
 2. Croset, Bernard, "Form factor of any polyhedron: a general compact
    formula and its singularities" In: J. Appl. Cryst. (2017). 50, 1245–1255
    https://doi.org/10.1107/S1600576717010147
+   
 3. Wuttke, J. Numerically stable form factor of any polygon and polyhedron
    J Appl Cryst 54, 580-587 (2021)
    https://doi.org/10.1107/S160057672100171
