@@ -291,13 +291,27 @@ def set_integration_size(info, n):
     Note: this really ought to be a method in modelinfo, but that leads to
     import loops.
     """
-    if info.source and any(lib.startswith('lib/gauss') for lib in info.source):
-        from .gengauss import gengauss
-        path = joinpath(MODEL_PATH, "lib", "gauss%d.c"%n)
-        if not exists(path):
-            gengauss(n, path)
-        info.source = ["lib/gauss%d.c"%n if lib.startswith('lib/gauss')
-                       else lib for lib in info.source]
+    from .gengauss import gengauss
+
+    if not info.source:
+        return
+
+    # Generate the integration points
+    path = joinpath(MODEL_PATH, "lib", f"gauss{n}.c")
+    if not exists(path):
+        # print(f"building Gaussian integration points of size {n} in {str(path)}")
+        gengauss(n, path)
+
+    # Replace adaptive.c or lib/gauss<n>.c
+    try:
+        index = info.source.index("lib/adaptive.c")
+        info.source[index:index+1] = [f"lib/gauss{n}.c", "lib/nonadaptive.c"]
+    except ValueError:
+        for index in range(len(info.source)-1, -1, -1):
+            if info.source[index].startswith("lib/gauss"):
+                info.source[index] = f"lib/gauss{n}.c"
+                break
+    # print("info.source is now", info.source)
 
 def format_units(units):
     # type: (str) -> str

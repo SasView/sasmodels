@@ -24,17 +24,21 @@ void _integrate_bessel(
     const double zm = 0.5*radius;
     const double zb = 0.5*radius;
 
+    const double qr_max = fmax(q_sin_psi*beta*radius*radius, q_cos_psi*radius);
+    constant double *w, *z;
+    int n_outer = gauss_weights(qr_max, &w, &z);
+
     // evaluate at Gauss points
     double sumS = 0.0;		// initialize integral
     double sumC = 0.0;		// initialize integral
     double r;
-    for (int i=0; i < GAUSS_N; i++) {
-        r = GAUSS_Z[i]*zm + zb;
+    for (int i=0; i < n_outer; i++) {
+        r = z[i]*zm + zb;
 
         const double qrs = r*q_sin_psi;
         const double qrrc = r*r*q_cos_psi;
 
-        double y = GAUSS_W[i] * r * sas_JN(n, beta*qrrc) * sas_JN(2*n, qrs);
+        double y = w[i] * r * sas_JN(n, beta*qrrc) * sas_JN(2*n, qrs);
         double S, C;
         SINCOS(alpha*qrrc, S, C);
         sumS += y*S;
@@ -80,19 +84,23 @@ double _integrate_psi(
     double alpha,
     double beta)
 {
+    const double qr_max = q*0.5*thickness;
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // translate gauss point z in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
     const double zb = M_PI_4;
 
     double sum = 0.0;
-    for (int i = 0; i < GAUSS_N; i++) {
-        double psi = GAUSS_Z[i]*zm + zb;
+    for (int i = 0; i < n; i++) {
+        double psi = z[i]*zm + zb;
         double sin_psi, cos_psi;
         SINCOS(psi, sin_psi, cos_psi);
         double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi);
         double sinc_term = square(sas_sinx_x(q * thickness * cos_psi / 2.0));
         double pringle_kernel = 4.0 * sin_psi * bessel_term * sinc_term;
-        sum += GAUSS_W[i] * pringle_kernel;
+        sum += w[i] * pringle_kernel;
     }
 
     return zm * sum;

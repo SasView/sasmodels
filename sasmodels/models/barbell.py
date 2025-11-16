@@ -117,7 +117,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c", "barbell.c"]
 valid = "radius_bell >= radius"
 have_Fq = True
 radius_effective_modes = [
