@@ -1,6 +1,29 @@
 Release notes
 =============
 
+v1.0.10 2025-06-25
+------------------
+* Reorganisation of project structure for wheel support
+* Round to nearest integer for star polymer arms
+* Fix pickle errors with product models
+* Fix random model generator for Hayter MSA
+* Doc update: Make equations in core shell sphere docs match the code
+* Package dependency: Use tccbox instead of tinycc
+
+v1.0.9 2025-02-28
+-----------------
+* Fix precision and improve stability at low Q for both the star_polymer and binary_hard_sphere models
+* Fix C wrapper generation using proper parameter table when using inline C code
+* Remove two unused and redundant functions from the magnetic function library
+* Package dependency: NumPy 2+ compatibility
+* Package dependency: Fix incompatibility between SciPy 1.15 and pytest
+* Package dependency: Increment github action `upload-artifact` version
+* Package dependency: Add support for python 3.12
+* Doc update: Fixed broken links in README
+* Doc update: Clarity on the Polymer Micelle model
+* Doc update: Fix typo in equation in Lamellar Stack Paracrystal documentation
+* Doc update: Complex number support
+
 v1.0.8 2024-09-26
 -----------------
 * New model: Bulk ferromagnets model from marketplace

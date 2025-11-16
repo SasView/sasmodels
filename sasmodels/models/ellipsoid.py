@@ -116,10 +116,9 @@ Authorship and Verification
 * **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
 * **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
 """
-from __future__ import division
 
 import numpy as np
-from numpy import inf, sin, cos, pi
+from numpy import cos, inf, pi, sin
 
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."

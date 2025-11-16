@@ -47,7 +47,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sin, cos, sqrt, log
+from numpy import cos, inf, log, pi, sin, sqrt
 
 name = " _sphere (python)"
 title = "PAK testing ideas for Spheres with uniform scattering length density"

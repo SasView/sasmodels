@@ -2,79 +2,132 @@ name: Test
 
 on: [push, pull_request]
 
-jobs:
-  test:
+defaults:
+  run:
+    shell: bash
 
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          version: "latest"
+          args: "check --fix-only --exit-non-zero-on-fix"
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: always()
+        with:
+          msg: '[pre-commit.ci lite] apply automatic fixes for ruff linting errors'
+
+  test:
+    needs: [ruff]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+      fail-fast: false
+
+    env:
+       BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14') && 'true' || '' }}
+       PYTHONUNBUFFERED: "1"
 
     steps:
-    - uses: actions/checkout@v4
+
+    - name: Obtain sasmodels source from git
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          **/requirements*.txt
 
-    - name: Free Disk Space (Ubuntu)
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: jlumbroso/free-disk-space@main
+    # If actions have problems with disk-space this can be re-enabled
+    # (The reports always show many GB in free space and it takes minutes to run)
+    # - name: Free Disk Space (Ubuntu)
+    #   if: ${{ matrix.os == 'ubuntu-latest' }}
+    #   uses: jlumbroso/free-disk-space@main
+    #   with:
+    #     haskell: false
+    #     large-packages: false
+
+    ### Build sasmodels
+
+
+    - name: Record figure building tools
+      if: env.BUILD_WHEEL
+      id: build-tools
+      run: |
+        echo "details=$(
+          python -m pip index versions matplotlib --json | python -c "import json; print(json.loads(input())['latest'])"
+        )" >> $GITHUB_OUTPUT
+        SASMODELS_BUILD_CACHE=~/.cache/sasmodels-figures
+        mkdir -p $SASMODELS_BUILD_CACHE
+        echo "SASMODELS_BUILD_CACHE=$SASMODELS_BUILD_CACHE" >> $GITHUB_ENV
+
+    - name: Cache figures in documentation
+      if: env.BUILD_WHEEL
+      id: cache-figures
+      uses: actions/cache@v4
       with:
-        haskell: false
-        large-packages: false
+        path: ${{ env.SASMODELS_BUILD_CACHE }}
+        key: ${{ steps.build-tools.outputs.details }}-${{ hashFiles('doc/genmodel.py') }}
 
-    - name: setup apt dependencies for Linux
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+    - name: Report cache status
+      if: env.BUILD_WHEEL
       run: |
-        sudo apt update
+        if [ "${{ steps.cache-figures.outputs.cache-hit }}" == "true" ]; then
+          echo "Figure cache hit - using cached figures"
+        else
+          echo "Figure cache miss - will generate new figures"
+        fi
 
-    - name: Install Python dependencies
+    - name: Build sasmodels
+      if: env.BUILD_WHEEL
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install wheel setuptools
-        python -m pip install mako
-        python -m pip install numpy scipy matplotlib docutils pytest sphinx bumps==0.* unittest-xml-reporting tinycc siphash24
+        python -m pip install build hatchling
+        python -m build --sdist --wheel
+        python -m pip install dist/sasmodels*whl
 
-    - name: setup pyopencl on Linux + macOS
-      if: ${{ matrix.os != 'windows-latest' }}
+    - name: Publish sdist and wheel package
+      if: env.BUILD_WHEEL
+      uses: actions/upload-artifact@v4
+      with:
+        name: sasmodels-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+           dist/sasmodels*whl
+           dist/sasmodels*tar*
+        if-no-files-found: ignore
+
+    ### Publish documentation
+
+    - name: Publish sasmodels docs
+      if: env.BUILD_WHEEL
+      uses: actions/upload-artifact@v4
+      with:
+        name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          build/doc/
+        if-no-files-found: error
+
+    ### Install dependencies
+
+    - name: Install Python dependencies (tests)
       run: |
-        python -m pip install pyopencl
+        python -m pip install -r build_tools/requirements.txt -r build_tools/requirements-test.txt -r build_tools/requirements-opencl.txt
 
-    - name: setup pyopencl on Windows
-      if: ${{ matrix.os == 'windows-latest' }}
-      run: |
-        python -m pip install pytools mako cffi
+    ### Build and test sasmodels
 
-        choco install opencl-intel-cpu-runtime
-        python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
-
-    - name: Test with pytest (only on Windows for now since PoCL is failing on Ubuntu)
-
+    - name: Test with pytest
       env:
         PYOPENCL_COMPILER_OUTPUT: 1
         SAS_OPENCL: none
       run: |
-        # other CI uses the following, but `setup.py test` is a deprecated way
-        # of running tests
-        # python setup.py test --pytest-args -v
-
         pytest -v
 
-    - name: check that the docs build (linux only)
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      env:
-        SAS_OPENCL: none
-      run: |
-        make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
-
-    - name: Publish samodels docs
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'}}
-      uses: actions/upload-artifact@v3
-      with:
-        name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
-        path: |
-          doc/_build/html
-        if-no-files-found: error

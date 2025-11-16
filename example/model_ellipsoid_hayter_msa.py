@@ -1,12 +1,11 @@
 import sys
+
 #sys.path.append('path_to_sasmodels')
+from bumps.names import FitProblem, inf
 
-import numpy as np
-
-from bumps.names import *
+from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
-from sasmodels.data import load_data, plot_data
+from sasmodels.data import load_data
 
 # IMPORT THE DATA USED
 data = load_data(sys.argv[1])

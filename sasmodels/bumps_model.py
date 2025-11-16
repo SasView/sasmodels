@@ -10,7 +10,6 @@ the sasview data loader.  *Experiment* takes a *cutoff* parameter controlling
 how far the polydispersity integral extends.
 
 """
-from __future__ import print_function
 
 # Note: exporting BumpsParameter so that the sphinx doc builder can pick it up.
 __all__ = ["Model", "Experiment", "BumpsParameter"]
@@ -22,7 +21,8 @@ from .direct_model import DataMixin
 
 # pylint: disable=unused-import
 try:
-    from typing import Dict, Union, Tuple, Any, Optional
+    from typing import Any, Optional, Union
+
     from .data import Data1D, Data2D
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
@@ -35,7 +35,8 @@ except ImportError:
 try:
     # Optional import. This allows the doc builder and tests to run even
     # when bumps is not on the path.
-    from bumps.parameter import Parameter as BumpsParameter, Reference # type: ignore
+    from bumps.parameter import Parameter as BumpsParameter  # type: ignore
+    from bumps.parameter import Reference
 except ImportError:
     class BumpsParameter:
         """See parameter.Parameter in the bumps documentation."""
@@ -44,7 +45,7 @@ except ImportError:
 
 
 def create_parameters(model_info, **kwargs):
-    # type: (ModelInfo, Union[float, str, BumpsParameter]) -> Tuple[Dict[str, BumpsParameter], Dict[str, str]]
+    # type: (ModelInfo, Union[float, str, BumpsParameter]) -> tuple[dict[str, BumpsParameter], dict[str, str]]
     """
     Generate Bumps parameters from the model info.
 
@@ -60,14 +61,15 @@ def create_parameters(model_info, **kwargs):
     parameters for each model parameter, and a dictionary of
     *{name: str}* containing the polydispersity distribution types.
     """
-    pars = {}     # type: Dict[str, BumpsParameter]
-    pd_types = {} # type: Dict[str, str]
+    pars = {}     # type: dict[str, BumpsParameter]
+    pd_types = {} # type: dict[str, str]
     for p in model_info.parameters.call_parameters:
         value = kwargs.pop(p.name, p.default)
         pars[p.name] = BumpsParameter.default(value, name=p.name, limits=p.limits)
         if p.polydisperse:
+            pd_limits = (-360.0, 360.0) if p.type == "orientation" else (0., 1.)
             for part, default, limits in [
-                    ('_pd', 0., pars[p.name].limits),
+                    ('_pd', 0., pd_limits),
                     ('_pd_n', 35., (0, 1000)),
                     ('_pd_nsigma', 3., (0, 10)),
                 ]:
@@ -83,7 +85,7 @@ def create_parameters(model_info, **kwargs):
 
     return pars, pd_types
 
-class Model(object):
+class Model:
     """
     Bumps wrapper for a SAS model.
 
@@ -94,7 +96,7 @@ class Model(object):
     Any additional *key=value* pairs are model dependent parameters.
     """
     def __init__(self, model, **kwargs):
-        # type: (KernelModel, **Dict[str, Union[float, BumpsParameter]]) -> None
+        # type: (KernelModel, **dict[str, Union[float, BumpsParameter]]) -> None
         self.sasmodel = model
         pars, pd_types = create_parameters(model.info, **kwargs)
         for k, v in pars.items():
@@ -105,7 +107,7 @@ class Model(object):
         self._pd_type_names = list(pd_types.keys())
 
     def parameters(self):
-        # type: () -> Dict[str, BumpsParameter]
+        # type: () -> dict[str, BumpsParameter]
         """
         Return a dictionary of parameters objects for the parameters,
         excluding polydispersity distribution type.
@@ -113,7 +115,7 @@ class Model(object):
         return dict((k, getattr(self, k)) for k in self._parameter_names)
 
     def state(self):
-        # type: () -> Dict[str, Union[BumpsParameter, str]]
+        # type: () -> dict[str, Union[BumpsParameter, str]]
         """
         Return a dictionary of current values for all the parameters,
         including polydispersity distribution type.
@@ -138,9 +140,9 @@ class Experiment(DataMixin):
 
     The resulting model can be used directly in a Bumps FitProblem call.
     """
-    _cache = None # type: Dict[str, np.ndarray]
+    _cache = None # type: dict[str, np.ndarray]
     def __init__(self, data, model, cutoff=1e-5, name=None, extra_pars=None):
-        # type: (Data, Model, float, Optional[str], Optional[Dict[str, BumpsParameter]]) -> None
+        # type: (Data, Model, float, Optional[str], Optional[dict[str, BumpsParameter]]) -> None
         # Allow resolution function to define fittable parameters.  We do this
         # by creating reference parameters within the resolution object rather
         # than modifying the object itself to use bumps parameters.  We need
@@ -211,7 +213,7 @@ class Experiment(DataMixin):
             setattr(self, name, ref)
 
     def parameters(self):
-        # type: () -> Dict[str, BumpsParameter]
+        # type: () -> dict[str, BumpsParameter]
         """
         Return a dictionary of parameters
         """
@@ -269,7 +271,7 @@ class Experiment(DataMixin):
     def simulate_data(self, noise=None):
         # type: (float) -> None
         """
-        Generate simulated data.
+        Generate simulated data. *noise* is the fractional uncertainty in percent.
         """
         Iq = self.theory()
         self._set_data(Iq, noise)
@@ -285,13 +287,13 @@ class Experiment(DataMixin):
             np.savetxt(basename+".dat", np.array([self._data.x, self.theory()]).T)
 
     def __getstate__(self):
-        # type: () -> Dict[str, Any]
+        # type: () -> dict[str, Any]
         # Can't pickle gpu functions, so instead make them lazy
         state = self.__dict__.copy()
         state['_kernel'] = None
         return state
 
     def __setstate__(self, state):
-        # type: (Dict[str, Any]) -> None
+        # type: (dict[str, Any]) -> None
         # pylint: disable=attribute-defined-outside-init
         self.__dict__ = state

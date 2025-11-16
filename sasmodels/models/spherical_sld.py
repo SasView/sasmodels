@@ -143,7 +143,7 @@ Boucher [#Boucher1983]_:
             (\frac{(r - r_{\text{flat}_i})}{\Delta t_{ \text{inter}_i }})^2
             \right) ^(A/2-2)  + C  & \mbox{for } A \neq 0 \\
         \rho_{\text{flat}_{i+1}}  & \mbox{for } A = 0 \\
-    \end{cases}  
+    \end{cases}
 
 The functions are normalized so that they vary between 0 and 1, and they are
 constrained such that the SLD is continuous at the boundaries of the interface
@@ -229,7 +229,7 @@ References
    and Neutron Scattering, Plenum Press, New York, (1987)
 .. [#Boucher1983] B Boucher, P Chieux, P Convert, and M Tournarie,
    *Metal Physics*, 13,1339 (1983).
-  
+
 
 
 Authorship and Verification
@@ -241,7 +241,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, expm1, sqrt
+from numpy import expm1, inf, sqrt
 from scipy.special import erf
 
 name = "spherical_sld"
@@ -280,7 +280,7 @@ SHAPE_FUNCTIONS = [
     lambda z, nu: 1 - (1-z)**nu,            # Lpow
     lambda z, nu: expm1(-nu*z)/expm1(-nu),  # Rexp
     lambda z, nu: expm1(nu*z)/expm1(nu),    # Lexp
-    lambda z, nu: 1 - (1 - z**2)**(0.5*nu-2.0), # Boucher    
+    lambda z, nu: 1 - (1 - z**2)**(0.5*nu-2.0), # Boucher
 ]
 
 def profile(n_shells, sld_solvent, sld, thickness,

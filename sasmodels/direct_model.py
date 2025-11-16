@@ -20,27 +20,23 @@ direct parameter values and by :class:`.bumps_model.Experiment` which wraps
 the parameter values in boxes so that the user can set fitting ranges, etc.
 on the individual parameters and send the model to the Bumps optimizers.
 """
-from __future__ import print_function, division
 
 import os
 
 import numpy as np  # type: ignore
 
 # TODO: fix sesans module
-from . import sesans  # type: ignore
-from . import weights
-from . import resolution
-from . import resolution2d
-from .details import make_kernel_args, dispersion_mesh
+from . import (
+    resolution,
+    resolution2d,
+    sesans,  # type: ignore
+    weights,
+)
+from .data import Data
+from .details import make_kernel_args
+from .kernel import KernelModel
 from .product import RADIUS_MODE_ID
 
-# pylint: disable=unused-import
-from typing import Optional, Dict, Tuple, List, Callable
-from collections import OrderedDict
-from .data import Data
-from .kernel import Kernel, KernelModel
-from .modelinfo import Parameter, ParameterSet, ModelInfo
-# pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
@@ -179,7 +175,7 @@ def _make_sesans_transform(data):
     return hankel
 
 
-class DataMixin(object):
+class DataMixin:
     """
     DataMixin captures the common aspects of evaluating a SAS model for a
     particular data set, including calculating Iq and evaluating the
@@ -396,8 +392,9 @@ def test_reparameterize():
     """Check simple reparameterized models will load and build"""
     from numpy import inf, pi
     from numpy.linalg import norm
+
+    from .core import build_model, load_model_info, reparameterize
     from .data import empty_data1D
-    from .core import load_model_info, build_model, reparameterize
     parameters = [
         ["volume", "Ang^3", 1e5, [0, inf], "volume", "ellipsoid volume"],
         ["eccentricity", "", 1, [0, inf], "volume", "polar:equatorial radius"],
@@ -457,7 +454,7 @@ def test_reparameterize():
         pass
 
 def _direct_calculate(model, data, pars):
-    from .core import load_model_info, build_model
+    from .core import build_model, load_model_info
     model_info = load_model_info(model)
     kernel = build_model(model_info)
     calculator = DirectModel(data, kernel)
@@ -571,7 +568,7 @@ def test_simple_interface():
     assert near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.3663431784535172])
     # simple sphere in 2D (perfect, pinhole)
     assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
-    assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars), 
+    assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars),
         [0.8167780778578667])
     # sesans (no background or scale)
     assert near(Gxi('sphere', [100], **pars), [-0.19146959126623486])

@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# ruff: noqa: E701
 """
 Program to compare models using different compute engines.
 
@@ -26,30 +25,24 @@ and tell you which string to use for the SAS_OPENCL variable.
 On Windows you will need to remove the quotes.
 """
 
-from __future__ import print_function, division
 
-import sys
-import os
-import math
 import datetime
-import traceback
+import math
+import os
 import re
+import sys
+import traceback
+
+# pylint: disable=unused-import
+from typing import Callable
 
 import numpy as np  # type: ignore
 
-from . import core
-from . import weights
-from . import kerneldll
-from . import kernelcl
-from . import kernelcuda
-from .data import plot_theory, empty_data1D, empty_data2D, empty_sesans, load_data
+from . import core, kernelcl, kernelcuda, kerneldll, weights
+from .data import Data, empty_data1D, empty_data2D, empty_sesans, load_data, plot_theory
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
-
-# pylint: disable=unused-import
-from typing import Optional, Dict, Any, Callable, Tuple, List
-from .modelinfo import ModelInfo, Parameter, ParameterSet
-from .data import Data
+from .modelinfo import ModelInfo, ParameterSet
 
 try:
     # With python 3.8+ we can indicate that calculator takes floats.
@@ -182,7 +175,7 @@ else:
         return dt.total_seconds()
 
 
-class push_seed(object):
+class push_seed:
     """
     Set the seed value for the random number generator.
 
@@ -956,6 +949,8 @@ def plot_models(opts, result, limits=None, setnum=0):
         if have_comp:
             plt.subplot(131)
         plot_theory(base_data, base_value, view=view, use_data=use_data, limits=limits)
+        if setnum > 0:
+            plt.legend([f"Set {k+1}" for k in range(setnum+1)], loc='best')
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
@@ -984,7 +979,6 @@ def plot_models(opts, result, limits=None, setnum=0):
         # at each q
         plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
-        plt.legend(['P%d'%(k+1) for k in range(setnum+1)], loc='best')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
@@ -1064,7 +1058,8 @@ def columnize(items, indent="", width=None):
     """
     # Use the columnize package (pycolumize) if it is available
     try:
-        from columnize import columnize as _columnize, default_opts
+        from columnize import columnize as _columnize
+        from columnize import default_opts
         if width is None:
             width = default_opts['displaywidth']
         return _columnize(list(items), displaywidth=width, lineprefix=indent)
@@ -1250,29 +1245,29 @@ def parse_opts(argv):
             opts['is2d'] = True
         elif arg.startswith('-maxdim'):
             opts['maxdim'] = float(arg[8:])
-        elif arg == '-preset':  opts['seed'] = -1
-        elif arg == '-mono':    opts['mono'] = True
-        elif arg == '-poly':    opts['mono'] = False
-        elif arg == '-magnetic':       opts['magnetic'] = True
-        elif arg == '-nonmagnetic':    opts['magnetic'] = False
-        elif arg == '-pars':    opts['show_pars'] = True
-        elif arg == '-nopars':  opts['show_pars'] = False
-        elif arg == '-hist':    opts['show_hist'] = True
-        elif arg == '-nohist':  opts['show_hist'] = False
-        elif arg == '-rel':     opts['rel_err'] = True
-        elif arg == '-abs':     opts['rel_err'] = False
-        elif arg == '-half':    opts['engine'] = 'half'
-        elif arg == '-fast':    opts['engine'] = 'fast'
-        elif arg == '-single':  opts['engine'] = 'single'
-        elif arg == '-double':  opts['engine'] = 'double'
-        elif arg == '-single!': opts['engine'] = 'single!'
-        elif arg == '-double!': opts['engine'] = 'double!'
-        elif arg == '-quad!':   opts['engine'] = 'quad!'
-        elif arg == '-edit':    opts['explore'] = True
-        elif arg == '-weights': opts['show_weights'] = True
-        elif arg == '-profile': opts['show_profile'] = True
-        elif arg == '-html':    opts['html'] = True
-        elif arg == '-help':    opts['html'] = True
+        elif arg == '-preset':      opts['seed'] = -1
+        elif arg == '-mono':        opts['mono'] = True
+        elif arg == '-poly':        opts['mono'] = False
+        elif arg == '-magnetic':    opts['magnetic'] = True
+        elif arg == '-nonmagnetic': opts['magnetic'] = False
+        elif arg == '-pars':        opts['show_pars'] = True
+        elif arg == '-nopars':      opts['show_pars'] = False
+        elif arg == '-hist':        opts['show_hist'] = True
+        elif arg == '-nohist':      opts['show_hist'] = False
+        elif arg == '-rel':         opts['rel_err'] = True
+        elif arg == '-abs':         opts['rel_err'] = False
+        elif arg == '-half':        opts['engine'] = 'half'
+        elif arg == '-fast':        opts['engine'] = 'fast'
+        elif arg == '-single':      opts['engine'] = 'single'
+        elif arg == '-double':      opts['engine'] = 'double'
+        elif arg == '-single!':     opts['engine'] = 'single!'
+        elif arg == '-double!':     opts['engine'] = 'double!'
+        elif arg == '-quad!':       opts['engine'] = 'quad!'
+        elif arg == '-edit':        opts['explore'] = True
+        elif arg == '-weights':     opts['show_weights'] = True
+        elif arg == '-profile':     opts['show_profile'] = True
+        elif arg == '-html':        opts['html'] = True
+        elif arg == '-help':        opts['html'] = True
         elif arg.startswith('-D'):
             var, val = arg[2:].split('=')
             os.environ[var] = val
@@ -1559,8 +1554,8 @@ def show_docs(opts):
     """
     show html docs for the model
     """
-    from .generate import make_html
     from . import rst2html
+    from .generate import make_html
 
     info = opts['info'][0]
     html = make_html(info)
@@ -1574,9 +1569,9 @@ def explore(opts):
     explore the model using the bumps gui.
     """
     import wx  # type: ignore
-    from bumps.names import FitProblem  # type: ignore
-    from bumps.gui.app_frame import AppFrame  # type: ignore
     from bumps.gui import signal
+    from bumps.gui.app_frame import AppFrame  # type: ignore
+    from bumps.names import FitProblem  # type: ignore
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
@@ -1599,7 +1594,7 @@ def explore(opts):
     if app:
         app.MainLoop()
 
-class Explore(object):
+class Explore:
     """
     Bumps wrapper for a SAS model comparison.
 
@@ -1609,6 +1604,7 @@ class Explore(object):
     def __init__(self, opts):
         # type: (Dict[str, Any]) -> None
         from bumps.cli import config_matplotlib  # type: ignore
+
         from . import bumps_model
         config_matplotlib()
         self.opts = opts

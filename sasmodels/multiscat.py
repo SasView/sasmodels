@@ -92,20 +92,18 @@ Intel HD 4000 graphics.  The single precision numerical artifacts don't
 seem to seriously impact overall accuracy, though they look pretty bad.
 """
 
-from __future__ import print_function, division
 
 import argparse
-#import time
 
+#import time
 import numpy as np
 from numpy import pi
 from scipy.special import gamma
 
-from sasmodels import core
-from sasmodels import compare
-from sasmodels.resolution import Resolution, bin_edges
-from sasmodels.direct_model import call_kernel
 import sasmodels.kernelcl
+from sasmodels import compare, core
+from sasmodels.direct_model import call_kernel
+from sasmodels.resolution import Resolution, bin_edges
 
 # TODO: select fast and accurate fft library
 # clFFT: https://github.com/clMathLibraries/clFFT (AMD's OpenCL)
@@ -126,7 +124,6 @@ except ImportError:
 
 # pylint: disable=unused-import,ungrouped-imports
 try:
-    from typing import Dict
     from sasmodels.modelinfo import ModelInfo
 except ImportError:
     pass
@@ -135,7 +132,7 @@ except ImportError:
 PRECISION = np.dtype('f' if HAVE_OPENCL else 'd')  # 'f' or 'd'
 USE_FAST = True  # OpenCL faster, less accurate math
 
-class ICalculator(object):
+class ICalculator:
     """
     Multiple scattering calculator
     """
@@ -651,7 +648,7 @@ def rebin(x, I, xo):
 
 
 def parse_pars(model, opts):
-    # type: (ModelInfo, argparse.Namespace) -> Dict[str, float]
+    # type: (ModelInfo, argparse.Namespace) -> dict[str, float]
     """
     Parse par=val arguments from the command line.
     """

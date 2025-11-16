@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Jitter Explorer
 ===============
@@ -45,12 +44,11 @@ From a jupyter cell::
     #filename = projection+('_theta' if dview[0] == 180 else '_phi' if dview[1] == 180 else '')
     #ipv.savefig(filename+'.png')
 """
-from __future__ import division, print_function
 
 import argparse
 
 import numpy as np
-from numpy import pi, cos, sin, sqrt, exp, log, degrees, radians, arccos, arctan2
+from numpy import arccos, arctan2, cos, degrees, exp, log, pi, radians, sin, sqrt
 
 # Too many complaints about variable names from pylint:
 #    a, b, c, u, v, x, y, z, dx, dy, dz, px, py, pz, R, Rx, Ry, Rz, ...
@@ -680,7 +678,7 @@ def orient_relative_to_beam_quaternion(view, points):
 # representation problem.  Leave it here in case we want to revisit this later.
 
 #import numpy as np
-class Quaternion(object):
+class Quaternion:
     r"""
     Quaternion(w, r) = w + ir[0] + jr[1] + kr[2]
 
@@ -866,7 +864,8 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     for plotting.  See the :class:`.direct_model.DirectModel` class
     for details.
     """
-    from sasmodels.core import load_model_info, build_model as build_sasmodel
+    from sasmodels.core import build_model as build_sasmodel
+    from sasmodels.core import load_model_info
     from sasmodels.data import empty_data2D
     from sasmodels.direct_model import DirectModel
 
@@ -1030,9 +1029,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
     # an issue since we are lazy-loading the package on a path that isn't tested.
     # Importing mplot3d adds projection='3d' option to subplot
-    import mpl_toolkits.mplot3d  # pylint: disable=unused-import
     import matplotlib as mpl
     import matplotlib.pyplot as plt
+    import mpl_toolkits.mplot3d  # noqa: F401
     from matplotlib.widgets import Slider
 
     ## create the plot window
@@ -1057,9 +1056,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     axes_theta = plt.axes([0.05, 0.15, 0.50, 0.04], **props)
     axes_phi = plt.axes([0.05, 0.10, 0.50, 0.04], **props)
     axes_psi = plt.axes([0.05, 0.05, 0.50, 0.04], **props)
-    stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
-    sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
-    spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
+    stheta = Slider(axes_theta, 'θ', -90, 90, valinit=0)
+    sphi = Slider(axes_phi, 'φ', -180, 180, valinit=0)
+    spsi = Slider(axes_psi, 'ψ', -180, 180, valinit=0)
 
     axes_dtheta = plt.axes([0.70, 0.15, 0.20, 0.04], **props)
     axes_dphi = plt.axes([0.70, 0.1, 0.20, 0.04], **props)
@@ -1069,9 +1068,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
     dlimit = DIST_LIMITS[dist]
-    sdtheta = Slider(axes_dtheta, u'Δθ', 0, 2*dlimit, valinit=0)
-    sdphi = Slider(axes_dphi, u'Δφ', 0, 2*dlimit, valinit=0)
-    sdpsi = Slider(axes_dpsi, u'Δψ', 0, 2*dlimit, valinit=0)
+    sdtheta = Slider(axes_dtheta, 'Δθ', 0, 2*dlimit, valinit=0)
+    sdphi = Slider(axes_dphi, 'Δφ', 0, 2*dlimit, valinit=0)
+    sdpsi = Slider(axes_dpsi, 'Δψ', 0, 2*dlimit, valinit=0)
 
     ## initial view and jitter
     theta, phi, psi = view
@@ -1221,7 +1220,7 @@ def ipv_axes():
     """
     import ipyvolume as ipv
 
-    class Axes(object):
+    class Axes:
         """
         Matplotlib Axes3D style interface to ipyvolume renderer.
         """
@@ -1314,9 +1313,9 @@ def ipv_axes():
     return Axes()
 
 def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
-    from IPython.display import display
-    import ipywidgets as widgets
     import ipyvolume as ipv
+    import ipywidgets as widgets
+    from IPython.display import display
 
     axes = ipv_axes()
 
@@ -1385,12 +1384,12 @@ def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
             readout=True,
             readout_format='.1f',
             )
-    theta = _slider(u'θ', trange, view[0])
-    phi = _slider(u'φ', prange, view[1])
-    psi = _slider(u'ψ', prange, view[2])
-    dtheta = _slider(u'Δθ', dtrange, jitter[0])
-    dphi = _slider(u'Δφ', dprange, jitter[1])
-    dpsi = _slider(u'Δψ', dprange, jitter[2])
+    theta = _slider('θ', trange, view[0])
+    phi = _slider('φ', prange, view[1])
+    psi = _slider('ψ', prange, view[2])
+    dtheta = _slider('Δθ', dtrange, jitter[0])
+    dphi = _slider('Δφ', dprange, jitter[1])
+    dpsi = _slider('Δψ', dprange, jitter[2])
     fields = {
         'theta': theta, 'phi': phi, 'psi': psi,
         'dtheta': dtheta, 'dphi': dphi, 'dpsi': dpsi,

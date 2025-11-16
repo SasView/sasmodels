@@ -13,9 +13,7 @@ the modifyitems hook is only called after test selection.]
 
 *pytest_ignore_collect* skips kernelcl.py if pyopencl cannot be imported.
 """
-from __future__ import print_function
 
-import os.path
 import inspect
 
 import pytest
