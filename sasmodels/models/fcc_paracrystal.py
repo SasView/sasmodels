@@ -186,7 +186,7 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
               ["radius", "Ang", 40, [0, inf], "volume", "Particle radius"],
               ["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld", "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld", "Solvent scattering length density"],
-              ["theta",       "degrees",    60,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["theta",       "degrees",    60,    [-180, 180], "orientation", "c axis to beam angle"],
               ["phi",         "degrees",    60,    [-360, 360], "orientation", "rotation about beam"],
               ["psi",         "degrees",    60,    [-360, 360], "orientation", "rotation about c axis"]
              ]
