@@ -73,8 +73,8 @@ uses alternative input entries:
 
 .. warning:: The original *rpa* model applied to case 0 did not produce the same
              result. However, at present is not completely clear if this is due to
-              a problem with the code or to the problems with the interface to select
-              and pass the correct parameters.
+             a problem with the code or to the problems with the interface to select
+             and pass the correct parameters.
 
 References
 ----------
