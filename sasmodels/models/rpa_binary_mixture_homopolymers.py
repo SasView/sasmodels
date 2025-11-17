@@ -68,7 +68,7 @@ uses alternative input entries:
   * Radius of gyration instead of the segment length of the monomer (use 136.3 |Ang| for
     PSD and 128.2 |Ang| for PVME).
 
-  * Scattering length densities instead of scattering lengths (use 6.42 and 0.594
+  * Scattering length densities instead of scattering lengths (use 6.42 and 0.359
     (in units of $10^{-6}/A^2$) for PSD and PVME, respectively).
 
 .. warning:: The original *rpa* model applied to case 0 did not produce the same
@@ -111,7 +111,7 @@ parameters = [
     ["bA", "Ang", 8.0, [0, inf], "", "segment length of polymer A"],
     ["nB", "", 2741.0, [1, inf], "", "Degree of polymerization of polymer B"],
     ["vB", "cm^3/mol", 55.4, [0, inf], "", "molar volume of polymer B"],
-    ["lB", "fm", 5.5, [-inf, inf], "", "scattering length of polymer B"],
+    ["lB", "fm", 3.3, [-inf, inf], "", "scattering length of polymer B"],
     ["bB", "Ang", 6.0, [0, inf], "", "segment length of polymer B"],
     ["chiAB", "cm^3/mol", -0.021, [-inf, inf], "", "A:B interaction parameter"],
 ]
