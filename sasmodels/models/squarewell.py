@@ -83,7 +83,7 @@ single = False
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
-    ["radius_effective", "Ang", 50.0, [0, inf], "volume",
+    ["radius_effective", "Ang", 50.0, [0, inf], "",
      "effective radius of hard sphere"],
     ["volfraction", "", 0.04, [0, 0.08], "",
      "volume fraction of spheres"],

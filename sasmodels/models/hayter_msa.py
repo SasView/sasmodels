@@ -108,7 +108,7 @@ description = """\
 #       in function random() below.
 #
 parameters = [
-    ["radius_effective", "Ang", 20.75,   [0, inf],    "volume", "effective radius of charged sphere"],
+    ["radius_effective", "Ang", 20.75,   [0, inf],    "", "effective radius of charged sphere"],
     ["volfraction",   "None",     0.0192, [0, 0.74],   "", "volume fraction of spheres"],
     ["charge",        "e",   19.0,    [0.000001, 200],    "", "charge on sphere (in electrons)"],
     ["temperature",   "K",  318.16,   [0, 450],    "", "temperature, in Kelvin, for Debye length calculation"],
