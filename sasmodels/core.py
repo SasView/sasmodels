@@ -217,7 +217,7 @@ def reparameterize(
     be included in the table after the existing parameter *par*, or at
     the beginning if *par* is the empty string.
 
-    *docs* constains the doc string for the translated model, which by default
+    *docs* contains the doc string for the translated model, which by default
     references the base model and gives the *translation* text.
 
     *name* is the model name (default = :code:`"constrained_" + base.name`).
