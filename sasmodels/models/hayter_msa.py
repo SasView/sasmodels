@@ -161,19 +161,7 @@ tests = [
       'volfraction': 0.0192,
       'temperature': 298.0,
       'concentration_salt': 0,
-      'dielectconst': 78.0,
-      'radius_effective_pd': 0},
+      'dielectconst': 78.0},
      [0.00001, 0.0010, 0.01, 0.075], [0.0711646, 0.0712928, 0.0847006, 1.07150]],
-    [{'scale': 1.0,
-      'background': 0.0,
-      'radius_effective': 20.75,
-      'charge': 19.0,
-      'volfraction': 0.0192,
-      'temperature': 298.0,
-      'concentration_salt': 0.05,
-      'dielectconst': 78.0,
-      'radius_effective_pd': 0.1,
-      'radius_effective_pd_n': 40},
-     [0.00001, 0.0010, 0.01, 0.075], [0.450272, 0.450420, 0.465116, 1.039625]]
     ]
 # ADDED by:  RKH  ON: 16Mar2016 converted from sasview, new Taylor expansion at smallest rescaled Q
