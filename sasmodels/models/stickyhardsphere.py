@@ -110,7 +110,7 @@ single = False
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
-    ["radius_effective", "Ang", 50.0, [0, inf], "volume",
+    ["radius_effective", "Ang", 50.0, [0, inf], "",
      "effective radius of hard sphere"],
     ["volfraction", "", 0.2, [0, 0.74], "",
      "volume fraction of hard spheres"],
@@ -144,7 +144,6 @@ def random():
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,
-      'perturb': 0.05, 'stickiness': 0.2, 'volfraction': 0.1,
-      'radius_effective_pd': 0},
+      'perturb': 0.05, 'stickiness': 0.2, 'volfraction': 0.1},
      [0.001, 0.003], [1.09718, 1.087830]],
     ]
