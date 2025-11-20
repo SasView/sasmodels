@@ -79,23 +79,29 @@ def radius_effective(mode, radius):
     """Calculate R_eff for sphere"""
     return radius if mode else 0.
 
-def Iq(q, sld, sld_solvent, radius):
-    """Calculate I(q) for sphere"""
+# Variants for testing purposes: toggle True/False
+vectorized = True  # Whether to call a q vector or loop over q scalars.
+have_Fq = True  # Whether to use Fq or Iq for evaluation.
+def Fq(q, sld, sld_solvent, radius):
+    """Calculate F(q), F^2(q) for sphere"""
     #print "q",q
     #print "sld,r",sld,sld_solvent,radius
     qr = q * radius
     sn, cn = sin(qr), cos(qr)
-    ## The natural expression for the Bessel function is the following:
-    ##     bes = 3 * (sn-qr*cn)/qr**3 if qr>0 else 1
-    ## however, to support vector q values we need to handle the conditional
-    ## as a vector, which we do by first evaluating the full expression
-    ## everywhere, then fixing it up where it is broken.   We should probably
-    ## set numpy to ignore the 0/0 error before we do though...
-    bes = 3 * (sn - qr * cn) / qr ** 3 # may be 0/0 but we fix that next line
-    bes[qr == 0] = 1
-    fq = bes * (sld - sld_solvent) * form_volume(radius)
-    return 1.0e-4 * fq ** 2
-Iq.vectorized = True  # Iq accepts an array of q values
+    if vectorized:
+        with np.errstate(all='ignore'):
+            bes = 3 * (sn - qr * cn) / qr ** 3 # may be 0/0 but we fix that next line
+            bes[qr == 0] = 1
+    else:
+        bes = 3 * (sn-qr*cn)/qr**3 if qr != 0 else 1
+    fq = bes * (1e-2 * (sld - sld_solvent) * form_volume(radius))
+    return fq, fq**2
+Fq.vectorized = vectorized  # Fq accepts an array of q value
+
+def Iq(q, sld, sld_solvent, radius):
+    """Calculate I(q) for sphere"""
+    return Fq(q, sld, sld_solvent, radius)[1]
+Iq.vectorized = vectorized  # Iq accepts an array of q value
 
 def sesans(z, sld, sld_solvent, radius):
     """
