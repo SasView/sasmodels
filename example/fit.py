@@ -13,6 +13,9 @@ radial_data = load_data('DEC07267.DAT')
 set_beam_stop(radial_data, 0.00669, outer=0.025)
 set_top(radial_data, -.0185)
 
+# Set data limits on fit
+#radial_data.qmin, radial_data.qmax = 0.01, 0.02
+
 tan_data = load_data('DEC07266.DAT')
 set_beam_stop(tan_data, 0.00669, outer=0.025)
 set_top(tan_data, -.0185)
