@@ -76,10 +76,11 @@ For a regular shape (no elongation):
 
     V = \frac{4}{3}\,\text{length\_a}^{3}\,\bigl(1 - 3(1 - t)^{3}\bigr)
 
-Amplitude of the form factor AP for the fixed orientation of the shape reads
+The reference orientation of the shape is: a along x, b along y and c along z.
+Amplitude of the form factor AP for the reference orientation of the shape reads 
 
 .. math::
-    AP(q,\theta,\phi) = \frac{6}{1 - 3(1 - t)^3}\,(AA + AB + AC)
+    AP(q,\theta,\phi) = \frac{6}{1 - 3(1 - t)^3}\,(AA + BB + CC)
 
 .. math::
     AA = \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_x)\sin\big(q_y(1 - t) - q_x t\big)
@@ -88,13 +89,13 @@ Amplitude of the form factor AP for the fixed orientation of the shape reads
     + (q_z + q_x)\sin\big(q_z(1 - t) + q_x t\big)\Big]
 
 .. math::
-    AB = \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_y)\sin\big(q_z(1 - t) - q_y t\big)
+    BB = \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_y)\sin\big(q_z(1 - t) - q_y t\big)
     + (q_z + q_y)\sin\big(q_z(1 - t) + q_y t\big)\Big]
     + \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_y)\sin\big(q_x(1 - t) - q_y t\big)
     + (q_x + q_y)\sin\big(q_x(1 - t) + q_y t\big)\Big]
 
 .. math::
-    AC = \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_z)\sin\big(q_x(1 - t) - q_z t\big)
+    CC = \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_z)\sin\big(q_x(1 - t) - q_z t\big)
     + (q_x + q_z)\sin\big(q_x(1 - t) + q_z t\big)\Big]
     + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y(1 - t) - q_z t\big)
     + (q_y + q_z)\sin\big(q_y(1 - t) + q_z t\big)\Big]
@@ -104,11 +105,13 @@ Amplitude of the form factor AP for the fixed orientation of the shape reads
     q_y = q\,\sin\theta\,\sin\phi, \qquad
     q_z = q\,\cos\theta
 
-θ is the angle between the scattering vector and the z axis of the octahedron (length_c).
-ϕ is the angle between the scattering vector (lying in the xy plane) and the x axis (length_a).
+θ is the angle between the scattering vector and the z axis.
+ϕ is the rotation angle in the xy plane.
+The octahedron is in its reference orientation, with the c-axis aligned along z and the a-axis aligned along x.
 
-The normalized form factor in 1D is obtained after averaging over all possible
-orientations and this part is implemented in the same way as in the rectangular prism model.
+The 1D form factor P(q) corresponds to the orientation average with all the possible orientations having the same probability.
+Instead of rotating the shape through all the possible orientations in the integral,
+it is equivalent to integrate the 3D scattering vector over a sphere of radius q with the shape in its reference orientation.
 
 .. math::
     P(q) =  \frac{2}{\pi} \int_0^{\frac{\pi}{2}} \,
