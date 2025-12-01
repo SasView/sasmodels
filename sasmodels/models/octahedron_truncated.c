@@ -5,7 +5,7 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio, double t)
 {
 //octehedron volume formula
 // length_a is the half height along the a axis of the octahedron
-    return (4./3.) * length_a * (length_a*b2a_ratio) * (length_a*c2a_ratio)*(1.-3*(1.-t)*(1.-t)*(1.-t));
+    return (4./3.) * cube(length_a) * b2a_ratio * c2a_ratio * (1.-3*cube(1-t));
 }
 
 static double
@@ -40,6 +40,8 @@ Iq(double q,
             SINCOS(phi, sin_phi, cos_phi);
 
             //HERE: Octahedron formula
+			// Warning: here qx, qy, qz are the rescaled components, they have no dimension.
+			// Qx, Qy, Qz are in A-1 and length_a, length_b, length_c are in A.
             const double Qx = q * sin_theta * cos_phi;
     	    const double Qy = q * sin_theta * sin_phi;
     	    const double Qz = q * cos_theta;
@@ -58,7 +60,7 @@ Iq(double q,
 
 
 	    // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
-            const double AP = 6./(1.-3*(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
+            const double AP = 6./(1.-3*cube(1-t))*(AA+BB+CC);
 
             inner_sum += GAUSS_W[j] * AP * AP;
 
@@ -76,9 +78,7 @@ Iq(double q,
     answer /= M_PI_2; //Form factor P(q)
 
     // Multiply by contrast^2 and volume^2
-    // volume of octahedron
-    const double volume = (4./3.)*length_a * length_b * length_c*(1.-3*(1.-t)*(1.-t)*(1.-t));
-    answer *= square((sld-solvent_sld)*volume);
+    answer *= square((sld-solvent_sld)*form_volume(length_a, b2a_ratio, c2a_ratio, t));
 
     // Convert from [1e-12 A-1] to [cm-1]
     answer *= 1.0e-4;
@@ -127,6 +127,8 @@ Fq(double q,
             SINCOS(phi, sin_phi, cos_phi);
 
             //HERE: Octahedron formula
+			// Warning: here qx, qy, qz are the rescaled components, they have no dimension.
+			// Qx, Qy, Qz are in A-1 and length_a, length_b, length_c are in A.
             const double Qx = q * sin_theta * cos_phi;
     	    const double Qy = q * sin_theta * sin_phi;
     	    const double Qz = q * cos_theta;
@@ -143,7 +145,7 @@ Fq(double q,
                                 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qz)*sin(qy*(1.-t)-qz*t)+(qy+qz)*sin(qy*(1.-t)+qz*t));
 
 	    // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
-            const double AP = 6./(1.-3*(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
+            const double AP = 6./(1.-3*cube(1-t))*(AA+BB+CC);
 
 
             inner_sum_F1 += GAUSS_W[j] * AP;
@@ -167,7 +169,7 @@ Fq(double q,
 
     // Multiply by contrast and volume
     // volume of octahedron
-    const double s = (sld-solvent_sld) * (4./3.) * (length_a * length_b * length_c)*(1.-3*(1.-t)*(1.-t)*(1.-t));
+    const double s = (sld-solvent_sld) * form_volume(length_a, b2a_ratio, c2a_ratio, t);
 
     // Convert from [1e-12 A-1] to [cm-1] and account for SLD units (1e-6/Ang^2)
     *F1 = 1e-2 * s * outer_sum_F1;
@@ -196,6 +198,8 @@ Iqabc(double qa, double qb, double qc,
 
 
     //HERE: Octahedron formula
+	// Warning: here qx, qy, qz are the rescaled components, they have no dimension.
+	// qa, qb, qc are in A-1 and length_a, length_b, length_c are in A.
     const double qx = qa * length_a;
     const double qy = qb * length_b;
     const double qz = qc * length_c;
@@ -209,10 +213,10 @@ Iqabc(double qa, double qb, double qc,
                                 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx))*((qy-qz)*sin(qy*(1.-t)-qz*t)+(qy+qz)*sin(qy*(1.-t)+qz*t));
 
 	    // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
-    const double AP = 6./(1.-3*(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
+    const double AP = 6./(1.-3*cube(1-t))*(AA+BB+CC);
 
     // Multiply by contrast and volume
-    const double s = (sld-solvent_sld) *(4./3.)* (length_a * length_b * length_c)*(1.-3*(1.-t)*(1.-t)*(1.-t));
+    const double s = (sld-solvent_sld) * form_volume(length_a, b2a_ratio, c2a_ratio, t);
 
 
     // Convert from [1e-12 A-1] to [cm-1]
