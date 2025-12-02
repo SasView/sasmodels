@@ -1,6 +1,14 @@
 Release notes
 =============
 
+v1.0.12 2025-12-02
+------------------
+
+* Include the 2-Yukawa structure factor model
+* Add Ruff pre-commit hooks for developers
+* Figures are cached between builds for CI speed up
+* Plugin model location docs updated
+
 v1.0.11 2025-08-19
 ------------------
 
