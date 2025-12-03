@@ -2,19 +2,19 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 
-This model provides the form factor, P(q), for a general octahedron.
+This model provides the form factor P(q) for a general octahedron.
 It can be a regular octahedron shape with all edges of the same length.
 Or a general shape with different elongations along the three perpendicular two-fold axes.
-It includes the possibility to add an adjustable square truncation at all the six vertices.
+It includes the possibility to add an adjustable square truncation at each of the six vertices.
 This model includes the general cuboctahedron shape for the maximum value of truncation.
 The form factor expression is obtained by analytical integration over the volume of the shape.
 This model is constructed in a similar way as the rectangular prism model.
-It contains both the form factor for a fixed orientation and the 1D form factor after orientation average (Gauss-Legendre).
+It contains both the form factor for a reference orientation and the 1D form factor after orientation average (Gauss-Legendre).
 
 Definition
 ----------
 
-The general octahedron is defined by its dimensions along its three perpendicular two-fold axis along x, y and z directions.
+The general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
 length_a, length_b and length_c are the distances from the center of the general octahedron to its 6 vertices.
 
 Coordinates of the six vertices are:
@@ -26,9 +26,9 @@ Coordinates of the six vertices are:
     (0, 0, -length_c)
 
 t is the truncation parameter.
-Truncation adds a square facet for each vertice that is perpendicular to a 2-fold axis.
-The resulting shape is made of 6 squares and 8 hexagons, that may be non regular depending on the three distances.
-A square facet crosses the x, y, z directions at distances equal to  t length_a, t length_b and t length_c.
+Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
+The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions
+A square facet crosses the x, y, z directions at distances equal to t length_a, t length_b and t length_c.
 
 A regular octahedron corresponds to:
 
@@ -100,13 +100,23 @@ Amplitude of the form factor AP for the reference orientation of the shape reads
     + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y(1 - t) - q_z t\big)
     + (q_y + q_z)\sin\big(q_y(1 - t) + q_z t\big)\Big]
 
-.. math::
-    q_x = q\,\sin\theta\,\cos\phi, \qquad
-    q_y = q\,\sin\theta\,\sin\phi, \qquad
-    q_z = q\,\cos\theta
+Capital QX QY QZ are the three components in [A-1] of the scattering vector.
+qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms.
 
-θ is the angle between the scattering vector and the z axis.
+.. math::
+    Q_x = q\,\sin\theta\,\cos\phi, \qquad
+    Q_y = q\,\sin\theta\,\sin\phi, \qquad
+    Q_z = q\,\cos\theta
+
+.. math::
+    q_x = Q_x\,\text{length\_a} \qquad
+    q_y = Q_y\,\text{length\_b} \qquad
+    q_z = Q_z\,\text{length\_c} \qquad
+
+
+θ is the angle between the scattering vector and the z axis.
 ϕ is the rotation angle in the xy plane.
+
 The octahedron is in its reference orientation, with the c-axis aligned along z and the a-axis aligned along x.
 
 The 1D form factor P(q) corresponds to the orientation average with all the possible orientations having the same probability.
@@ -131,7 +141,7 @@ units) *scale* represents the volume fraction (which is unitless).
 
 .. figure:: img/octa-truncated.png
 
-    Truncated octahedron shape.
+    Truncated octahedron shape for different truncation.
 
 .. figure:: img/octahedrons_intensity_plot.png
 
@@ -141,7 +151,7 @@ Validation
 ----------
 
 Validation of the code is made using numerical checks.
-Comparisons with Debye formula calculations were made using DebyeCalcultor library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
+Comparisons with Debye formula calculations were made using DebyeCalculator library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
 Good agreement was found at q < 0.1 1/Angstrom.
 
 References
@@ -166,9 +176,9 @@ Authorship and Verification
              Helen Ibrahim (helenibrahim1@outlook.com)
              Sara Mokhtari (smokhtari@insa-toulouse.fr)
 
-* **Last Modified by:** SM **Date:** 13 November 2025
+* **Last Modified by:** MIC **Date:** 3 December 2025
 
-* **Last Reviewed by:** SM **Date:** November 2025
+* **Last Reviewed by:** SM **Date:** 3 December 2025
 
 """
 
@@ -187,7 +197,8 @@ BB = 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy)) * ((qz-qy)*sin(qz*(1.-t)-qy*t) + (qz+qy)
 
 CC = 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz)) * ((qx-qz)*sin(qx*(1.-t)-qz*t) + (qx+qz)*sin(qx*(1.-t)+qz*t)) + 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx)) * ((qy-qz)*sin(qy*(1.-t)-qz*t) + (qy+qz)*sin(qy*(1.-t)+qz*t))
 
-Normalization at q = 0 uses the standard scaling factor.
+With capital QX QY QZ are the three components in [A-1] of the scattering vector
+and qx qy qz are the rescaled components (no unit) for computing AP term.
 
 Qx = q * sin_theta * cos_phi
 Qy = q * sin_theta * sin_phi
@@ -196,7 +207,12 @@ qx = Qx * length_a
 qy = Qy * length_b
 qz = Qz * length_c
 
-Valid truncation parameter range: 0 < t < 1.
+Reference orientation is with a along x axis, b along y axis and c along z axis
+
+Valid truncation parameter range: 0.5 < t < 1.
+
+t=1 is for octahedron
+t=0.5 is for cuboctahedron
 """
 
 category = "shape:polyhedron"
@@ -225,6 +241,8 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
 source = ["lib/gauss20.c", "octahedron_truncated.c"]
 # change to "lib/gauss76.c" or "lib/gauss150.c" to increase the number of integration points
 # for the orientational average. Note that it will increase calculation times.
+
+# Fq() function is used in the .c code
 have_Fq = True
 
 tests = [
