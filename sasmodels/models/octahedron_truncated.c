@@ -89,8 +89,8 @@ Iq(double q,
     // contrast
     const double s = (sld-solvent_sld);
     // volume
-    s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
-    answer *= square(s);
+    // s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
+    answer *= square(s*form_volume(length_a, b2a_ratio,c2a_ratio, t));
 
     // Convert from [1e-12 A-1] to [cm-1]
     answer *= 1.0e-4;
@@ -180,11 +180,11 @@ Fq(double q,
     // contrast
     const double s = (sld-solvent_sld);
     // volume
-    s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
-
+    // s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
+	
     // Convert from [1e-12 A-1] to [cm-1]
-    *F1 = 1e-2 * s * outer_sum_F1;
-    *F2 = 1e-4 * s * s * outer_sum_F2;
+    *F1 = 1e-2 * s * form_volume(length_a, b2a_ratio,c2a_ratio, t) * outer_sum_F1;
+    *F2 = 1e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, t)) * outer_sum_F2;
 }
 
 
@@ -223,8 +223,8 @@ Iqabc(double qa, double qb, double qc,
     // contrast
     const double s = (sld-solvent_sld);
     // volume
-    s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
+    // s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
 
     // Convert from [1e-12 A-1] to [cm-1]
-    return 1.0e-4 * square(s * AP);
+    return 1.0e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, t) * AP);
 }
