@@ -95,6 +95,10 @@ Iq(double q,
     // Convert from [1e-12 A-1] to [cm-1]
     answer *= 1.0e-4;
 
+	if (isnan(answer) || isinf(answer)) {
+        return 0.0;
+    }
+
     return answer;
 }
 
@@ -185,6 +189,13 @@ Fq(double q,
     // Convert from [1e-12 A-1] to [cm-1]
     *F1 = 1e-2 * s * form_volume(length_a, b2a_ratio,c2a_ratio, t) * outer_sum_F1;
     *F2 = 1e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, t)) * outer_sum_F2;
+
+    if (isnan(*F1) || isinf(*F1)) {
+        *F1 = 0.0;
+    }
+    if (isnan(*F2) || isinf(*F2)) {
+        *F2 = 0.0;
+    }
 }
 
 
@@ -226,5 +237,13 @@ Iqabc(double qa, double qb, double qc,
     // s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
 
     // Convert from [1e-12 A-1] to [cm-1]
-    return 1.0e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, t) * AP);
+    double answer = 1.0e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, t) * AP);
+    if (isnan(answer) || isinf(answer)) {
+        return 0.0;
+    }
+
+    return answer;
 }
+
+
+
