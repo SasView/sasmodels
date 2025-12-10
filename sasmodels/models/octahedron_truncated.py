@@ -57,24 +57,24 @@ For a regular shape:
 Volume of the general shape including truncation is given by:
 
 .. math::
-    V = \frac{4}{3}\, \text{length\_a}^{3}\, \text{b2a\_ratio}\, \text{c2a\_ratio}\,\bigl(1 - 3(1 - t)^{3}\bigr)
+    V = \frac{4}{3}\, length_a^{3}\, b2a_ratio\, c2a_ratio\bigl(1 - 3(1 - t)^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
 
 .. math::
-    A_{\text{edge}}^{2} = \text{length\_a}^{2} + \text{length\_b}^{2},\qquad
-    B_{\text{edge}}^{2} = \text{length\_a}^{2} + \text{length\_c}^{2},\qquad
-    C_{\text{edge}}^{2} = \text{length\_b}^{2} + \text{length\_c}^{2}
+    A_edge^2 = length_a^2 + length_b^2,\qquad
+    B_edge^2 = length_a^2 + length_c^2,\qquad
+    C_edge^2 = length_b^2 + length_c^2
 
 For a regular shape (no elongation):
 
 .. math::
-    	{b2a\_ratio} = \text{c2a\_ratio} = 1,\qquad
-    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = \text{length\_a}\sqrt{2},\qquad
-    	{length\_a} = \text{length\_b} = \text{length\_c} = A_{\text{edge}}/\sqrt{2},
-
-    V = \frac{4}{3}\,\text{length\_a}^{3}\,\bigl(1 - 3(1 - t)^{3}\bigr)
+    	b2a_ratio = c2a_ratio = 1,\qquad
+    A_edge = B_edge = C_edge = length_a\sqrt{2},\qquad
+    	length_a = length_b = length_c = A_edge/\sqrt{2},
+ 
+    V = \frac{4}{3}\, length_a^{3}\,\bigl(1 - 3(1 - t)^{3}\bigr)
 
 The reference orientation of the shape is: a along x, b along y and c along z.
 Amplitude of the form factor AP for the reference orientation of the shape reads 
@@ -109,9 +109,9 @@ qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms.
     Q_z = q\,\cos\theta
 
 .. math::
-    q_x = Q_x\,\text{length\_a} \qquad
-    q_y = Q_y\,\text{length\_b} \qquad
-    q_z = Q_z\,\text{length\_c} \qquad
+    q_x = Q_x\,length_a \qquad
+    q_y = Q_y\,length_b \qquad
+    q_z = Q_z\,length_c \qquad
 
 
 θ is the angle between the scattering vector and the z axis.
