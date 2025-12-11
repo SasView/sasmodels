@@ -34,45 +34,45 @@ A regular octahedron corresponds to:
 
 .. math::
     length_a = length_b = length_c
-    t = 1
+    (t = 1)
 
 A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
 .. math:: 
     length_a = length_b = length_c
-    t = 1/2
+    (t = 1/2)
 
 The model contains 4 parameters: length_a, the two ratios b2a_ratio and c2a_ratio and t:
 
 .. math::
-    b2a_ratio = length_b/length_a,
-    c2a_ratio = length_c/length_a,
+    b2a_{ratio} = length_b/length_a,
+    c2a_{ratio} = length_c/length_a,
     1/2 < t < 1
 
 For a regular shape:
 
 .. math::
-    b2a_ratio = c2a_ratio = 1
+    b2a_{ratio} = c2a_{ratio} = 1
 
 Volume of the general shape including truncation is given by:
 
 .. math::
-    V = \frac{4}{3}\, length_a^{3}\, b2a_ratio\, c2a_ratio\bigl(1 - 3(1 - t)^{3}\bigr)
+    V = \frac{4}{3}\, length_a^{3}\, b2a_{ratio}\, c2a_{ratio}\bigl(1 - 3(1 - t)^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
 
 .. math::
-    A_edge^2 = length_a^2 + length_b^2,\qquad
-    B_edge^2 = length_a^2 + length_c^2,\qquad
-    C_edge^2 = length_b^2 + length_c^2
+    A_{edge}^2 = length_a^2 + length_b^2,\qquad
+    B_{edge}^2 = length_a^2 + length_c^2,\qquad
+    C_{edge}^2 = length_b^2 + length_c^2
 
 For a regular shape (no elongation):
 
 .. math::
-    	b2a_ratio = c2a_ratio = 1,\qquad
-    A_edge = B_edge = C_edge = length_a\sqrt{2},\qquad
-    	length_a = length_b = length_c = A_edge/\sqrt{2},
+    	b2a_{ratio} = c2a_{ratio} = 1,\qquad
+    A_{edge} = B_{edge} = C_{edge} = length_a\sqrt{2},\qquad
+    	length_a = length_b = length_c = A_{edge}/\sqrt{2},
  
     V = \frac{4}{3}\, length_a^{3}\,\bigl(1 - 3(1 - t)^{3}\bigr)
 
@@ -100,7 +100,7 @@ Amplitude of the form factor AP for the reference orientation of the shape reads
     + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y(1 - t) - q_z t\big)
     + (q_y + q_z)\sin\big(q_y(1 - t) + q_z t\big)\Big]
 
-Capital QX QY QZ are the three components in [A-1] of the scattering vector.
+Capital Qx Qy Qz are the three components in [A-1] of the scattering vector.
 qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms.
 
 .. math::
@@ -172,13 +172,13 @@ References
 Authorship and Verification
 ----------------------------
 
-* **Authors:** Marianne Imperor-Clerc (marianne.imperor@universite-paris-saclay.fr)
+* **Authors:** Marianne Imperor-Clerc (marianne.imperor@cnrs.fr)
              Helen Ibrahim (helenibrahim1@outlook.com)
              Sara Mokhtari (smokhtari@insa-toulouse.fr)
 
-* **Last Modified by:** MIC **Date:** 3 December 2025
+* **Last Modified by:** MIC **Date:** 11 December 2025
 
-* **Last Reviewed by:** SM **Date:** 3 December 2025
+* **Last Reviewed by:** SM **Date:** 10 December 2025
 
 """
 
