@@ -119,6 +119,7 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c",
           "flexible_cylinder_elliptical.c"]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

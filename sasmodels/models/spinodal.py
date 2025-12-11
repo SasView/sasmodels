@@ -96,6 +96,7 @@ def Iq(q,
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     pars = dict(

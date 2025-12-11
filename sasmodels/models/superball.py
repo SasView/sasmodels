@@ -152,6 +152,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 # lib/gauss76.c
 # lib/gauss20.c
 source = ["lib/gauss20.c", "lib/sas_gamma.c", "superball.c"]
+has_shape_visualization = False
 have_Fq = True
 radius_effective_modes = [
     "radius of gyration",

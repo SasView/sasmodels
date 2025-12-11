@@ -77,6 +77,7 @@ import numpy as np
 from numpy import inf
 
 category = "shape:sphere"
+has_shape_visualization = False
 single = False  # double precision only!
 
 name = "binary_hard_sphere"

@@ -238,6 +238,7 @@ radius_effective_modes = [
     "half length_a", "half length_b", "half length_c",
     "equivalent circular cross-section", "half ab diagonal", "half diagonal",
     ]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

@@ -147,6 +147,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
+has_shape_visualization = False
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent outer volume sphere",

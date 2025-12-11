@@ -70,6 +70,7 @@ def Iq(q, lorentz_scale, porod_scale, cor_length, porod_exp, lorentz_exp):
     return inten
 Iq.vectorized = True
 
+has_shape_visualization = False
 tests = [[{}, 0.001, 1009.98],
          [{}, 0.150141, 0.175645],
          [{}, 0.442528, 0.0213957]]

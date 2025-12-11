@@ -73,6 +73,7 @@ parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier ter
 
 source = ["gel_fit.c"]
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     guinier_scale = 10**np.random.uniform(1, 3)

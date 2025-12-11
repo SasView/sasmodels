@@ -74,6 +74,64 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "sphere.c"]
 have_Fq = True
 radius_effective_modes = ["radius"]
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for sphere visualization."""
+    import numpy as np
+    radius = params.get('radius', 50)
+    
+    # Create sphere
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    x = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z = radius * np.cos(phi_mesh)
+    
+    return {'sphere': (x, y, z)}
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the sphere."""
+    import numpy as np
+    radius = params.get('radius', 50)
+    
+    # Create circle for all cross-sections (sphere is symmetric)
+    theta = np.linspace(0, 2*np.pi, 100)
+    circle_x = radius * np.cos(theta)
+    circle_y = radius * np.sin(theta)
+    
+    # XY plane (top view)
+    ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2)
+    ax_xy.set_xlim(-radius*1.2, radius*1.2)
+    ax_xy.set_ylim(-radius*1.2, radius*1.2)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane (side view)
+    ax_xz.plot(circle_x, circle_y, 'r-', linewidth=2)
+    ax_xz.set_xlim(-radius*1.2, radius*1.2)
+    ax_xz.set_ylim(-radius*1.2, radius*1.2)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Side View)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane (front view)
+    ax_yz.plot(circle_x, circle_y, 'g-', linewidth=2)
+    ax_yz.set_xlim(-radius*1.2, radius*1.2)
+    ax_yz.set_ylim(-radius*1.2, radius*1.2)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Front View)')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
+
 #single = False
 def random():
     """Return a random parameter set for the model."""

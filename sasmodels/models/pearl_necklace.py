@@ -104,6 +104,7 @@ source = ["lib/sas_Si.c", "lib/sas_3j1x_x.c", "pearl_necklace.c"]
 valid = "thick_string < radius && num_pearls > 0.0"
 single = False  # use double precision unless told otherwise
 radius_effective_modes = ["equivalent volume sphere"]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

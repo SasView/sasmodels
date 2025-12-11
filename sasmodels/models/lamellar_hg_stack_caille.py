@@ -98,6 +98,7 @@ description = """\
 """
 category = "shape:lamellae"
 
+has_shape_visualization = False
 single = False  # TODO: check
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",

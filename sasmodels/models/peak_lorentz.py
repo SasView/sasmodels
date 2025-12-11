@@ -65,6 +65,7 @@ def Iq(q, peak_pos, peak_hwhm):
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     peak_pos = 10**np.random.uniform(-3, -1)

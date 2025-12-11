@@ -139,6 +139,7 @@ radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "outer radius", "half outer length",
     "half min outer dimension", "half max outer dimension", "half outer diagonal",
     ]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

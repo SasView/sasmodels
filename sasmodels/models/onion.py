@@ -334,6 +334,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "onion.c"]
+has_shape_visualization = False
 single = False
 have_Fq = True
 radius_effective_modes = ["outer radius"]

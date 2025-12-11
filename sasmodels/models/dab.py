@@ -71,6 +71,7 @@ parameters = [
 
 source = ["dab.c"]
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     pars = dict(

@@ -944,6 +944,7 @@ def make_model_info(kernel_module):
     # TODO: find Fq by inspection
     info.radius_effective_modes = getattr(kernel_module, 'radius_effective_modes', None)
     info.have_Fq = getattr(kernel_module, 'have_Fq', False)
+    info.has_shape_visualization = getattr(kernel_module, 'has_shape_visualization', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     # Note: custom.load_custom_kernel_module assumes the C sources are defined
     # by this attribute.
@@ -1097,6 +1098,8 @@ class ModelInfo:
     #: True if the model defines an Fq function with signature
     #: ``void Fq(double q, double *F1, double *F2, ...)``
     have_Fq = False
+    #: True if the model supports 3D shape visualization
+    has_shape_visualization = False  # type: bool
     #: List of options for computing the effective radius of the shape,
     #: or None if the model is not usable as a form factor model.
     radius_effective_modes = None   # type: list[str]

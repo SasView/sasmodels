@@ -179,6 +179,7 @@ description = """
 category = "shape:paracrystal"
 
 #note - calculation requires double precision
+has_shape_visualization = False
 single = False
 
 # pylint: disable=bad-whitespace, line-too-long

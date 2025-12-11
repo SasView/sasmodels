@@ -111,6 +111,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
+has_shape_visualization = False
 single = False
 
 source = ["lib/sas_3j1x_x.c", "polymer_micelle.c"]

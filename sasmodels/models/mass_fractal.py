@@ -92,6 +92,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "mass_fractal.c"]
+has_shape_visualization = False
 valid = "fractal_dim_mass >= 1.0"
 
 def random():

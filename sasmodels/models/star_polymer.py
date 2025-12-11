@@ -84,6 +84,7 @@ parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of
 
 source = ["star_polymer.c"]
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     pars = dict(

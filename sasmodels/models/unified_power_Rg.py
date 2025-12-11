@@ -122,6 +122,7 @@ def Iq(q, level, rg, power, B, G):
 
 Iq.vectorized = True
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     level = np.minimum(np.random.poisson(0.5) + 1, 6)

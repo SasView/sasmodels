@@ -95,6 +95,7 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     # only care about the value of second_moment:

@@ -268,6 +268,7 @@ parameters = [["n_shells",             "",           1,      [1, 10],        "vo
              ]
 # pylint: enable=bad-whitespace, line-too-long
 source = ["lib/polevl.c", "lib/sas_erf.c", "lib/sas_3j1x_x.c", "spherical_sld.c"]
+has_shape_visualization = False
 single = False  # TODO: fix low q behaviour
 have_Fq = True
 radius_effective_modes = ["outer radius"]

@@ -144,6 +144,7 @@ radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",
     "radius", "half length", "half total length",
     ]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

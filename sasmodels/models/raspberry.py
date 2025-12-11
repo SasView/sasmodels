@@ -156,6 +156,7 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
 radius_effective_modes = ["radius_large", "radius_outer"]
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     # Limit volume fraction to 20% each

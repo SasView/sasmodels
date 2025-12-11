@@ -106,6 +106,7 @@ radius_effective_modes = [
     "half outer min dimension", "half outer max dimension",
     "half outer diagonal",
     ]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

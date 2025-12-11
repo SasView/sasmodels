@@ -139,6 +139,7 @@ parameters = [
 
 
 source = ["rpa.c"]
+has_shape_visualization = False
 single = False
 
 control = "case_num"

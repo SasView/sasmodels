@@ -57,6 +57,7 @@ def Iq(q, power):
     return result
 Iq.vectorized = True  # Iq accepts an array of q values
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     power = np.random.uniform(1, 6)

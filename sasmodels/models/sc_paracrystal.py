@@ -175,6 +175,7 @@ description = """
         sldSolv: SLD of the solvent
         """
 category = "shape:paracrystal"
+has_shape_visualization = False
 single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],

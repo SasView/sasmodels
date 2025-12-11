@@ -103,6 +103,7 @@ description = """\
     in versions 4.2.2 and higher.
 """
 category = "structure-factor"
+has_shape_visualization = False
 structure_factor = True
 
 single = False

@@ -98,6 +98,7 @@ description = """Note : scale and contrast = (sld - sld_solvent) are both
               """
 
 category = "shape:cylinder"
+has_shape_visualization = False
 single = False  # double precision only!
 
 # pylint: disable=bad-whitespace, line-too-long

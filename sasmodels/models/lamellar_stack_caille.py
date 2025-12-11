@@ -92,6 +92,7 @@ description = """\
 """
 category = "shape:lamellae"
 
+has_shape_visualization = False
 single = False  # TODO: check
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],

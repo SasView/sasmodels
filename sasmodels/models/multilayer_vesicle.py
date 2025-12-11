@@ -144,6 +144,7 @@ parameters = [
 #polydispersity = ["radius", "thick_shell"]
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
+has_shape_visualization = False
 have_Fq = True
 radius_effective_modes = ["outer radius"]
 

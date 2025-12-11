@@ -128,6 +128,7 @@ title = "User model for two Yukawa structure factor (S(q))"
 description = """"""
 
 category = "structure-factor"
+has_shape_visualization = False
 structure_factor = True
 single = False  # make sure that it has double digit precision
 opencl = False  # related with parallel computing

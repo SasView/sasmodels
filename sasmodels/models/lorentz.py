@@ -52,6 +52,7 @@ parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "Screening length"],]
 
 source = ["lorentz.c"]
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     pars = dict(

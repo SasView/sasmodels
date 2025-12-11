@@ -96,6 +96,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["mass_surface_fractal.c"]
+has_shape_visualization = False
 valid = "fractal_dim_mass + fractal_dim_surf <= 6.0"
 
 def random():

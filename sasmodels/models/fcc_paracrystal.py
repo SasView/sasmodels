@@ -177,6 +177,7 @@ description = """
     """
 category = "shape:paracrystal"
 
+has_shape_visualization = False
 single = False
 
 # pylint: disable=bad-whitespace, line-too-long

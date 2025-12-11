@@ -78,6 +78,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["mono_gauss_coil.c"]
+has_shape_visualization = False
 have_Fq = False
 radius_effective_modes = ["R_g", "2R_g", "3R_g", "sqrt(5/3)*R_g"]
 

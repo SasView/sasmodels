@@ -147,6 +147,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

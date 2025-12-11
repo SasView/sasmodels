@@ -113,6 +113,7 @@ description = """\
 """
 category = "shape:lamellae"
 
+has_shape_visualization = False
 single = False
 
 #             ["name", "units", default, [lower, upper], "type","description"],

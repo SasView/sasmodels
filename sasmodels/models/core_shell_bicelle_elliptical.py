@@ -152,6 +152,7 @@ radius_effective_modes = [
     "outer rim average radius", "outer rim min radius",
     "outer max radius", "half outer thickness", "half diagonal",
     ]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

@@ -167,6 +167,7 @@ def Iq(q, rg=60.0, porod_exp=3.0):
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     rg = 10**np.random.uniform(0, 4)

@@ -118,6 +118,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
+has_shape_visualization = False
 valid = "radius_bell >= radius"
 have_Fq = True
 radius_effective_modes = [

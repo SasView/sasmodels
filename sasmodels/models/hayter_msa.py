@@ -74,6 +74,7 @@ import numpy as np
 from numpy import inf
 
 category = "structure-factor"
+has_shape_visualization = False
 structure_factor = True
 single = False  # double precision only!
 

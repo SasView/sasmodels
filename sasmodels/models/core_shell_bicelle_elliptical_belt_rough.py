@@ -159,6 +159,7 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical_belt_rough.c"]
+has_shape_visualization = False
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",

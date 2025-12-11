@@ -108,6 +108,7 @@ def Iq(q, i_zero, rg, polydispersity):
     return i_zero * result
 Iq.vectorized = True  # Iq accepts an array of q values
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     rg = 10**np.random.uniform(0, 4)

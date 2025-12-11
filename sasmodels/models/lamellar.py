@@ -94,6 +94,7 @@ Iq = """
     return 4.0e-4*M_PI*sub*sub/qsq * 2.0*sinq2*sinq2 / (thickness*qsq);
     """
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     thickness = 10**np.random.uniform(1, 4)

@@ -87,6 +87,7 @@ Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
 #{ return (m*qx+b)*(m*qy+b); }
 #"""
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     scale = 10**np.random.uniform(0, 3)

@@ -158,6 +158,7 @@ have_Fq = True
 radius_effective_modes = [
     "average curvature", "equivalent volume sphere", "min radius", "max radius",
     ]
+has_shape_visualization = True
 
 def random():
     """Return a random parameter set for the model."""

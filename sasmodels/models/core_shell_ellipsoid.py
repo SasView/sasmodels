@@ -150,6 +150,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
+has_shape_visualization = False
 have_Fq = True
 radius_effective_modes = [
     "average outer curvature", "equivalent volume sphere",

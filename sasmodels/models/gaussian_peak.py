@@ -53,6 +53,7 @@ parameters = [["peak_pos", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
 
 source = ["gaussian_peak.c"]
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     peak_pos = 10**np.random.uniform(-3, -1)

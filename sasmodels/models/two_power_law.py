@@ -98,6 +98,7 @@ def Iq(q,
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     coefficient_1 = 1

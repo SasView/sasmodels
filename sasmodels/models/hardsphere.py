@@ -77,6 +77,7 @@ description = """\
     volfraction is the volume fraction occupied by the spheres.
 """
 category = "structure-factor"
+has_shape_visualization = False
 structure_factor = True
 single = False # TODO: check
 

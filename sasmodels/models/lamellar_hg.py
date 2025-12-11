@@ -88,6 +88,7 @@ form_volume = """
 
 source = ["lamellar_hg.c"]
 
+has_shape_visualization = False
 def random():
     """Return a random parameter set for the model."""
     thickness = 10**np.random.uniform(1, 4)

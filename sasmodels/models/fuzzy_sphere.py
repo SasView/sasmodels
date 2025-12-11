@@ -89,6 +89,7 @@ parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle
 # pylint: enable=bad-whitespace,line-too-long
 
 source = ["lib/sas_3j1x_x.c", "fuzzy_sphere.c"]
+has_shape_visualization = False
 have_Fq = True
 radius_effective_modes = ["radius", "radius + fuzziness"]
 
