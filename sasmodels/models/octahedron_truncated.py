@@ -33,68 +33,79 @@ A square facet crosses the x, y, z directions at distances equal to t length_a, 
 A regular octahedron corresponds to:
 
 .. math::
-    length_a = length_b = length_c
-    (t = 1)
+
+    length_a = length_b = length_c, \quad t = 1
 
 A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
 .. math:: 
-    length_a = length_b = length_c
-    (t = 1/2)
+
+    length_a = length_b = length_c, \quad t = \frac{1}{2}
 
 The model contains 4 parameters: length_a, the two ratios b2a_ratio and c2a_ratio and t:
 
 .. math::
-    b2a_{ratio} = length_b/length_a,
-    c2a_{ratio} = length_c/length_a,
-    1/2 < t < 1
+
+    b2a_{\text{ratio}} = \frac{length_b}{length_a}, \quad
+    c2a_{\text{ratio}} = \frac{length_c}{length_a}, \quad
+    \frac{1}{2} < t < 1
 
 For a regular shape:
 
 .. math::
-    b2a_{ratio} = c2a_{ratio} = 1
+
+    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1
 
 Volume of the general shape including truncation is given by:
 
 .. math::
-    V = \frac{4}{3}\, length_a^{3}\, b2a_{ratio}\, c2a_{ratio}\bigl(1 - 3(1 - t)^{3}\bigr)
+
+    V = \frac{4}{3}\, \text{length\_a}^{3}\, \text{b2a\_ratio}\, \text{c2a\_ratio}\,\bigl(1 - 3(1 - t)^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
 
 .. math::
-    A_{edge}^2 = length_a^2 + length_b^2,\qquad
-    B_{edge}^2 = length_a^2 + length_c^2,\qquad
-    C_{edge}^2 = length_b^2 + length_c^2
+
+    A_{\text{edge}}^{2} = \text{length\_a}^{2} + \text{length\_b}^{2},\qquad
+    B_{\text{edge}}^{2} = \text{length\_a}^{2} + \text{length\_c}^{2},\qquad
+    C_{\text{edge}}^{2} = \text{length\_b}^{2} + \text{length\_c}^{2}
 
 For a regular shape (no elongation):
 
 .. math::
-    	b2a_{ratio} = c2a_{ratio} = 1,\qquad
-    A_{edge} = B_{edge} = C_{edge} = length_a\sqrt{2},\qquad
-    	length_a = length_b = length_c = A_{edge}/\sqrt{2},
- 
-    V = \frac{4}{3}\, length_a^{3}\,\bigl(1 - 3(1 - t)^{3}\bigr)
+
+    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1,\qquad
+    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = \text{length\_a} \sqrt{2},\qquad
+    length_{\text{a}} = length_{\text{b}} = length_{\text{c}} = A_{\text{edge}} / \sqrt{2}
+
+.. math::
+
+    V = \frac{4}{3} \, \text{length\_a}^{3} \, \bigl(1 - 3 (1 - t)^3 \bigr)
 
 The reference orientation of the shape is: a along x, b along y and c along z.
 Amplitude of the form factor AP for the reference orientation of the shape reads 
 
 .. math::
+
     AP(q,\theta,\phi) = \frac{6}{1 - 3(1 - t)^3}\,(AA + BB + CC)
 
 .. math::
+
     AA = \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_x)\sin\big(q_y(1 - t) - q_x t\big)
     + (q_y + q_x)\sin\big(q_y(1 - t) + q_x t\big)\Big]
     + \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_x)\sin\big(q_z(1 - t) - q_x t\big)
     + (q_z + q_x)\sin\big(q_z(1 - t) + q_x t\big)\Big]
 
 .. math::
+
     BB = \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_y)\sin\big(q_z(1 - t) - q_y t\big)
     + (q_z + q_y)\sin\big(q_z(1 - t) + q_y t\big)\Big]
     + \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_y)\sin\big(q_x(1 - t) - q_y t\big)
     + (q_x + q_y)\sin\big(q_x(1 - t) + q_y t\big)\Big]
 
 .. math::
+
     CC = \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_z)\sin\big(q_x(1 - t) - q_z t\big)
     + (q_x + q_z)\sin\big(q_x(1 - t) + q_z t\big)\Big]
     + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y(1 - t) - q_z t\big)
@@ -104,14 +115,16 @@ Capital Qx Qy Qz are the three components in [A-1] of the scattering vector.
 qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms.
 
 .. math::
+
     Q_x = q\,\sin\theta\,\cos\phi, \qquad
     Q_y = q\,\sin\theta\,\sin\phi, \qquad
     Q_z = q\,\cos\theta
 
 .. math::
-    q_x = Q_x\,length_a \qquad
-    q_y = Q_y\,length_b \qquad
-    q_z = Q_z\,length_c \qquad
+
+    q_x = Q_x \, \text{length\_a},\qquad
+    q_y = Q_y \, \text{length\_b},\qquad
+    q_z = Q_z \, \text{length\_c}
 
 
 θ is the angle between the scattering vector and the z axis.
@@ -124,12 +137,14 @@ Instead of rotating the shape through all the possible orientations in the integ
 it is equivalent to integrate the 3D scattering vector over a sphere of radius q with the shape in its reference orientation.
 
 .. math::
+
     P(q) =  \frac{2}{\pi} \int_0^{\frac{\pi}{2}} \,
     \int_0^{\frac{\pi}{2}} A_P^2(q) \, \sin\theta \, d\theta \, d\phi
 
 And the 1D scattering intensity is calculated as
 
 .. math::
+
     I(q) = \text{scale} \times V \times (\rho_\text{p} -
     \rho_\text{solvent})^2 \times P(q)
 
