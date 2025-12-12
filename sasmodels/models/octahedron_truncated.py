@@ -60,7 +60,7 @@ Volume of the general shape including truncation is given by:
 
 .. math::
 
-    V = \frac{4}{3}\, length_{\text{a}}^{3}\, b2a_{\text{ratio}}, c2a_{\text{ratio}},\bigl(1 - 3(1 - t)^{3}\bigr)
+    V = \frac{4}{3}\, length_{\text{a}}^{3}\, b2a_{\text{ratio}}\, c2a_{\text{ratio}}\,\bigl(1 - 3(1 - t)^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
