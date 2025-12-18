@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+from pathlib import Path
 
 from bumps.names import FitProblem
 
@@ -9,11 +10,12 @@ from sasmodels.core import load_model
 from sasmodels.data import load_data, set_beam_stop, set_top
 
 """ IMPORT THE DATA USED """
-radial_data = load_data('DEC07267.DAT')
+path = Path(__file__).resolve().parent
+radial_data = load_data(str(path / 'DEC07267.DAT'))
 set_beam_stop(radial_data, 0.00669, outer=0.025)
 set_top(radial_data, -.0185)
 
-tan_data = load_data('DEC07266.DAT')
+tan_data = load_data(str(path / 'DEC07266.DAT'))
 set_beam_stop(tan_data, 0.00669, outer=0.025)
 set_top(tan_data, -.0185)
 #sas.set_half(tan_data, 'right')
@@ -188,7 +190,15 @@ if section == "both":
 else:
     problem = FitProblem(M)
 
+M.problem = problem
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    problem.plot()
+
+    problem.summarize()
+    # Plot using plotly
+    fig = M._plot(backend="plotly")
+    fig.show(renderer='browser')
+    # Plot using matplotlib
+    M._plot(backend="matplotlib")
     plt.show()
