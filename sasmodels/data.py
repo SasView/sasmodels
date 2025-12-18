@@ -40,10 +40,11 @@ from numpy import cos, pi, sin, sqrt
 
 # pylint: disable=unused-import
 try:
-    from typing import Callable, Optional, Union
+    from typing import Optional, Union
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
     OptLimits = Optional[tuple[float, float]]
+    OptIndex = np.ndarray | slice | None
     OptString = Optional[str]
 except ImportError:
     pass
@@ -418,8 +419,8 @@ def empty_data2D(qx, qy=None, resolution=0.0):
     return data
 
 
-def plot_data(data, view=None, limits=None):
-    # type: (Data, str, OptLimits) -> None
+def plot_data(data, view=None, limits=None, index=None):
+    # type: (Data, str, OptLimits, OptIndex) -> None
     """
     Plot data loaded by the sasview loader.
 
@@ -436,14 +437,14 @@ def plot_data(data, view=None, limits=None):
     if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, None, None, view, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
-        _plot_result2D(data, None, None, view, use_data=True, limits=limits)
+        _plot_result2D(data, None, None, view, use_data=True, limits=limits, index=index)
     else:
-        _plot_result1D(data, None, None, view, use_data=True, limits=limits)
+        _plot_result1D(data, None, None, view, use_data=True, limits=limits, index=index)
 
 
 def plot_theory(data, theory, resid=None, view=None, use_data=True,
-                limits=None, Iq_calc=None):
-    # type: (Data, OptArray, OptArray, OptString, bool, OptLimits, OptArray) -> None
+                limits=None, Iq_calc=None, index=None):
+    # type: (Data, OptArray, OptArray, OptString, bool, OptLimits, OptArray, OptIndex) -> None
     """
     Plot theory calculation.
 
@@ -466,10 +467,10 @@ def plot_theory(data, theory, resid=None, view=None, use_data=True,
     if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, theory, resid, view, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
-        _plot_result2D(data, theory, resid, view, use_data, limits=limits)
+        _plot_result2D(data, theory, resid, view, use_data, limits=limits, index=index)
     else:
         _plot_result1D(data, theory, resid, view, use_data,
-                       limits=limits, Iq_calc=Iq_calc)
+                       limits=limits, Iq_calc=Iq_calc, index=index)
 
 
 def protect(func):
@@ -495,7 +496,7 @@ def protect(func):
 
 @protect
 def _plot_result1D(data, theory, resid, view, use_data,
-                   limits=None, Iq_calc=None):
+                   limits=None, Iq_calc=None, index=None):
     # type: (Data1D, OptArray, OptArray, str, bool, OptLimits, OptArray) -> None
     """
     Plot the data and residuals for 1D data.
@@ -520,6 +521,9 @@ def _plot_result1D(data, theory, resid, view, use_data,
 
     scale = 1e8 * data.x**4 if view == 'q4' else 1.0
 
+    if index is None:
+        index = slice(None)
+
     if use_data or use_theory:
         if num_plots > 1:
             plt.subplot(1, num_plots, 1)
@@ -543,8 +547,8 @@ def _plot_result1D(data, theory, resid, view, use_data,
             # Note: masks merge, so any masked theory points will stay masked,
             # and the data mask will be added to it.
             #mtheory = masked_array(theory, data.mask.copy())
-            theory_x = data.x[data.mask == 0]
-            theory_scale = scale if np.isscalar(scale) else scale[data.mask == 0]
+            theory_x = data.x[index]
+            theory_scale = scale if np.isscalar(scale) else scale[index]
             mtheory = masked_array(theory)
             mtheory[~np.isfinite(mtheory)] = masked
             if view == 'log':
@@ -578,7 +582,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
         #plt.axis('equal')
 
     if use_resid:
-        theory_x = data.x[data.mask == 0]
+        theory_x = data.x[index]
         mresid = masked_array(resid)
         mresid[~np.isfinite(mresid)] = masked
         some_present = (mresid.count() > 0)
@@ -646,7 +650,7 @@ def _plot_result_sesans(data, theory, resid, view, use_data, limits=None):
 
 
 @protect
-def _plot_result2D(data, theory, resid, view, use_data, limits=None):
+def _plot_result2D(data, theory, resid, view, use_data, limits=None, index=None):
     # type: (Data2D, OptArray, OptArray, str, bool, OptLimits) -> None
     """
     Plot the data and residuals for 2D data.
@@ -658,12 +662,15 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
     use_theory = theory is not None
     use_resid = resid is not None
     num_plots = use_data + use_theory + use_resid
+    mask = ~data.mask
+    if index is None:
+        index = mask
 
     # Put theory and data on a common colormap scale
     vmin, vmax = np.inf, -np.inf
     target = None  # type: OptArray
     if use_data:
-        target = data.data[~data.mask]
+        target = data.data[mask] # full data
         datamin = target[target > 0].min() if view == 'log' else target.min()
         datamax = target.max()
         vmin = min(vmin, datamin)
@@ -682,7 +689,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
     if use_data:
         if num_plots > 1:
             plt.subplot(1, num_plots, 1)
-        _plot_2d_signal(data, target, view=view, vmin=vmin, vmax=vmax)
+        _plot_2d_signal(data, target, view=view, vmin=vmin, vmax=vmax, index=mask)
         plt.title('data')
         h = plt.colorbar()
         h.set_label('$I(q)$')
@@ -691,7 +698,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
     if use_theory:
         if num_plots > 1:
             plt.subplot(1, num_plots, use_data+1)
-        _plot_2d_signal(data, theory, view=view, vmin=vmin, vmax=vmax)
+        _plot_2d_signal(data, theory, view=view, vmin=vmin, vmax=vmax, index=index)
         plt.title('theory')
         h = plt.colorbar()
         h.set_label(r'$\log_{10}I(q)$' if view == 'log'
@@ -702,14 +709,14 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
     if use_resid:
         if num_plots > 1:
             plt.subplot(1, num_plots, use_data+use_theory+1)
-        _plot_2d_signal(data, resid, view='linear')
+        _plot_2d_signal(data, resid, view='linear', index=index)
         plt.title('residuals')
         h = plt.colorbar()
         h.set_label(r'$\Delta I(q)$')
 
 
 @protect
-def _plot_2d_signal(data, signal, vmin=None, vmax=None, view=None):
+def _plot_2d_signal(data, signal, vmin=None, vmax=None, view=None, index=None):
     # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> tuple[float, float]
     """
     Plot the target value for the data.  This could be the data itself,
@@ -724,8 +731,8 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view=None):
         view = 'log'
 
     image = np.zeros_like(data.qx_data)
-    image[~data.mask] = signal
-    valid = np.isfinite(image) & ~data.mask
+    image[index] = signal
+    valid = np.isfinite(image) & index
     if view == 'log':
         valid &= image > 0
         if vmin is None:
