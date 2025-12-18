@@ -26,13 +26,18 @@ _cap_kernel(double qab, double qc, double h, double radius_cap,
     const double m = radius_cap*qc; // cos argument slope
     const double b = (half_length+h)*qc; // cos argument intercept
     const double qab_r = radius_cap*qab; // Q*R*sin(theta)
+
+    const double qr_max = fmax(qab_r, m);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     double total = 0.0;
-    for (int i=0; i<GAUSS_N; i++) {
-        const double t = GAUSS_Z[i]*zm + zb;
+    for (int i=0; i<n; i++) {
+        const double t = z[i]*zm + zb;
         const double radical = 1.0 - t*t;
         const double bj = sas_2J1x_x(qab_r*sqrt(radical));
         const double Fq = cos(m*t + b) * radical * bj;
-        total += GAUSS_W[i] * Fq;
+        total += w[i] * Fq;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double integral = total*zm;
@@ -114,21 +119,25 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     const double h = -sqrt(square(radius_cap) - square(radius));
     const double half_length = 0.5*length;
 
+    const double qr_max = q*fmax(radius_cap, half_length);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
     const double zb = M_PI_4;
     double total_F1 = 0.0;
     double total_F2 = 0.0;
-    for (int i=0; i<GAUSS_N ;i++) {
-        const double theta = GAUSS_Z[i]*zm + zb;
+    for (int i=0; i<n ;i++) {
+        const double theta = z[i]*zm + zb;
         double sin_theta, cos_theta; // slots to hold sincos function output
         SINCOS(theta, sin_theta, cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
         const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length);
         // scale by sin_theta for spherical coord integration
-        total_F1 += GAUSS_W[i] * Aq * sin_theta;
-        total_F2 += GAUSS_W[i] * Aq * Aq * sin_theta;
+        total_F1 += w[i] * Aq * sin_theta;
+        total_F2 += w[i] * Aq * Aq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double form_avg = total_F1 * zm;

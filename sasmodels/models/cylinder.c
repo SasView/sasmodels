@@ -51,6 +51,7 @@ radius_effective(int mode, double radius, double length)
     }
 }
 
+
 static void
 Fq(double q,
     double *F1,
@@ -60,20 +61,23 @@ Fq(double q,
     double radius,
     double length)
 {
+    const double qr_max = q*fmax(radius, 0.5*length);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
     const double zb = M_PI_4;
-
     double total_F1 = 0.0;
     double total_F2 = 0.0;
-    for (int i=0; i<GAUSS_N ;i++) {
-        const double theta = GAUSS_Z[i]*zm + zb;
+    for (int i=0; i<n ;i++) {
+        const double theta = z[i]*zm + zb;
         double sin_theta, cos_theta; // slots to hold sincos function output
         // theta (theta,phi) the projection of the cylinder on the detector plane
         SINCOS(theta , sin_theta, cos_theta);
         const double form = _fq(q*sin_theta, q*cos_theta, radius, length);
-        total_F1 += GAUSS_W[i] * form * sin_theta;
-        total_F2 += GAUSS_W[i] * form * form * sin_theta;
+        total_F1 += w[i] * form * sin_theta;
+        total_F2 += w[i] * form * form * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     total_F1 *= zm;
