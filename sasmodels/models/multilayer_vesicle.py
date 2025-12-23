@@ -126,6 +126,137 @@ description = """
     background: incoherent background
         """
 category = "shape:sphere"
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for multilayer vesicle visualization."""
+    import numpy as np
+    radius = params.get('radius', 60)
+    thick_shell = params.get('thick_shell', 10)
+    thick_solvent = params.get('thick_solvent', 10)
+    n_shells = int(round(params.get('n_shells', 2)))
+    n_shells = max(n_shells, 1)
+
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    meshes = {}
+    # Core (solvent-filled)
+    x_core = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_core = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_core = radius * np.cos(phi_mesh)
+    meshes['core'] = (x_core, y_core, z_core)
+
+    # Each shell + solvent layer pair
+    current_r = radius
+    for i in range(n_shells):
+        # Shell
+        shell_inner = current_r
+        shell_outer = current_r + thick_shell
+        x = shell_outer * np.sin(phi_mesh) * np.cos(theta_mesh)
+        y = shell_outer * np.sin(phi_mesh) * np.sin(theta_mesh)
+        z = shell_outer * np.cos(phi_mesh)
+        meshes[f'shell_{i}'] = (x, y, z)
+        current_r = shell_outer
+
+        # Solvent layer (except for outermost)
+        if i < n_shells - 1:
+            current_r += thick_solvent
+
+    return meshes
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the multilayer vesicle."""
+    import numpy as np
+    radius = params.get('radius', 60)
+    thick_shell = params.get('thick_shell', 10)
+    thick_solvent = params.get('thick_solvent', 10)
+    n_shells = int(round(params.get('n_shells', 2)))
+    n_shells = max(n_shells, 1)
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # Calculate all radii
+    radii = [radius]  # Core outer = first shell inner
+    current_r = radius
+    for i in range(n_shells):
+        shell_outer = current_r + thick_shell
+        radii.append(shell_outer)
+        if i < n_shells - 1:
+            radii.append(shell_outer + thick_solvent)
+            current_r = shell_outer + thick_solvent
+        else:
+            current_r = shell_outer
+
+    outer_radius = radii[-1]
+    colors = ['lightblue', 'lightcoral', 'lightgreen', 'lightyellow', 'lightpink']
+
+    # XY plane - concentric circles
+    for i, r in enumerate(radii):
+        circle_x = r * np.cos(theta)
+        circle_y = r * np.sin(theta)
+        if i == 0:
+            ax_xy.fill(circle_x, circle_y, 'white', alpha=1.0)
+            ax_xy.plot(circle_x, circle_y, 'b--', linewidth=1.5, label='Core')
+        else:
+            is_shell = (i % 2 == 1) if n_shells > 1 else True
+            if is_shell:
+                ax_xy.plot(circle_x, circle_y, 'r-', linewidth=2)
+            else:
+                ax_xy.plot(circle_x, circle_y, 'b--', linewidth=1, alpha=0.5)
+
+    ax_xy.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'XY Cross-section ({n_shells} shells)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ plane - show layered structure
+    current_r = radius
+    # Draw from outside in for proper layering
+    for i in range(n_shells - 1, -1, -1):
+        if i < n_shells - 1:
+            solv_outer = radii[2*i + 2] if 2*i + 2 < len(radii) else radii[-1]
+        shell_outer = radius + (i + 1) * thick_shell + i * thick_solvent
+        shell_inner = radius + i * thick_shell + i * thick_solvent
+
+        # Shell
+        shell_x = shell_outer * np.cos(theta)
+        shell_y = shell_outer * np.sin(theta)
+        ax_xz.fill(shell_x, shell_y, colors[i % len(colors)], alpha=0.6)
+
+        inner_x = shell_inner * np.cos(theta)
+        inner_y = shell_inner * np.sin(theta)
+        ax_xz.fill(inner_x, inner_y, 'white', alpha=1.0)
+
+    ax_xz.plot(radius * np.cos(theta), radius * np.sin(theta), 'b-', linewidth=2)
+    ax_xz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title(f'XZ Cross-section')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane - same as XZ
+    for i in range(n_shells - 1, -1, -1):
+        shell_outer = radius + (i + 1) * thick_shell + i * thick_solvent
+        shell_inner = radius + i * thick_shell + i * thick_solvent
+        ax_yz.fill(shell_outer * np.cos(theta), shell_outer * np.sin(theta),
+                   colors[i % len(colors)], alpha=0.6)
+        ax_yz.fill(shell_inner * np.cos(theta), shell_inner * np.sin(theta),
+                   'white', alpha=1.0)
+
+    ax_yz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title(f't_shell={thick_shell:.0f}Å, t_solv={thick_solvent:.0f}Å')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 
 # pylint: disable=bad-whitespace, line-too-long
 #   ["name", "units", default, [lower, upper], "type","description"],
@@ -144,7 +275,6 @@ parameters = [
 #polydispersity = ["radius", "thick_shell"]
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
-has_shape_visualization = False
 have_Fq = True
 radius_effective_modes = ["outer radius"]
 

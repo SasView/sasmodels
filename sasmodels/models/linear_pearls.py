@@ -66,7 +66,104 @@ parameters = [
     ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf],  "sld", "SLD of the solvent"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=40):
+    """Create 3D mesh for linear pearls visualization."""
+    import numpy as np
+    radius = params.get('radius', 80.0)
+    edge_sep = params.get('edge_sep', 350.0)
+    num_pearls = int(round(params.get('num_pearls', 3)))
+    num_pearls = max(num_pearls, 1)
+
+    # Spacing between pearl centers
+    center_step = 2 * radius + edge_sep
+    z_positions = [
+        (i - (num_pearls - 1) / 2.0) * center_step
+        for i in range(num_pearls)
+    ]
+
+    # Sphere mesh
+    phi = np.linspace(0, np.pi, resolution // 2)
+    theta = np.linspace(0, 2 * np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    pearls = {}
+    for i, z0 in enumerate(z_positions):
+        x = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+        y = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+        z = radius * np.cos(phi_mesh) + z0
+        pearls[f'pearl_{i}'] = (x, y, z)
+
+    return pearls
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the linear pearls."""
+    import numpy as np
+    radius = params.get('radius', 80.0)
+    edge_sep = params.get('edge_sep', 350.0)
+    num_pearls = int(round(params.get('num_pearls', 3)))
+    num_pearls = max(num_pearls, 1)
+
+    center_step = 2 * radius + edge_sep
+    z_positions = [
+        (i - (num_pearls - 1) / 2.0) * center_step
+        for i in range(num_pearls)
+    ]
+
+    theta = np.linspace(0, 2 * np.pi, 100)
+    circle_x = radius * np.cos(theta)
+    circle_y = radius * np.sin(theta)
+
+    # XY plane - single pearl cross-section
+    ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2)
+    ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.3)
+    ax_xy.set_xlim(-radius*1.5, radius*1.5)
+    ax_xy.set_ylim(-radius*1.5, radius*1.5)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Single Pearl)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ plane - all pearls in a line
+    colors = ['lightblue', 'lightcoral', 'lightgreen', 'lightyellow', 'lightpink']
+    for i, z0 in enumerate(z_positions):
+        color = colors[i % len(colors)]
+        pearl_z = circle_y + z0
+        ax_xz.plot(circle_x, pearl_z, 'b-', linewidth=2)
+        ax_xz.fill(circle_x, pearl_z, color, alpha=0.5)
+
+    # Draw connecting lines
+    for i in range(num_pearls - 1):
+        ax_xz.plot([0, 0], [z_positions[i] + radius, z_positions[i+1] - radius],
+                   'k-', linewidth=1, alpha=0.5)
+
+    total_length = z_positions[-1] - z_positions[0] + 2*radius if num_pearls > 1 else 2*radius
+    ax_xz.set_xlim(-radius*2, radius*2)
+    ax_xz.set_ylim(z_positions[0] - radius*1.5, z_positions[-1] + radius*1.5)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title(f'XZ Cross-section ({num_pearls} pearls)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane - same as XZ
+    for i, z0 in enumerate(z_positions):
+        color = colors[i % len(colors)]
+        pearl_z = circle_y + z0
+        ax_yz.plot(circle_x, pearl_z, 'g-', linewidth=2)
+        ax_yz.fill(circle_x, pearl_z, color, alpha=0.5)
+
+    for i in range(num_pearls - 1):
+        ax_yz.plot([0, 0], [z_positions[i] + radius, z_positions[i+1] - radius],
+                   'k-', linewidth=1, alpha=0.5)
+
+    ax_yz.set_xlim(-radius*2, radius*2)
+    ax_yz.set_ylim(z_positions[0] - radius*1.5, z_positions[-1] + radius*1.5)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title(f'YZ Cross-section ({num_pearls} pearls)')
+    ax_yz.grid(True, alpha=0.3)
 single = False
 
 source = ["lib/sas_3j1x_x.c", "linear_pearls.c"]

@@ -108,7 +108,89 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism_thin_walls.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for hollow rectangular prism with thin walls."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+
+    length_b = length_a * b2a_ratio
+    length_c = length_a * c2a_ratio
+
+    faces = {}
+
+    # Create box frame (just the edges, since walls are infinitely thin)
+    # Front and back faces (as wireframe rectangles)
+    y = np.linspace(-length_b/2, length_b/2, resolution//4)
+    z = np.linspace(-length_c/2, length_c/2, resolution//2)
+    y_mesh, z_mesh = np.meshgrid(y, z)
+    faces['front'] = (np.full_like(y_mesh, length_a/2), y_mesh, z_mesh)
+    faces['back'] = (np.full_like(y_mesh, -length_a/2), y_mesh, z_mesh)
+
+    x = np.linspace(-length_a/2, length_a/2, resolution//4)
+    z = np.linspace(-length_c/2, length_c/2, resolution//2)
+    x_mesh, z_mesh = np.meshgrid(x, z)
+    faces['right'] = (x_mesh, np.full_like(x_mesh, length_b/2), z_mesh)
+    faces['left'] = (x_mesh, np.full_like(x_mesh, -length_b/2), z_mesh)
+
+    x = np.linspace(-length_a/2, length_a/2, resolution//4)
+    y = np.linspace(-length_b/2, length_b/2, resolution//4)
+    x_mesh, y_mesh = np.meshgrid(x, y)
+    faces['top'] = (x_mesh, y_mesh, np.full_like(x_mesh, length_c/2))
+    faces['bottom'] = (x_mesh, y_mesh, np.full_like(x_mesh, -length_c/2))
+
+    return faces
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the hollow rectangular prism (thin walls)."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+
+    length_b = length_a * b2a_ratio
+    length_c = length_a * c2a_ratio
+
+    # XY plane - rectangle outline only (infinitely thin walls)
+    rect_x = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    rect_y = [-length_b/2, length_b/2, length_b/2, -length_b/2, -length_b/2]
+    ax_xy.plot(rect_x, rect_y, 'b-', linewidth=3, label='Thin walls')
+    max_xy = max(length_a, length_b) / 2 * 1.3
+    ax_xy.set_xlim(-max_xy, max_xy)
+    ax_xy.set_ylim(-max_xy, max_xy)
+    ax_xy.set_xlabel('X (Å) - A')
+    ax_xy.set_ylabel('Y (Å) - B')
+    ax_xy.set_title('XY Cross-section (wireframe)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend(fontsize=9)
+
+    # XZ plane
+    rect_xz_x = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    rect_xz_z = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+    ax_xz.plot(rect_xz_x, rect_xz_z, 'r-', linewidth=3)
+    max_xz = max(length_a, length_c) / 2 * 1.3
+    ax_xz.set_xlim(-max_xz, max_xz)
+    ax_xz.set_ylim(-max_xz, max_xz)
+    ax_xz.set_xlabel('X (Å) - A')
+    ax_xz.set_ylabel('Z (Å) - C')
+    ax_xz.set_title('XZ Cross-section')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane
+    rect_yz_y = [-length_b/2, -length_b/2, length_b/2, length_b/2, -length_b/2]
+    rect_yz_z = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+    ax_yz.plot(rect_yz_y, rect_yz_z, 'g-', linewidth=3)
+    max_yz = max(length_b, length_c) / 2 * 1.3
+    ax_yz.set_xlim(-max_yz, max_yz)
+    ax_yz.set_ylim(-max_yz, max_yz)
+    ax_yz.set_xlabel('Y (Å) - B')
+    ax_yz.set_ylabel('Z (Å) - C')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent outer volume sphere",

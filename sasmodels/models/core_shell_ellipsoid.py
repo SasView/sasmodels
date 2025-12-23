@@ -150,7 +150,107 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for core-shell ellipsoid visualization."""
+    import numpy as np
+    radius_equat_core = params.get('radius_equat_core', 20)
+    x_core = params.get('x_core', 3)  # ratio polar/equatorial
+    thick_shell = params.get('thick_shell', 30)
+    x_polar_shell = params.get('x_polar_shell', 1)
+
+    # Core radii
+    radius_polar_core = radius_equat_core * x_core
+
+    # Shell outer radii
+    radius_equat_outer = radius_equat_core + thick_shell
+    radius_polar_outer = radius_polar_core + thick_shell * x_polar_shell
+
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    # Core ellipsoid
+    x_core_mesh = radius_equat_core * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_core_mesh = radius_equat_core * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_core_mesh = radius_polar_core * np.cos(phi_mesh)
+
+    # Shell ellipsoid
+    x_shell = radius_equat_outer * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_shell = radius_equat_outer * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_shell = radius_polar_outer * np.cos(phi_mesh)
+
+    return {
+        'core': (x_core_mesh, y_core_mesh, z_core_mesh),
+        'shell': (x_shell, y_shell, z_shell)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the core-shell ellipsoid."""
+    import numpy as np
+    radius_equat_core = params.get('radius_equat_core', 20)
+    x_core = params.get('x_core', 3)
+    thick_shell = params.get('thick_shell', 30)
+    x_polar_shell = params.get('x_polar_shell', 1)
+
+    radius_polar_core = radius_equat_core * x_core
+    radius_equat_outer = radius_equat_core + thick_shell
+    radius_polar_outer = radius_polar_core + thick_shell * x_polar_shell
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # XY plane (equatorial) - circles
+    core_x = radius_equat_core * np.cos(theta)
+    core_y = radius_equat_core * np.sin(theta)
+    shell_x = radius_equat_outer * np.cos(theta)
+    shell_y = radius_equat_outer * np.sin(theta)
+
+    ax_xy.fill(shell_x, shell_y, 'lightcoral', alpha=0.3, label='Shell')
+    ax_xy.fill(core_x, core_y, 'lightblue', alpha=0.5, label='Core')
+    ax_xy.plot(shell_x, shell_y, 'r-', linewidth=2)
+    ax_xy.plot(core_x, core_y, 'b-', linewidth=2)
+    max_xy = radius_equat_outer * 1.2
+    ax_xy.set_xlim(-max_xy, max_xy)
+    ax_xy.set_ylim(-max_xy, max_xy)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Equatorial)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend()
+
+    # XZ plane (meridional) - ellipses
+    core_xz_x = radius_equat_core * np.cos(theta)
+    core_xz_z = radius_polar_core * np.sin(theta)
+    shell_xz_x = radius_equat_outer * np.cos(theta)
+    shell_xz_z = radius_polar_outer * np.sin(theta)
+
+    ax_xz.fill(shell_xz_x, shell_xz_z, 'lightcoral', alpha=0.3)
+    ax_xz.fill(core_xz_x, core_xz_z, 'lightblue', alpha=0.5)
+    ax_xz.plot(shell_xz_x, shell_xz_z, 'r-', linewidth=2)
+    ax_xz.plot(core_xz_x, core_xz_z, 'b-', linewidth=2)
+    max_xz = max(radius_equat_outer, radius_polar_outer) * 1.2
+    ax_xz.set_xlim(-max_xz, max_xz)
+    ax_xz.set_ylim(-max_xz, max_xz)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Meridional)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane
+    ax_yz.fill(shell_xz_x, shell_xz_z, 'lightgreen', alpha=0.3)
+    ax_yz.fill(core_xz_x, core_xz_z, 'moccasin', alpha=0.5)
+    ax_yz.plot(shell_xz_x, shell_xz_z, 'g-', linewidth=2)
+    ax_yz.plot(core_xz_x, core_xz_z, 'orange', linewidth=2)
+    ax_yz.set_xlim(-max_xz, max_xz)
+    ax_yz.set_ylim(-max_xz, max_xz)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Meridional)')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = [
     "average outer curvature", "equivalent volume sphere",

@@ -118,7 +118,150 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for barbell visualization."""
+    import numpy as np
+    radius = params.get('radius', 20)
+    radius_bell = params.get('radius_bell', 40)
+    length = params.get('length', 400)
+
+    if radius_bell < radius:
+        radius_bell = radius  # Ensure valid geometry
+
+    # Height where bell meets cylinder
+    h = np.sqrt(radius_bell**2 - radius**2)
+
+    # Create cylinder body
+    theta = np.linspace(0, 2*np.pi, resolution)
+    z_cyl = np.linspace(-length/2, length/2, resolution//2)
+    theta_cyl, z_cyl_mesh = np.meshgrid(theta, z_cyl)
+    x_cyl = radius * np.cos(theta_cyl)
+    y_cyl = radius * np.sin(theta_cyl)
+
+    # Create spherical bells (larger than cylinder caps)
+    # The bell center is at distance h inside the cylinder end
+    phi_max = np.arcsin(radius / radius_bell)
+    phi = np.linspace(0, phi_max, resolution//4)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    # Top bell
+    x_bell_top = radius_bell * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_bell_top = radius_bell * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_bell_top = length/2 + h + radius_bell * np.cos(phi_mesh) - radius_bell
+
+    # Bottom bell
+    x_bell_bottom = radius_bell * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_bell_bottom = radius_bell * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_bell_bottom = -length/2 - h - radius_bell * np.cos(phi_mesh) + radius_bell
+
+    return {
+        'cylinder': (x_cyl, y_cyl, z_cyl_mesh),
+        'bell_top': (x_bell_top, y_bell_top, z_bell_top),
+        'bell_bottom': (x_bell_bottom, y_bell_bottom, z_bell_bottom)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the barbell matching SasView documentation."""
+    import numpy as np
+    from matplotlib.patches import Circle, Arc, Polygon
+    from matplotlib.collections import PatchCollection
+
+    radius = params.get('radius', 20)  # r in docs
+    radius_bell = params.get('radius_bell', 40)  # R in docs
+    length = params.get('length', 400)  # L in docs
+
+    if radius_bell < radius:
+        radius_bell = radius
+
+    # h = sqrt(R^2 - r^2) per documentation
+    h = np.sqrt(radius_bell**2 - radius**2)
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # XY plane - circle (cylinder cross-section at center)
+    circle_x = radius * np.cos(theta)
+    circle_y = radius * np.sin(theta)
+    ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.5)
+    ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2, label=f'r={radius:.0f}Å')
+
+    # Show bell outline for reference
+    bell_x = radius_bell * np.cos(theta)
+    bell_y = radius_bell * np.sin(theta)
+    ax_xy.plot(bell_x, bell_y, 'r--', linewidth=1.5, alpha=0.6, label=f'R={radius_bell:.0f}Å')
+
+    ax_xy.set_xlim(-radius_bell*1.4, radius_bell*1.4)
+    ax_xy.set_ylim(-radius_bell*1.4, radius_bell*1.4)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend(fontsize=9)
+
+    # XZ plane (side view) - matching documentation figure
+    # Draw cylinder body
+    cyl_z = np.array([-length/2, length/2, length/2, -length/2, -length/2])
+    cyl_r = np.array([-radius, -radius, radius, radius, -radius])
+    ax_xz.fill(cyl_z, cyl_r, 'lightblue', alpha=0.5)
+    ax_xz.plot(cyl_z, cyl_r, 'b-', linewidth=2)
+
+    # Right bell (positive z) - sphere center at z = L/2 + h
+    bell_center_right = length/2 + h
+    # Arc from angle where it meets cylinder to the tip
+    # At cylinder junction: z = L/2, r = ±radius
+    # The arc angle at junction: sin(angle) = radius/radius_bell
+    angle_junction = np.arcsin(radius / radius_bell)
+    bell_angles = np.linspace(-angle_junction, angle_junction, 50)
+    # Parametric: z = center + R*cos(angle), r = R*sin(angle)
+    bell_z_right = bell_center_right - radius_bell * np.cos(bell_angles)
+    bell_r_right = radius_bell * np.sin(bell_angles)
+
+    # Create closed polygon for right bell
+    right_bell_z = np.concatenate([[length/2], bell_z_right, [length/2]])
+    right_bell_r = np.concatenate([[radius], bell_r_right, [-radius]])
+    ax_xz.fill(right_bell_z, right_bell_r, 'lightcoral', alpha=0.5)
+    ax_xz.plot(bell_z_right, bell_r_right, 'r-', linewidth=2, label='Bell')
+
+    # Left bell (negative z) - sphere center at z = -L/2 - h
+    bell_center_left = -length/2 - h
+    bell_z_left = bell_center_left + radius_bell * np.cos(bell_angles)
+    bell_r_left = radius_bell * np.sin(bell_angles)
+
+    left_bell_z = np.concatenate([[-length/2], bell_z_left, [-length/2]])
+    left_bell_r = np.concatenate([[radius], bell_r_left, [-radius]])
+    ax_xz.fill(left_bell_z, left_bell_r, 'lightcoral', alpha=0.5)
+    ax_xz.plot(bell_z_left, bell_r_left, 'r-', linewidth=2)
+
+    # Add dimension annotations like in documentation
+    total_length = length + 2*h + 2*(radius_bell - h)
+    ax_xz.annotate('', xy=(length/2, 0), xytext=(-length/2, 0),
+                  arrowprops=dict(arrowstyle='<->', color='black'))
+    ax_xz.text(0, -radius*1.5, f'L={length:.0f}Å', ha='center', fontsize=9)
+
+    ax_xz.set_xlim(-length/2 - radius_bell*1.3, length/2 + radius_bell*1.3)
+    ax_xz.set_ylim(-radius_bell*1.4, radius_bell*1.4)
+    ax_xz.set_xlabel('Z (Å) - along axis')
+    ax_xz.set_ylabel('Radial (Å)')
+    ax_xz.set_title('Side View (like documentation)')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.legend(fontsize=9)
+
+    # YZ plane - same profile
+    ax_yz.fill(cyl_z, cyl_r, 'lightgreen', alpha=0.5)
+    ax_yz.plot(cyl_z, cyl_r, 'g-', linewidth=2)
+    ax_yz.fill(right_bell_z, right_bell_r, 'moccasin', alpha=0.5)
+    ax_yz.plot(bell_z_right, bell_r_right, 'orange', linewidth=2)
+    ax_yz.fill(left_bell_z, left_bell_r, 'moccasin', alpha=0.5)
+    ax_yz.plot(bell_z_left, bell_r_left, 'orange', linewidth=2)
+
+    ax_yz.set_xlim(-length/2 - radius_bell*1.3, length/2 + radius_bell*1.3)
+    ax_yz.set_ylim(-radius_bell*1.4, radius_bell*1.4)
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Radial (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.grid(True, alpha=0.3)
 valid = "radius_bell >= radius"
 have_Fq = True
 radius_effective_modes = [

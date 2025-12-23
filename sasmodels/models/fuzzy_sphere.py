@@ -89,7 +89,106 @@ parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle
 # pylint: enable=bad-whitespace,line-too-long
 
 source = ["lib/sas_3j1x_x.c", "fuzzy_sphere.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for fuzzy sphere visualization."""
+    import numpy as np
+    radius = params.get('radius', 60)
+    fuzziness = params.get('fuzziness', 10)
+
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    # Core sphere (where density is ~full)
+    core_radius = radius - 2 * fuzziness
+    core_radius = max(core_radius, radius * 0.5)  # Ensure visible core
+    x_core = core_radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_core = core_radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_core = core_radius * np.cos(phi_mesh)
+
+    # Outer sphere (where density approaches zero)
+    outer_radius = radius + 2 * fuzziness
+    x_outer = outer_radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_outer = outer_radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_outer = outer_radius * np.cos(phi_mesh)
+
+    return {
+        'core': (x_core, y_core, z_core),
+        'fuzzy_boundary': (x_outer, y_outer, z_outer)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the fuzzy sphere."""
+    import numpy as np
+    radius = params.get('radius', 60)
+    fuzziness = params.get('fuzziness', 10)
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # Core, half-density, and outer radii
+    core_radius = max(radius - 2 * fuzziness, radius * 0.5)
+    outer_radius = radius + 2 * fuzziness
+
+    core_x = core_radius * np.cos(theta)
+    core_y = core_radius * np.sin(theta)
+    mid_x = radius * np.cos(theta)
+    mid_y = radius * np.sin(theta)
+    outer_x = outer_radius * np.cos(theta)
+    outer_y = outer_radius * np.sin(theta)
+
+    # XY plane
+    ax_xy.fill(outer_x, outer_y, 'lightyellow', alpha=0.3, label='Fuzzy interface')
+    ax_xy.fill(mid_x, mid_y, 'lightblue', alpha=0.4, label='Half-density (R)')
+    ax_xy.fill(core_x, core_y, 'blue', alpha=0.3, label='Dense core')
+    ax_xy.plot(outer_x, outer_y, 'y--', linewidth=1.5, alpha=0.7)
+    ax_xy.plot(mid_x, mid_y, 'b-', linewidth=2)
+    ax_xy.plot(core_x, core_y, 'b:', linewidth=1.5)
+    ax_xy.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend(fontsize=8)
+
+    # XZ plane
+    ax_xz.fill(outer_x, outer_y, 'lightyellow', alpha=0.3)
+    ax_xz.fill(mid_x, mid_y, 'lightcoral', alpha=0.4)
+    ax_xz.fill(core_x, core_y, 'red', alpha=0.3)
+    ax_xz.plot(outer_x, outer_y, 'y--', linewidth=1.5, alpha=0.7)
+    ax_xz.plot(mid_x, mid_y, 'r-', linewidth=2)
+    ax_xz.plot(core_x, core_y, 'r:', linewidth=1.5)
+    ax_xz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+
+    # Add annotations
+    ax_xz.annotate('', xy=(radius, 0), xytext=(0, 0),
+                  arrowprops=dict(arrowstyle='->', color='black'))
+    ax_xz.text(radius/2, -outer_radius*0.15, f'R={radius:.0f}Å', ha='center', fontsize=9)
+    ax_xz.text(outer_radius*0.7, outer_radius*0.7, f'σ={fuzziness:.0f}Å', fontsize=9)
+
+    # YZ plane
+    ax_yz.fill(outer_x, outer_y, 'lightyellow', alpha=0.3)
+    ax_yz.fill(mid_x, mid_y, 'lightgreen', alpha=0.4)
+    ax_yz.fill(core_x, core_y, 'green', alpha=0.3)
+    ax_yz.plot(outer_x, outer_y, 'y--', linewidth=1.5, alpha=0.7)
+    ax_yz.plot(mid_x, mid_y, 'g-', linewidth=2)
+    ax_yz.plot(core_x, core_y, 'g:', linewidth=1.5)
+    ax_yz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = ["radius", "radius + fuzziness"]
 

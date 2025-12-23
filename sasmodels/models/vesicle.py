@@ -97,7 +97,96 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "vesicle.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for vesicle visualization (hollow sphere)."""
+    import numpy as np
+    radius = params.get('radius', 100)
+    thickness = params.get('thickness', 30)
+
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    # Inner surface (core)
+    x_inner = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_inner = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_inner = radius * np.cos(phi_mesh)
+
+    # Outer surface (shell)
+    outer_radius = radius + thickness
+    x_outer = outer_radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_outer = outer_radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_outer = outer_radius * np.cos(phi_mesh)
+
+    return {
+        'inner': (x_inner, y_inner, z_inner),
+        'outer': (x_outer, y_outer, z_outer)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the vesicle."""
+    import numpy as np
+    radius = params.get('radius', 100)
+    thickness = params.get('thickness', 30)
+    outer_radius = radius + thickness
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # Inner and outer circles
+    inner_x = radius * np.cos(theta)
+    inner_y = radius * np.sin(theta)
+    outer_x = outer_radius * np.cos(theta)
+    outer_y = outer_radius * np.sin(theta)
+
+    # XY plane
+    ax_xy.fill(outer_x, outer_y, 'lightcoral', alpha=0.3, label='Shell')
+    ax_xy.fill(inner_x, inner_y, 'white', alpha=1.0)
+    ax_xy.plot(outer_x, outer_y, 'r-', linewidth=2)
+    ax_xy.plot(inner_x, inner_y, 'b-', linewidth=2, label='Core boundary')
+    ax_xy.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend()
+
+    # XZ plane
+    ax_xz.fill(outer_x, outer_y, 'lightcoral', alpha=0.3)
+    ax_xz.fill(inner_x, inner_y, 'white', alpha=1.0)
+    ax_xz.plot(outer_x, outer_y, 'r-', linewidth=2)
+    ax_xz.plot(inner_x, inner_y, 'b-', linewidth=2)
+    ax_xz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Side View)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+
+    # Add dimension annotations
+    ax_xz.annotate('', xy=(0, radius), xytext=(0, 0),
+                  arrowprops=dict(arrowstyle='->', color='blue'))
+    ax_xz.text(5, radius/2, f'r={radius:.0f}Å', fontsize=9, color='blue')
+    ax_xz.annotate('', xy=(0, outer_radius), xytext=(0, radius),
+                  arrowprops=dict(arrowstyle='->', color='red'))
+    ax_xz.text(5, radius + thickness/2, f't={thickness:.0f}Å', fontsize=9, color='red')
+
+    # YZ plane
+    ax_yz.fill(outer_x, outer_y, 'lightgreen', alpha=0.3)
+    ax_yz.fill(inner_x, inner_y, 'white', alpha=1.0)
+    ax_yz.plot(outer_x, outer_y, 'g-', linewidth=2)
+    ax_yz.plot(inner_x, inner_y, 'orange', linewidth=2)
+    ax_yz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Front View)')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = ["outer radius"]
 

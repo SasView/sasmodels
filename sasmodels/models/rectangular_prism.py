@@ -145,7 +145,94 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "rectangular_prism.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for rectangular prism visualization."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+
+    length_b = length_a * b2a_ratio
+    length_c = length_a * c2a_ratio
+
+    faces = {}
+    # Front and back faces (YZ planes at x = ±a/2)
+    y = np.linspace(-length_b/2, length_b/2, resolution//4)
+    z = np.linspace(-length_c/2, length_c/2, resolution//2)
+    y_mesh, z_mesh = np.meshgrid(y, z)
+    faces['front'] = (np.full_like(y_mesh, length_a/2), y_mesh, z_mesh)
+    faces['back'] = (np.full_like(y_mesh, -length_a/2), y_mesh, z_mesh)
+
+    # Left and right faces (XZ planes at y = ±b/2)
+    x = np.linspace(-length_a/2, length_a/2, resolution//4)
+    z = np.linspace(-length_c/2, length_c/2, resolution//2)
+    x_mesh, z_mesh = np.meshgrid(x, z)
+    faces['right'] = (x_mesh, np.full_like(x_mesh, length_b/2), z_mesh)
+    faces['left'] = (x_mesh, np.full_like(x_mesh, -length_b/2), z_mesh)
+
+    # Top and bottom faces (XY planes at z = ±c/2)
+    x = np.linspace(-length_a/2, length_a/2, resolution//4)
+    y = np.linspace(-length_b/2, length_b/2, resolution//4)
+    x_mesh, y_mesh = np.meshgrid(x, y)
+    faces['top'] = (x_mesh, y_mesh, np.full_like(x_mesh, length_c/2))
+    faces['bottom'] = (x_mesh, y_mesh, np.full_like(x_mesh, -length_c/2))
+
+    return faces
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the rectangular prism."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+
+    length_b = length_a * b2a_ratio
+    length_c = length_a * c2a_ratio
+
+    # XY plane (A x B)
+    rect_x = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    rect_y = [-length_b/2, length_b/2, length_b/2, -length_b/2, -length_b/2]
+    ax_xy.plot(rect_x, rect_y, 'b-', linewidth=2)
+    ax_xy.fill(rect_x, rect_y, 'lightblue', alpha=0.3)
+    max_xy = max(length_a, length_b) / 2 * 1.3
+    ax_xy.set_xlim(-max_xy, max_xy)
+    ax_xy.set_ylim(-max_xy, max_xy)
+    ax_xy.set_xlabel('X (Å) - A')
+    ax_xy.set_ylabel('Y (Å) - B')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # Add dimensions
+    ax_xy.text(0, -max_xy*0.9, f'A={length_a:.0f}Å, B={length_b:.0f}Å', ha='center', fontsize=9)
+
+    # XZ plane (A x C)
+    rect_x_xz = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    rect_z = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+    ax_xz.plot(rect_x_xz, rect_z, 'r-', linewidth=2)
+    ax_xz.fill(rect_x_xz, rect_z, 'lightcoral', alpha=0.3)
+    max_xz = max(length_a, length_c) / 2 * 1.3
+    ax_xz.set_xlim(-max_xz, max_xz)
+    ax_xz.set_ylim(-max_xz, max_xz)
+    ax_xz.set_xlabel('X (Å) - A')
+    ax_xz.set_ylabel('Z (Å) - C')
+    ax_xz.set_title('XZ Cross-section (Side View)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane (B x C)
+    rect_y_yz = [-length_b/2, -length_b/2, length_b/2, length_b/2, -length_b/2]
+    rect_z_yz = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+    ax_yz.plot(rect_y_yz, rect_z_yz, 'g-', linewidth=2)
+    ax_yz.fill(rect_y_yz, rect_z_yz, 'lightgreen', alpha=0.3)
+    max_yz = max(length_b, length_c) / 2 * 1.3
+    ax_yz.set_xlim(-max_yz, max_yz)
+    ax_yz.set_ylim(-max_yz, max_yz)
+    ax_yz.set_xlabel('Y (Å) - B')
+    ax_yz.set_ylabel('Z (Å) - C')
+    ax_yz.set_title('YZ Cross-section (Front View)')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",

@@ -152,7 +152,104 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 # lib/gauss76.c
 # lib/gauss20.c
 source = ["lib/gauss20.c", "lib/sas_gamma.c", "superball.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=60):
+    """Create 3D mesh for superball visualization."""
+    import numpy as np
+    length_a = params.get('length_a', 50)
+    p = params.get('exponent_p', 2.5)
+
+    # Superball equation: |x|^(2p) + |y|^(2p) + |z|^(2p) <= (a/2)^(2p)
+    # Parametric surface approximation
+    R = length_a / 2
+
+    # Use spherical-like coordinates but with superellipse shape
+    u = np.linspace(0, np.pi, resolution)
+    v = np.linspace(0, 2*np.pi, resolution)
+    u_mesh, v_mesh = np.meshgrid(u, v)
+
+    # Superellipsoid parametric equations
+    def sign_pow(x, n):
+        return np.sign(x) * np.abs(x)**n
+
+    cos_u = np.cos(u_mesh)
+    sin_u = np.sin(u_mesh)
+    cos_v = np.cos(v_mesh)
+    sin_v = np.sin(v_mesh)
+
+    # Exponent for shape (1/p gives the superellipsoid exponent)
+    e = 1.0 / p
+
+    x = R * sign_pow(sin_u, e) * sign_pow(cos_v, e)
+    y = R * sign_pow(sin_u, e) * sign_pow(sin_v, e)
+    z = R * sign_pow(cos_u, e)
+
+    return {'superball': (x, y, z)}
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the superball."""
+    import numpy as np
+    length_a = params.get('length_a', 50)
+    p = params.get('exponent_p', 2.5)
+    R = length_a / 2
+
+    # Superellipse: |x/R|^(2p) + |y/R|^(2p) = 1
+    # Parametric: x = R*sign(cos(t))*|cos(t)|^(1/p), y = R*sign(sin(t))*|sin(t)|^(1/p)
+    t = np.linspace(0, 2*np.pi, 200)
+
+    def sign_pow(x, n):
+        return np.sign(x) * np.abs(x)**n
+
+    e = 1.0 / p
+    superellipse_x = R * sign_pow(np.cos(t), e)
+    superellipse_y = R * sign_pow(np.sin(t), e)
+
+    # Reference shapes
+    circle_x = R * np.cos(t)
+    circle_y = R * np.sin(t)
+
+    # XY plane
+    ax_xy.fill(superellipse_x, superellipse_y, 'lightblue', alpha=0.5)
+    ax_xy.plot(superellipse_x, superellipse_y, 'b-', linewidth=2, label=f'p={p:.1f}')
+    ax_xy.plot(circle_x, circle_y, 'g--', linewidth=1, alpha=0.5, label='sphere (p=1)')
+    # Square reference
+    sq = R * np.array([-1, -1, 1, 1, -1])
+    ax_xy.plot(sq, np.array([-1, 1, 1, -1, -1])*R, 'r--', linewidth=1, alpha=0.5, label='cube (p=∞)')
+
+    ax_xy.set_xlim(-R*1.4, R*1.4)
+    ax_xy.set_ylim(-R*1.4, R*1.4)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'XY Cross-section (a={length_a:.0f}Å)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend(fontsize=8)
+
+    # XZ plane
+    ax_xz.fill(superellipse_x, superellipse_y, 'lightcoral', alpha=0.5)
+    ax_xz.plot(superellipse_x, superellipse_y, 'r-', linewidth=2)
+    ax_xz.plot(circle_x, circle_y, 'g--', linewidth=1, alpha=0.5)
+    ax_xz.plot(sq, np.array([-1, 1, 1, -1, -1])*R, 'b--', linewidth=1, alpha=0.5)
+
+    ax_xz.set_xlim(-R*1.4, R*1.4)
+    ax_xz.set_ylim(-R*1.4, R*1.4)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title(f'XZ Cross-section (p={p:.2f})')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane
+    ax_yz.fill(superellipse_x, superellipse_y, 'lightgreen', alpha=0.5)
+    ax_yz.plot(superellipse_x, superellipse_y, 'g-', linewidth=2)
+    ax_yz.set_xlim(-R*1.4, R*1.4)
+    ax_yz.set_ylim(-R*1.4, R*1.4)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = [
     "radius of gyration",

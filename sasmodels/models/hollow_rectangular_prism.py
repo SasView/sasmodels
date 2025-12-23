@@ -147,7 +147,122 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for hollow rectangular prism visualization."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+    thickness = params.get('thickness', 1)
+
+    # Outer dimensions
+    outer_a = length_a
+    outer_b = length_a * b2a_ratio
+    outer_c = length_a * c2a_ratio
+
+    # Inner dimensions
+    inner_a = outer_a - 2 * thickness
+    inner_b = outer_b - 2 * thickness
+    inner_c = outer_c - 2 * thickness
+
+    # Ensure inner dimensions are positive
+    inner_a = max(inner_a, 0.1)
+    inner_b = max(inner_b, 0.1)
+    inner_c = max(inner_c, 0.1)
+
+    faces = {}
+
+    # Outer faces
+    y = np.linspace(-outer_b/2, outer_b/2, resolution//4)
+    z = np.linspace(-outer_c/2, outer_c/2, resolution//2)
+    y_mesh, z_mesh = np.meshgrid(y, z)
+    faces['outer_front'] = (np.full_like(y_mesh, outer_a/2), y_mesh, z_mesh)
+    faces['outer_back'] = (np.full_like(y_mesh, -outer_a/2), y_mesh, z_mesh)
+
+    x = np.linspace(-outer_a/2, outer_a/2, resolution//4)
+    z = np.linspace(-outer_c/2, outer_c/2, resolution//2)
+    x_mesh, z_mesh = np.meshgrid(x, z)
+    faces['outer_right'] = (x_mesh, np.full_like(x_mesh, outer_b/2), z_mesh)
+    faces['outer_left'] = (x_mesh, np.full_like(x_mesh, -outer_b/2), z_mesh)
+
+    x = np.linspace(-outer_a/2, outer_a/2, resolution//4)
+    y = np.linspace(-outer_b/2, outer_b/2, resolution//4)
+    x_mesh, y_mesh = np.meshgrid(x, y)
+    faces['outer_top'] = (x_mesh, y_mesh, np.full_like(x_mesh, outer_c/2))
+    faces['outer_bottom'] = (x_mesh, y_mesh, np.full_like(x_mesh, -outer_c/2))
+
+    return faces
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the hollow rectangular prism."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+    thickness = params.get('thickness', 1)
+
+    outer_a, outer_b, outer_c = length_a, length_a * b2a_ratio, length_a * c2a_ratio
+    inner_a = max(outer_a - 2*thickness, 0.1)
+    inner_b = max(outer_b - 2*thickness, 0.1)
+    inner_c = max(outer_c - 2*thickness, 0.1)
+
+    # XY plane
+    outer_x = [-outer_a/2, -outer_a/2, outer_a/2, outer_a/2, -outer_a/2]
+    outer_y = [-outer_b/2, outer_b/2, outer_b/2, -outer_b/2, -outer_b/2]
+    inner_x = [-inner_a/2, -inner_a/2, inner_a/2, inner_a/2, -inner_a/2]
+    inner_y = [-inner_b/2, inner_b/2, inner_b/2, -inner_b/2, -inner_b/2]
+
+    ax_xy.fill(outer_x, outer_y, 'lightblue', alpha=0.3)
+    ax_xy.fill(inner_x, inner_y, 'white', alpha=1.0)
+    ax_xy.plot(outer_x, outer_y, 'b-', linewidth=2, label='Outer')
+    ax_xy.plot(inner_x, inner_y, 'r--', linewidth=2, label='Inner (hollow)')
+    max_xy = max(outer_a, outer_b) / 2 * 1.3
+    ax_xy.set_xlim(-max_xy, max_xy)
+    ax_xy.set_ylim(-max_xy, max_xy)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend()
+
+    # XZ plane
+    outer_xz_x = [-outer_a/2, -outer_a/2, outer_a/2, outer_a/2, -outer_a/2]
+    outer_xz_z = [-outer_c/2, outer_c/2, outer_c/2, -outer_c/2, -outer_c/2]
+    inner_xz_x = [-inner_a/2, -inner_a/2, inner_a/2, inner_a/2, -inner_a/2]
+    inner_xz_z = [-inner_c/2, inner_c/2, inner_c/2, -inner_c/2, -inner_c/2]
+
+    ax_xz.fill(outer_xz_x, outer_xz_z, 'lightcoral', alpha=0.3)
+    ax_xz.fill(inner_xz_x, inner_xz_z, 'white', alpha=1.0)
+    ax_xz.plot(outer_xz_x, outer_xz_z, 'r-', linewidth=2)
+    ax_xz.plot(inner_xz_x, inner_xz_z, 'b--', linewidth=2)
+    max_xz = max(outer_a, outer_c) / 2 * 1.3
+    ax_xz.set_xlim(-max_xz, max_xz)
+    ax_xz.set_ylim(-max_xz, max_xz)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Side View)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane
+    outer_yz_y = [-outer_b/2, -outer_b/2, outer_b/2, outer_b/2, -outer_b/2]
+    outer_yz_z = [-outer_c/2, outer_c/2, outer_c/2, -outer_c/2, -outer_c/2]
+    inner_yz_y = [-inner_b/2, -inner_b/2, inner_b/2, inner_b/2, -inner_b/2]
+    inner_yz_z = [-inner_c/2, inner_c/2, inner_c/2, -inner_c/2, -inner_c/2]
+
+    ax_yz.fill(outer_yz_y, outer_yz_z, 'lightgreen', alpha=0.3)
+    ax_yz.fill(inner_yz_y, inner_yz_z, 'white', alpha=1.0)
+    ax_yz.plot(outer_yz_y, outer_yz_z, 'g-', linewidth=2)
+    ax_yz.plot(inner_yz_y, inner_yz_z, 'orange', linewidth=2)
+    max_yz = max(outer_b, outer_c) / 2 * 1.3
+    ax_yz.set_xlim(-max_yz, max_yz)
+    ax_yz.set_ylim(-max_yz, max_yz)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Front View)')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent outer volume sphere",

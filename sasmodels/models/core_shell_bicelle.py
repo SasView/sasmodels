@@ -154,7 +154,123 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for core-shell bicelle visualization."""
+    import numpy as np
+    radius = params.get('radius', 80)
+    thick_rim = params.get('thick_rim', 10)
+    thick_face = params.get('thick_face', 10)
+    length = params.get('length', 50)
+
+    outer_radius = radius + thick_rim
+    total_length = length + 2 * thick_face
+
+    theta = np.linspace(0, 2*np.pi, resolution)
+    z = np.linspace(-total_length/2, total_length/2, resolution//2)
+    theta_mesh, z_mesh = np.meshgrid(theta, z)
+
+    # Outer cylinder (rim surface)
+    x_outer = outer_radius * np.cos(theta_mesh)
+    y_outer = outer_radius * np.sin(theta_mesh)
+
+    # Top cap
+    r = np.linspace(0, outer_radius, resolution//4)
+    r_mesh, theta_cap = np.meshgrid(r, theta)
+    x_top = r_mesh * np.cos(theta_cap)
+    y_top = r_mesh * np.sin(theta_cap)
+    z_top = np.full_like(x_top, total_length/2)
+
+    # Bottom cap
+    z_bottom = np.full_like(x_top, -total_length/2)
+
+    return {
+        'rim': (x_outer, y_outer, z_mesh),
+        'top': (x_top, y_top, z_top),
+        'bottom': (x_top, y_top, z_bottom)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the core-shell bicelle."""
+    import numpy as np
+    radius = params.get('radius', 80)
+    thick_rim = params.get('thick_rim', 10)
+    thick_face = params.get('thick_face', 10)
+    length = params.get('length', 50)
+
+    outer_radius = radius + thick_rim
+    total_length = length + 2 * thick_face
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # XY plane - concentric circles (core and rim)
+    core_x = radius * np.cos(theta)
+    core_y = radius * np.sin(theta)
+    outer_x = outer_radius * np.cos(theta)
+    outer_y = outer_radius * np.sin(theta)
+
+    ax_xy.fill(outer_x, outer_y, 'lightcoral', alpha=0.3, label='Rim')
+    ax_xy.fill(core_x, core_y, 'lightblue', alpha=0.5, label='Core')
+    ax_xy.plot(outer_x, outer_y, 'r-', linewidth=2)
+    ax_xy.plot(core_x, core_y, 'b-', linewidth=2)
+    ax_xy.set_xlim(-outer_radius*1.3, outer_radius*1.3)
+    ax_xy.set_ylim(-outer_radius*1.3, outer_radius*1.3)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'XY Cross-section (R={radius:.0f}, t_rim={thick_rim:.0f}Å)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend(fontsize=8)
+
+    # XZ plane - side view showing bicelle structure
+    # Rim (outer rectangle)
+    rim_z = np.array([-total_length/2, total_length/2, total_length/2, -total_length/2, -total_length/2])
+    rim_r = np.array([-outer_radius, -outer_radius, outer_radius, outer_radius, -outer_radius])
+
+    # Core (inner rectangle, only in center)
+    core_z = np.array([-length/2, length/2, length/2, -length/2, -length/2])
+    core_r = np.array([-radius, -radius, radius, radius, -radius])
+
+    # Face regions (top and bottom)
+    ax_xz.fill(rim_z, rim_r, 'lightcoral', alpha=0.3)  # Rim (outer)
+    ax_xz.fill(core_z, core_r, 'lightblue', alpha=0.5)  # Core
+
+    # Draw faces (different color)
+    # Top face
+    face_top_z = np.array([length/2, total_length/2, total_length/2, length/2, length/2])
+    face_top_r = np.array([-radius, -radius, radius, radius, -radius])
+    ax_xz.fill(face_top_z, face_top_r, 'lightgreen', alpha=0.5)
+
+    # Bottom face
+    face_bot_z = np.array([-total_length/2, -length/2, -length/2, -total_length/2, -total_length/2])
+    face_bot_r = np.array([-radius, -radius, radius, radius, -radius])
+    ax_xz.fill(face_bot_z, face_bot_r, 'lightgreen', alpha=0.5)
+
+    ax_xz.plot(rim_z, rim_r, 'r-', linewidth=2)
+    ax_xz.plot(core_z, core_r, 'b-', linewidth=2)
+
+    ax_xz.set_xlim(-total_length/2*1.2, total_length/2*1.2)
+    ax_xz.set_ylim(-outer_radius*1.3, outer_radius*1.3)
+    ax_xz.set_xlabel('Z (Å) - along axis')
+    ax_xz.set_ylabel('Radial (Å)')
+    ax_xz.set_title(f'Side View (L={length:.0f}, t_face={thick_face:.0f}Å)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane - same as XZ
+    ax_yz.fill(rim_z, rim_r, 'moccasin', alpha=0.3)
+    ax_yz.fill(core_z, core_r, 'lightyellow', alpha=0.5)
+    ax_yz.fill(face_top_z, face_top_r, 'lightpink', alpha=0.5)
+    ax_yz.fill(face_bot_z, face_bot_r, 'lightpink', alpha=0.5)
+    ax_yz.plot(rim_z, rim_r, 'orange', linewidth=2)
+    ax_yz.plot(core_z, core_r, 'gold', linewidth=2)
+
+    ax_yz.set_xlim(-total_length/2*1.2, total_length/2*1.2)
+    ax_yz.set_ylim(-outer_radius*1.3, outer_radius*1.3)
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Radial (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "outer rim radius",

@@ -19,8 +19,8 @@ try:
 except ImportError:
     __version__ = "0.0.0.dev"
 
-# Shape visualization API
-from .shape_visualizer import SASModelsShapeDetector, generate_shape_image
+# Shape visualization API moved to explore/shape_visualizer.py
+# from .shape_visualizer import SASModelsShapeDetector, generate_shape_image
 
 
 def data_files():

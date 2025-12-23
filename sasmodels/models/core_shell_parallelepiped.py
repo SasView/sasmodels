@@ -225,7 +225,117 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for core-shell parallelepiped visualization."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    length_b = params.get('length_b', 75)
+    length_c = params.get('length_c', 400)
+    thick_a = params.get('thick_rim_a', 10)
+    thick_b = params.get('thick_rim_b', 10)
+    thick_c = params.get('thick_rim_c', 10)
+
+    faces = {}
+
+    # Outer dimensions (core + shells on each face)
+    outer_a = length_a + 2 * thick_a
+    outer_b = length_b + 2 * thick_b
+    outer_c = length_c + 2 * thick_c
+
+    # Create outer box faces
+    y = np.linspace(-outer_b/2, outer_b/2, resolution//4)
+    z = np.linspace(-outer_c/2, outer_c/2, resolution//2)
+    y_mesh, z_mesh = np.meshgrid(y, z)
+    faces['outer_front'] = (np.full_like(y_mesh, outer_a/2), y_mesh, z_mesh)
+    faces['outer_back'] = (np.full_like(y_mesh, -outer_a/2), y_mesh, z_mesh)
+
+    x = np.linspace(-outer_a/2, outer_a/2, resolution//4)
+    z = np.linspace(-outer_c/2, outer_c/2, resolution//2)
+    x_mesh, z_mesh = np.meshgrid(x, z)
+    faces['outer_right'] = (x_mesh, np.full_like(x_mesh, outer_b/2), z_mesh)
+    faces['outer_left'] = (x_mesh, np.full_like(x_mesh, -outer_b/2), z_mesh)
+
+    x = np.linspace(-outer_a/2, outer_a/2, resolution//4)
+    y = np.linspace(-outer_b/2, outer_b/2, resolution//4)
+    x_mesh, y_mesh = np.meshgrid(x, y)
+    faces['outer_top'] = (x_mesh, y_mesh, np.full_like(x_mesh, outer_c/2))
+    faces['outer_bottom'] = (x_mesh, y_mesh, np.full_like(x_mesh, -outer_c/2))
+
+    return faces
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the core-shell parallelepiped."""
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    length_b = params.get('length_b', 75)
+    length_c = params.get('length_c', 400)
+    thick_a = params.get('thick_rim_a', 10)
+    thick_b = params.get('thick_rim_b', 10)
+    thick_c = params.get('thick_rim_c', 10)
+
+    outer_a = length_a + 2 * thick_a
+    outer_b = length_b + 2 * thick_b
+    outer_c = length_c + 2 * thick_c
+
+    # XY plane (top view) - shows A and B dimensions
+    # Outer rectangle
+    outer_x = [-outer_a/2, -outer_a/2, outer_a/2, outer_a/2, -outer_a/2]
+    outer_y = [-outer_b/2, outer_b/2, outer_b/2, -outer_b/2, -outer_b/2]
+    # Core rectangle
+    core_x = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    core_y = [-length_b/2, length_b/2, length_b/2, -length_b/2, -length_b/2]
+
+    ax_xy.fill(outer_x, outer_y, 'lightcoral', alpha=0.3, label='Shell')
+    ax_xy.fill(core_x, core_y, 'lightblue', alpha=0.5, label='Core')
+    ax_xy.plot(outer_x, outer_y, 'r-', linewidth=2)
+    ax_xy.plot(core_x, core_y, 'b-', linewidth=2)
+    max_xy = max(outer_a, outer_b) / 2 * 1.3
+    ax_xy.set_xlim(-max_xy, max_xy)
+    ax_xy.set_ylim(-max_xy, max_xy)
+    ax_xy.set_xlabel('X (Å) - A')
+    ax_xy.set_ylabel('Y (Å) - B')
+    ax_xy.set_title(f'XY Cross-section (t_a={thick_a:.0f}, t_b={thick_b:.0f}Å)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend(fontsize=8)
+
+    # XZ plane (side view) - shows A and C dimensions
+    outer_xz_x = [-outer_a/2, -outer_a/2, outer_a/2, outer_a/2, -outer_a/2]
+    outer_xz_z = [-outer_c/2, outer_c/2, outer_c/2, -outer_c/2, -outer_c/2]
+    core_xz_x = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    core_xz_z = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+
+    ax_xz.fill(outer_xz_x, outer_xz_z, 'lightcoral', alpha=0.3)
+    ax_xz.fill(core_xz_x, core_xz_z, 'lightblue', alpha=0.5)
+    ax_xz.plot(outer_xz_x, outer_xz_z, 'r-', linewidth=2)
+    ax_xz.plot(core_xz_x, core_xz_z, 'b-', linewidth=2)
+    max_xz = max(outer_a, outer_c) / 2 * 1.1
+    ax_xz.set_xlim(-max_xz, max_xz)
+    ax_xz.set_ylim(-max_xz, max_xz)
+    ax_xz.set_xlabel('X (Å) - A')
+    ax_xz.set_ylabel('Z (Å) - C')
+    ax_xz.set_title(f'XZ Cross-section (t_c={thick_c:.0f}Å)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane (front view) - shows B and C dimensions
+    outer_yz_y = [-outer_b/2, -outer_b/2, outer_b/2, outer_b/2, -outer_b/2]
+    outer_yz_z = [-outer_c/2, outer_c/2, outer_c/2, -outer_c/2, -outer_c/2]
+    core_yz_y = [-length_b/2, -length_b/2, length_b/2, length_b/2, -length_b/2]
+    core_yz_z = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+
+    ax_yz.fill(outer_yz_y, outer_yz_z, 'lightgreen', alpha=0.3)
+    ax_yz.fill(core_yz_y, core_yz_z, 'moccasin', alpha=0.5)
+    ax_yz.plot(outer_yz_y, outer_yz_z, 'g-', linewidth=2)
+    ax_yz.plot(core_yz_y, core_yz_z, 'orange', linewidth=2)
+    max_yz = max(outer_b, outer_c) / 2 * 1.1
+    ax_yz.set_xlim(-max_yz, max_yz)
+    ax_yz.set_ylim(-max_yz, max_yz)
+    ax_yz.set_xlabel('Y (Å) - B')
+    ax_yz.set_ylabel('Z (Å) - C')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.grid(True, alpha=0.3)
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume",

@@ -159,7 +159,83 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for triaxial ellipsoid visualization."""
+    import numpy as np
+    radius_a = params.get('radius_equat_minor', 20)
+    radius_b = params.get('radius_equat_major', 400)
+    radius_c = params.get('radius_polar', 10)
+
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    x = radius_a * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y = radius_b * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z = radius_c * np.cos(phi_mesh)
+
+    return {'ellipsoid': (x, y, z)}
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the triaxial ellipsoid."""
+    import numpy as np
+    radius_a = params.get('radius_equat_minor', 20)
+    radius_b = params.get('radius_equat_major', 400)
+    radius_c = params.get('radius_polar', 10)
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # XY plane (Ra x Rb ellipse)
+    ellipse_x = radius_a * np.cos(theta)
+    ellipse_y = radius_b * np.sin(theta)
+    ax_xy.plot(ellipse_x, ellipse_y, 'b-', linewidth=2)
+    ax_xy.fill(ellipse_x, ellipse_y, 'lightblue', alpha=0.3)
+    max_xy = max(radius_a, radius_b) * 1.2
+    ax_xy.set_xlim(-max_xy, max_xy)
+    ax_xy.set_ylim(-max_xy, max_xy)
+    ax_xy.set_xlabel('X (Å) - Ra')
+    ax_xy.set_ylabel('Y (Å) - Rb')
+    ax_xy.set_title('XY Cross-section (Equatorial)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # Annotations
+    ax_xy.annotate('', xy=(radius_a, 0), xytext=(0, 0),
+                  arrowprops=dict(arrowstyle='->', color='blue'))
+    ax_xy.text(radius_a/2, -max_xy*0.15, f'Ra={radius_a:.0f}Å', ha='center', fontsize=9)
+    ax_xy.annotate('', xy=(0, radius_b), xytext=(0, 0),
+                  arrowprops=dict(arrowstyle='->', color='blue'))
+    ax_xy.text(-max_xy*0.15, radius_b/2, f'Rb={radius_b:.0f}Å', ha='center', fontsize=9, rotation=90)
+
+    # XZ plane (Ra x Rc ellipse)
+    ellipse_x_xz = radius_a * np.cos(theta)
+    ellipse_z = radius_c * np.sin(theta)
+    ax_xz.plot(ellipse_x_xz, ellipse_z, 'r-', linewidth=2)
+    ax_xz.fill(ellipse_x_xz, ellipse_z, 'lightcoral', alpha=0.3)
+    max_xz = max(radius_a, radius_c) * 1.2
+    ax_xz.set_xlim(-max_xz, max_xz)
+    ax_xz.set_ylim(-max_xz, max_xz)
+    ax_xz.set_xlabel('X (Å) - Ra')
+    ax_xz.set_ylabel('Z (Å) - Rc')
+    ax_xz.set_title('XZ Cross-section (Meridional)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane (Rb x Rc ellipse)
+    ellipse_y_yz = radius_b * np.cos(theta)
+    ellipse_z_yz = radius_c * np.sin(theta)
+    ax_yz.plot(ellipse_y_yz, ellipse_z_yz, 'g-', linewidth=2)
+    ax_yz.fill(ellipse_y_yz, ellipse_z_yz, 'lightgreen', alpha=0.3)
+    max_yz = max(radius_b, radius_c) * 1.2
+    ax_yz.set_xlim(-max_yz, max_yz)
+    ax_yz.set_ylim(-max_yz, max_yz)
+    ax_yz.set_xlabel('Y (Å) - Rb')
+    ax_yz.set_ylabel('Z (Å) - Rc')
+    ax_yz.set_title('YZ Cross-section (Meridional)')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 # Equations do not require Ra <= Rb <= Rc so don't test for it.
 #valid = ("radius_equat_minor <= radius_equat_major"
 #         " && radius_equat_major <= radius_polar")

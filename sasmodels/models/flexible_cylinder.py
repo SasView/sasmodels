@@ -98,7 +98,83 @@ description = """Note : scale and contrast = (sld - sld_solvent) are both
               """
 
 category = "shape:cylinder"
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for flexible cylinder (shown as simplified straight cylinder)."""
+    import numpy as np
+    length = params.get('length', 1000)
+    radius = params.get('radius', 20)
+    kuhn_length = params.get('kuhn_length', 100)
+
+    # Show as straight cylinder (simplified view)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    z = np.linspace(-length/2, length/2, resolution//2)
+    theta_mesh, z_mesh = np.meshgrid(theta, z)
+
+    x = radius * np.cos(theta_mesh)
+    y = radius * np.sin(theta_mesh)
+
+    return {
+        'cylinder': (x, y, z_mesh),
+        '_note': f'Simplified straight view - actual model is flexible with Kuhn length {kuhn_length:.0f} Å'
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the flexible cylinder."""
+    import numpy as np
+    length = params.get('length', 1000)
+    radius = params.get('radius', 20)
+    kuhn_length = params.get('kuhn_length', 100)
+
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # XY plane - circular cross-section
+    circle_x = radius * np.cos(theta)
+    circle_y = radius * np.sin(theta)
+    ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.5)
+    ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2)
+    ax_xy.set_xlim(-radius*2, radius*2)
+    ax_xy.set_ylim(-radius*2, radius*2)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'Cross-section (R={radius:.0f}Å)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ plane - side view with Kuhn segments indicated
+    cyl_z = np.array([-length/2, length/2, length/2, -length/2, -length/2])
+    cyl_r = np.array([-radius, -radius, radius, radius, -radius])
+    ax_xz.fill(cyl_z, cyl_r, 'lightblue', alpha=0.5)
+    ax_xz.plot(cyl_z, cyl_r, 'b-', linewidth=2)
+
+    # Mark Kuhn length segments
+    n_kuhn = int(length / kuhn_length)
+    for i in range(1, min(n_kuhn, 10)):  # Show up to 10 segments
+        z_pos = -length/2 + i * kuhn_length
+        if z_pos < length/2:
+            ax_xz.axvline(z_pos, color='red', linestyle='--', alpha=0.5, linewidth=1)
+
+    ax_xz.set_xlim(-length/2*1.1, length/2*1.1)
+    ax_xz.set_ylim(-radius*3, radius*3)
+    ax_xz.set_xlabel('Z (Å) - Contour Length')
+    ax_xz.set_ylabel('Radial (Å)')
+    ax_xz.set_title(f'Side View (L={length:.0f}Å, b={kuhn_length:.0f}Å)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # Add annotation
+    ax_xz.text(0, radius*2.5, f'Kuhn length b = {kuhn_length:.0f} Å (red lines)',
+               ha='center', fontsize=9, color='red')
+
+    # YZ plane
+    ax_yz.fill(cyl_z, cyl_r, 'lightgreen', alpha=0.5)
+    ax_yz.plot(cyl_z, cyl_r, 'g-', linewidth=2)
+    ax_yz.set_xlim(-length/2*1.1, length/2*1.1)
+    ax_yz.set_ylim(-radius*3, radius*3)
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Radial (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.grid(True, alpha=0.3)
 single = False  # double precision only!
 
 # pylint: disable=bad-whitespace, line-too-long
