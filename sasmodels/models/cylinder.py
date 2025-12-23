@@ -156,25 +156,25 @@ def create_shape_mesh(params, resolution=50):
     import numpy as np
     radius = params.get('radius', 20)
     length = params.get('length', 400)
-    
+
     # Create cylinder
     theta = np.linspace(0, 2*np.pi, resolution)
     z = np.linspace(-length/2, length/2, resolution//2)
     theta_mesh, z_mesh = np.meshgrid(theta, z)
-    
+
     x = radius * np.cos(theta_mesh)
     y = radius * np.sin(theta_mesh)
-    
+
     # Create end caps
     r_cap = np.linspace(0, radius, resolution//4)
     theta_cap = np.linspace(0, 2*np.pi, resolution)
     r_cap_mesh, theta_cap_mesh = np.meshgrid(r_cap, theta_cap)
-    
+
     x_cap = r_cap_mesh * np.cos(theta_cap_mesh)
     y_cap = r_cap_mesh * np.sin(theta_cap_mesh)
     z_cap_top = np.full_like(x_cap, length/2)
     z_cap_bottom = np.full_like(x_cap, -length/2)
-    
+
     return {
         'cylinder': (x, y, z_mesh),
         'cap_top': (x_cap, y_cap, z_cap_top),
@@ -186,12 +186,12 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     import numpy as np
     radius = params.get('radius', 20)
     length = params.get('length', 400)
-    
+
     # XY plane (top view) - circle
     theta = np.linspace(0, 2*np.pi, 100)
     circle_x = radius * np.cos(theta)
     circle_y = radius * np.sin(theta)
-    
+
     ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2, label='Cylinder')
     ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.3)
     ax_xy.set_xlim(-radius*1.5, radius*1.5)
@@ -201,11 +201,11 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title('XY Cross-section (Top View)')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane (side view) - rectangle
     rect_x = [-length/2, -length/2, length/2, length/2, -length/2]
     rect_z = [-radius, radius, radius, -radius, -radius]
-    
+
     ax_xz.plot(rect_x, rect_z, 'r-', linewidth=2, label='Cylinder')
     ax_xz.fill(rect_x, rect_z, 'lightcoral', alpha=0.3)
     ax_xz.set_xlim(-length/2*1.2, length/2*1.2)
@@ -214,7 +214,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_ylabel('X (Å)')
     ax_xz.set_title('XZ Cross-section (Side View)')
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane (front view) - rectangle
     ax_yz.plot(rect_x, rect_z, 'g-', linewidth=2, label='Cylinder')
     ax_yz.fill(rect_x, rect_z, 'lightgreen', alpha=0.3)

@@ -149,6 +149,105 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=40):
+    import numpy as np
+    thick_core = params.get('thick_core', 10.0)
+    thick_layer = params.get('thick_layer', 10.0)
+    radius = params.get('radius', 15.0)
+    n_stacking = max(int(round(params.get('n_stacking', 1.0))), 1)
+
+    # Period between disk centers (approximate): core + two layers
+    d = thick_core + 2 * thick_layer
+    total_height = n_stacking * d
+    z_centers = [
+        (i - (n_stacking - 1) / 2.0) * d
+        for i in range(n_stacking)
+    ]
+
+    theta = np.linspace(0, 2 * np.pi, resolution)
+    z_disk = np.linspace(-d / 2, d / 2, resolution // 3)
+    theta_mesh, z_local = np.meshgrid(theta, z_disk)
+    x = radius * np.cos(theta_mesh)
+    y = radius * np.sin(theta_mesh)
+
+    mesh = {}
+    for i, z0 in enumerate(z_centers):
+        z = z_local + z0
+        mesh[f'disk_{i}'] = (x, y, z)
+
+    return mesh
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    thick_core = params.get('thick_core', 10.0)
+    thick_layer = params.get('thick_layer', 10.0)
+    radius = params.get('radius', 15.0)
+    n_stacking = max(int(round(params.get('n_stacking', 1.0))), 1)
+
+    d = thick_core + 2 * thick_layer
+    z_centers = np.array(
+        [(i - (n_stacking - 1) / 2.0) * d for i in range(n_stacking)]
+    )
+    total_height = n_stacking * d
+
+    # XY: top view of a single disk
+    theta = np.linspace(0, 2 * np.pi, 200)
+    circle_x = radius * np.cos(theta)
+    circle_y = radius * np.sin(theta)
+    ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2)
+    ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.4)
+    ax_xy.set_xlim(-radius * 1.3, radius * 1.3)
+    ax_xy.set_ylim(-radius * 1.3, radius * 1.3)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Disk)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ: side view through center, show layered stack
+    for z0 in z_centers:
+        # Core region
+        core_z_top = z0 + thick_core / 2
+        core_z_bottom = z0 - thick_core / 2
+        # Layers above and below
+        layer_top_top = core_z_top + thick_layer
+        layer_top_bottom = core_z_top
+        layer_bottom_top = core_z_bottom
+        layer_bottom_bottom = core_z_bottom - thick_layer
+
+        # Draw layers (rectangles along Z)
+        ax_xz.fill(
+            [radius, radius, -radius, -radius],
+            [layer_bottom_bottom, layer_bottom_top, layer_bottom_top, layer_bottom_bottom],
+            color='lightcoral', alpha=0.4
+        )
+        ax_xz.fill(
+            [radius, radius, -radius, -radius],
+            [layer_top_bottom, layer_top_top, layer_top_top, layer_top_bottom],
+            color='lightcoral', alpha=0.4
+        )
+        # Core
+        ax_xz.fill(
+            [radius, radius, -radius, -radius],
+            [core_z_bottom, core_z_top, core_z_top, core_z_bottom],
+            color='lightblue', alpha=0.6
+        )
+
+    ax_xz.set_xlim(-radius * 1.5, radius * 1.5)
+    ax_xz.set_ylim(-total_height / 2 * 1.2, total_height / 2 * 1.2)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Stack of core+layer disks)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ: identical to XZ (axisymmetric)
+    ax_yz.set_xlim(-radius * 1.5, radius * 1.5)
+    ax_yz.set_ylim(-total_height / 2 * 1.2, total_height / 2 * 1.2)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Stack of disks)')
+    ax_yz.grid(True, alpha=0.3)
+
 def random():
     """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1, 4.7)

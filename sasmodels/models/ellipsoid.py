@@ -160,6 +160,76 @@ radius_effective_modes = [
     ]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=50):
+    import numpy as np
+    radius_polar = params.get('radius_polar', 20)
+    radius_equatorial = params.get('radius_equatorial', 400)
+
+    # Create ellipsoid
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    x = radius_equatorial * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y = radius_equatorial * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z = radius_polar * np.cos(phi_mesh)
+
+    return {'ellipsoid': (x, y, z)}
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    radius_polar = params.get('radius_polar', 20)
+    radius_equatorial = params.get('radius_equatorial', 400)
+
+    # XY plane (top view) - circle with equatorial radius
+    theta = np.linspace(0, 2*np.pi, 100)
+    circle_x = radius_equatorial * np.cos(theta)
+    circle_y = radius_equatorial * np.sin(theta)
+
+    ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2, label='Equatorial')
+    ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.3)
+    ax_xy.set_xlim(-radius_equatorial*1.2, radius_equatorial*1.2)
+    ax_xy.set_ylim(-radius_equatorial*1.2, radius_equatorial*1.2)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Equatorial)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ plane (side view) - ellipse
+    ellipse_x = radius_equatorial * np.cos(theta)
+    ellipse_z = radius_polar * np.sin(theta)
+
+    ax_xz.plot(ellipse_x, ellipse_z, 'r-', linewidth=2, label='Meridional')
+    ax_xz.fill(ellipse_x, ellipse_z, 'lightcoral', alpha=0.3)
+    ax_xz.set_xlim(-radius_equatorial*1.2, radius_equatorial*1.2)
+    ax_xz.set_ylim(-radius_polar*1.2, radius_polar*1.2)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Meridional)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane (front view) - ellipse
+    ax_yz.plot(ellipse_x, ellipse_z, 'g-', linewidth=2, label='Meridional')
+    ax_yz.fill(ellipse_x, ellipse_z, 'lightgreen', alpha=0.3)
+    ax_yz.set_xlim(-radius_equatorial*1.2, radius_equatorial*1.2)
+    ax_yz.set_ylim(-radius_polar*1.2, radius_polar*1.2)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Meridional)')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
+
+    # Add dimension annotations
+    ax_xz.annotate('', xy=(-radius_equatorial, 0), xytext=(radius_equatorial, 0),
+                  arrowprops=dict(arrowstyle='<->', color='black'))
+    ax_xz.text(0, -radius_polar*0.3, f'R_eq = {radius_equatorial:.0f} Å', ha='center', fontsize=10)
+
+    ax_xz.annotate('', xy=(0, -radius_polar), xytext=(0, radius_polar),
+                  arrowprops=dict(arrowstyle='<->', color='black'))
+    ax_xz.text(radius_equatorial*0.3, 0, f'R_pol = {radius_polar:.0f} Å', ha='center', fontsize=10, rotation=90)
+
 def random():
     """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)

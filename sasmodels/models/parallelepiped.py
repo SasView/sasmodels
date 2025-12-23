@@ -240,6 +240,106 @@ radius_effective_modes = [
     ]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=50):
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    length_b = params.get('length_b', 75)
+    length_c = params.get('length_c', 400)
+
+    # Create faces of the parallelepiped
+    faces = {}
+
+    # Front and back faces (x = ±length_a/2)
+    y = np.linspace(-length_b/2, length_b/2, resolution//4)
+    z = np.linspace(-length_c/2, length_c/2, resolution//2)
+    y_mesh, z_mesh = np.meshgrid(y, z)
+
+    faces['front'] = (np.full_like(y_mesh, length_a/2), y_mesh, z_mesh)
+    faces['back'] = (np.full_like(y_mesh, -length_a/2), y_mesh, z_mesh)
+
+    # Left and right faces (y = ±length_b/2)
+    x = np.linspace(-length_a/2, length_a/2, resolution//4)
+    z = np.linspace(-length_c/2, length_c/2, resolution//2)
+    x_mesh, z_mesh = np.meshgrid(x, z)
+
+    faces['right'] = (x_mesh, np.full_like(x_mesh, length_b/2), z_mesh)
+    faces['left'] = (x_mesh, np.full_like(x_mesh, -length_b/2), z_mesh)
+
+    # Top and bottom faces (z = ±length_c/2)
+    x = np.linspace(-length_a/2, length_a/2, resolution//4)
+    y = np.linspace(-length_b/2, length_b/2, resolution//4)
+    x_mesh, y_mesh = np.meshgrid(x, y)
+
+    faces['top'] = (x_mesh, y_mesh, np.full_like(x_mesh, length_c/2))
+    faces['bottom'] = (x_mesh, y_mesh, np.full_like(x_mesh, -length_c/2))
+
+    return faces
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    length_a = params.get('length_a', 35)
+    length_b = params.get('length_b', 75)
+    length_c = params.get('length_c', 400)
+
+    # XY plane (top view) - rectangle A x B
+    rect_xy_x = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    rect_xy_y = [-length_b/2, length_b/2, length_b/2, -length_b/2, -length_b/2]
+
+    ax_xy.plot(rect_xy_x, rect_xy_y, 'b-', linewidth=2, label='A × B face')
+    ax_xy.fill(rect_xy_x, rect_xy_y, 'lightblue', alpha=0.3)
+    ax_xy.set_xlim(-length_a/2*1.3, length_a/2*1.3)
+    ax_xy.set_ylim(-length_b/2*1.3, length_b/2*1.3)
+    ax_xy.set_xlabel('X (Å) - Length A')
+    ax_xy.set_ylabel('Y (Å) - Length B')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ plane (side view) - rectangle A x C
+    rect_xz_x = [-length_a/2, -length_a/2, length_a/2, length_a/2, -length_a/2]
+    rect_xz_z = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+
+    ax_xz.plot(rect_xz_x, rect_xz_z, 'r-', linewidth=2, label='A × C face')
+    ax_xz.fill(rect_xz_x, rect_xz_z, 'lightcoral', alpha=0.3)
+    ax_xz.set_xlim(-length_a/2*1.3, length_a/2*1.3)
+    ax_xz.set_ylim(-length_c/2*1.3, length_c/2*1.3)
+    ax_xz.set_xlabel('X (Å) - Length A')
+    ax_xz.set_ylabel('Z (Å) - Length C')
+    ax_xz.set_title('XZ Cross-section (Side View)')
+    ax_xz.grid(True, alpha=0.3)
+
+    # YZ plane (front view) - rectangle B x C
+    rect_yz_y = [-length_b/2, -length_b/2, length_b/2, length_b/2, -length_b/2]
+    rect_yz_z = [-length_c/2, length_c/2, length_c/2, -length_c/2, -length_c/2]
+
+    ax_yz.plot(rect_yz_y, rect_yz_z, 'g-', linewidth=2, label='B × C face')
+    ax_yz.fill(rect_yz_y, rect_yz_z, 'lightgreen', alpha=0.3)
+    ax_yz.set_xlim(-length_b/2*1.3, length_b/2*1.3)
+    ax_yz.set_ylim(-length_c/2*1.3, length_c/2*1.3)
+    ax_yz.set_xlabel('Y (Å) - Length B')
+    ax_yz.set_ylabel('Z (Å) - Length C')
+    ax_yz.set_title('YZ Cross-section (Front View)')
+    ax_yz.grid(True, alpha=0.3)
+
+    # Add dimension annotations
+    # XY plane
+    ax_xy.annotate('', xy=(-length_a/2, -length_b/2*1.4), xytext=(length_a/2, -length_b/2*1.4),
+                  arrowprops=dict(arrowstyle='<->', color='black'))
+    ax_xy.text(0, -length_b/2*1.5, f'A = {length_a:.0f} Å', ha='center', fontsize=10)
+
+    ax_xy.annotate('', xy=(-length_a/2*1.4, -length_b/2), xytext=(-length_a/2*1.4, length_b/2),
+                  arrowprops=dict(arrowstyle='<->', color='black'))
+    ax_xy.text(-length_a/2*1.5, 0, f'B = {length_b:.0f} Å', ha='center', fontsize=10, rotation=90)
+
+    # XZ plane
+    ax_xz.annotate('', xy=(-length_a/2, -length_c/2*1.2), xytext=(length_a/2, -length_c/2*1.2),
+                  arrowprops=dict(arrowstyle='<->', color='black'))
+    ax_xz.text(0, -length_c/2*1.25, f'A = {length_a:.0f} Å', ha='center', fontsize=10)
+
+    ax_xz.annotate('', xy=(-length_a/2*1.2, -length_c/2), xytext=(-length_a/2*1.2, length_c/2),
+                  arrowprops=dict(arrowstyle='<->', color='black'))
+    ax_xz.text(-length_a/2*1.25, 0, f'C = {length_c:.0f} Å', ha='center', fontsize=10, rotation=90)
+
 def random():
     """Return a random parameter set for the model."""
     length = 10**np.random.uniform(1, 4.7, size=3)

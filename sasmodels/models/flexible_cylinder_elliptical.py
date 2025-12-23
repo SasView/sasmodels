@@ -121,6 +121,83 @@ source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c",
           "flexible_cylinder_elliptical.c"]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=50):
+    import numpy as np
+    # Flexible cylinder is complex (worm-like chain), showing simplified straight version
+    length = params.get('length', 1000)
+    radius = params.get('radius', 20)
+    axis_ratio = params.get('axis_ratio', 1.5)
+    kuhn_length = params.get('kuhn_length', 100)
+
+    radius_minor = radius
+    radius_major = radius * axis_ratio
+
+    # Show as straight elliptical cylinder with annotation about flexibility
+    theta = np.linspace(0, 2*np.pi, resolution)
+    z = np.linspace(-length/2, length/2, resolution//2)
+    theta_mesh, z_mesh = np.meshgrid(theta, z)
+
+    x = radius_major * np.cos(theta_mesh)
+    y = radius_minor * np.sin(theta_mesh)
+
+    return {
+        'cylinder': (x, y, z_mesh),
+        '_note': f'Simplified view - actual model is flexible with Kuhn length {kuhn_length} Å'
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    radius = params.get('radius', 20)
+    axis_ratio = params.get('axis_ratio', 1.5)
+    length = params.get('length', 1000)
+    kuhn_length = params.get('kuhn_length', 100)
+
+    radius_minor = radius
+    radius_major = radius * axis_ratio
+
+    # XY plane (top view) - ellipse
+    theta = np.linspace(0, 2*np.pi, 100)
+    ellipse_x = radius_major * np.cos(theta)
+    ellipse_y = radius_minor * np.sin(theta)
+
+    ax_xy.plot(ellipse_x, ellipse_y, 'b-', linewidth=2)
+    ax_xy.fill(ellipse_x, ellipse_y, 'lightblue', alpha=0.3)
+    ax_xy.set_xlim(-radius_major*1.3, radius_major*1.3)
+    ax_xy.set_ylim(-radius_minor*1.3, radius_minor*1.3)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Elliptical)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.text(0, 0, 'NOTE:\nFlexible', ha='center', fontsize=8, style='italic')
+
+    # XZ plane - show flexibility with wavy line
+    z_points = np.linspace(-length/2, length/2, 100)
+    x_points = radius_major * np.sin(z_points / kuhn_length * 2)  # Simplified wave
+
+    ax_xz.plot(z_points, x_points, 'r-', linewidth=2, label='Chain axis')
+    ax_xz.fill_between(z_points, x_points - radius_major, x_points + radius_major,
+                      alpha=0.2, color='lightcoral')
+    ax_xz.set_xlim(-length/2*1.2, length/2*1.2)
+    ax_xz.set_ylim(-radius_major*5, radius_major*5)
+    ax_xz.set_xlabel('Z (Å)')
+    ax_xz.set_ylabel('X (Å)')
+    ax_xz.set_title('XZ Cross-section (Flexible chain)')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.text(0, radius_major*4.5, f'Kuhn length = {kuhn_length:.0f} Å', ha='center', fontsize=8)
+
+    # YZ plane
+    y_points = radius_minor * np.cos(z_points / kuhn_length * 2)
+    ax_yz.plot(z_points, y_points, 'g-', linewidth=2, label='Chain axis')
+    ax_yz.fill_between(z_points, y_points - radius_minor, y_points + radius_minor,
+                      alpha=0.2, color='lightgreen')
+    ax_yz.set_xlim(-length/2*1.2, length/2*1.2)
+    ax_yz.set_ylim(-radius_minor*5, radius_minor*5)
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Y (Å)')
+    ax_yz.set_title('YZ Cross-section (Flexible)')
+    ax_yz.grid(True, alpha=0.3)
+
 def random():
     """Return a random parameter set for the model."""
     length = 10**np.random.uniform(2, 6)

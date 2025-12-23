@@ -80,28 +80,28 @@ def create_shape_mesh(params, resolution=50):
     """Create 3D mesh for sphere visualization."""
     import numpy as np
     radius = params.get('radius', 50)
-    
+
     # Create sphere
     phi = np.linspace(0, np.pi, resolution//2)
     theta = np.linspace(0, 2*np.pi, resolution)
     phi_mesh, theta_mesh = np.meshgrid(phi, theta)
-    
+
     x = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
     y = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
     z = radius * np.cos(phi_mesh)
-    
+
     return {'sphere': (x, y, z)}
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     """Plot 2D cross-sections of the sphere."""
     import numpy as np
     radius = params.get('radius', 50)
-    
+
     # Create circle for all cross-sections (sphere is symmetric)
     theta = np.linspace(0, 2*np.pi, 100)
     circle_x = radius * np.cos(theta)
     circle_y = radius * np.sin(theta)
-    
+
     # XY plane (top view)
     ax_xy.plot(circle_x, circle_y, 'b-', linewidth=2)
     ax_xy.set_xlim(-radius*1.2, radius*1.2)
@@ -111,7 +111,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title('XY Cross-section (Top View)')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane (side view)
     ax_xz.plot(circle_x, circle_y, 'r-', linewidth=2)
     ax_xz.set_xlim(-radius*1.2, radius*1.2)
@@ -121,7 +121,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_title('XZ Cross-section (Side View)')
     ax_xz.set_aspect('equal')
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane (front view)
     ax_yz.plot(circle_x, circle_y, 'g-', linewidth=2)
     ax_yz.set_xlim(-radius*1.2, radius*1.2)

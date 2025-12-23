@@ -133,6 +133,87 @@ radius_effective_modes = [
     ]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=50):
+    import numpy as np
+    radius_minor = params.get('radius_minor', 20)
+    axis_ratio = params.get('axis_ratio', 1.5)
+    length = params.get('length', 400)
+
+    radius_major = radius_minor * axis_ratio
+
+    # Create elliptical cylinder
+    theta = np.linspace(0, 2*np.pi, resolution)
+    z = np.linspace(-length/2, length/2, resolution//2)
+    theta_mesh, z_mesh = np.meshgrid(theta, z)
+
+    x = radius_major * np.cos(theta_mesh)
+    y = radius_minor * np.sin(theta_mesh)
+
+    # Create end caps (elliptical)
+    u = np.linspace(0, 1, resolution//4)
+    theta_cap = np.linspace(0, 2*np.pi, resolution)
+    u_mesh, theta_cap_mesh = np.meshgrid(u, theta_cap)
+
+    x_cap = u_mesh * radius_major * np.cos(theta_cap_mesh)
+    y_cap = u_mesh * radius_minor * np.sin(theta_cap_mesh)
+    z_cap_top = np.full_like(x_cap, length/2)
+    z_cap_bottom = np.full_like(x_cap, -length/2)
+
+    return {
+        'cylinder': (x, y, z_mesh),
+        'cap_top': (x_cap, y_cap, z_cap_top),
+        'cap_bottom': (x_cap, y_cap, z_cap_bottom)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    radius_minor = params.get('radius_minor', 20)
+    axis_ratio = params.get('axis_ratio', 1.5)
+    length = params.get('length', 400)
+    radius_major = radius_minor * axis_ratio
+
+    # XY plane (top view) - ellipse
+    theta = np.linspace(0, 2*np.pi, 100)
+    ellipse_x = radius_major * np.cos(theta)
+    ellipse_y = radius_minor * np.sin(theta)
+
+    ax_xy.plot(ellipse_x, ellipse_y, 'b-', linewidth=2)
+    ax_xy.fill(ellipse_x, ellipse_y, 'lightblue', alpha=0.3)
+    ax_xy.set_xlim(-radius_major*1.3, radius_major*1.3)
+    ax_xy.set_ylim(-radius_minor*1.3, radius_minor*1.3)
+    ax_xy.set_xlabel('X (Å) - Major axis')
+    ax_xy.set_ylabel('Y (Å) - Minor axis')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ plane (side view along major axis)
+    rect_x = [-length/2, -length/2, length/2, length/2, -length/2]
+    rect_z = [-radius_major, radius_major, radius_major, -radius_major, -radius_major]
+
+    ax_xz.plot(rect_x, rect_z, 'r-', linewidth=2)
+    ax_xz.fill(rect_x, rect_z, 'lightcoral', alpha=0.3)
+    ax_xz.set_xlim(-length/2*1.2, length/2*1.2)
+    ax_xz.set_ylim(-radius_major*1.3, radius_major*1.3)
+    ax_xz.set_xlabel('Z (Å)')
+    ax_xz.set_ylabel('X (Å) - Major')
+    ax_xz.set_title('XZ Cross-section (Major axis)')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.text(0, -radius_major*1.15, f'r_major = {radius_major:.0f} Å', ha='center', fontsize=9)
+
+    # YZ plane (side view along minor axis)
+    rect_y = [-radius_minor, radius_minor, radius_minor, -radius_minor, -radius_minor]
+
+    ax_yz.plot(rect_x, rect_y, 'g-', linewidth=2)
+    ax_yz.fill(rect_x, rect_y, 'lightgreen', alpha=0.3)
+    ax_yz.set_xlim(-length/2*1.2, length/2*1.2)
+    ax_yz.set_ylim(-radius_minor*1.3, radius_minor*1.3)
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Y (Å) - Minor')
+    ax_yz.set_title('YZ Cross-section (Minor axis)')
+    ax_yz.grid(True, alpha=0.3)
+    ax_yz.text(0, -radius_minor*1.15, f'r_minor = {radius_minor:.0f} Å', ha='center', fontsize=9)
+
 def random():
     """Return a random parameter set for the model."""
     # V = pi * radius_major * radius_minor * length;

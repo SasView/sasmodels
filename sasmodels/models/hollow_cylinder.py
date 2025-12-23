@@ -108,6 +108,121 @@ radius_effective_modes = [
     ]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=50):
+    import numpy as np
+    radius = params.get('radius', 20)  # Inner/core radius
+    thickness = params.get('thickness', 10)
+    length = params.get('length', 400)
+
+    outer_radius = radius + thickness
+
+    # Create inner cylinder surface
+    theta = np.linspace(0, 2*np.pi, resolution)
+    z = np.linspace(-length/2, length/2, resolution//2)
+    theta_mesh, z_mesh = np.meshgrid(theta, z)
+
+    x_inner = radius * np.cos(theta_mesh)
+    y_inner = radius * np.sin(theta_mesh)
+
+    # Create outer cylinder surface
+    x_outer = outer_radius * np.cos(theta_mesh)
+    y_outer = outer_radius * np.sin(theta_mesh)
+
+    # Create end caps (annular disks)
+    r_cap = np.linspace(radius, outer_radius, resolution//4)
+    theta_cap = np.linspace(0, 2*np.pi, resolution)
+    r_cap_mesh, theta_cap_mesh = np.meshgrid(r_cap, theta_cap)
+
+    x_cap = r_cap_mesh * np.cos(theta_cap_mesh)
+    y_cap = r_cap_mesh * np.sin(theta_cap_mesh)
+    z_cap_top = np.full_like(x_cap, length/2)
+    z_cap_bottom = np.full_like(x_cap, -length/2)
+
+    return {
+        'inner_cylinder': (x_inner, y_inner, z_mesh),
+        'outer_cylinder': (x_outer, y_outer, z_mesh),
+        'cap_top': (x_cap, y_cap, z_cap_top),
+        'cap_bottom': (x_cap, y_cap, z_cap_bottom)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    radius = params.get('radius', 20)
+    thickness = params.get('thickness', 10)
+    length = params.get('length', 400)
+    outer_radius = radius + thickness
+
+    # XY plane (top view) - annular ring
+    theta = np.linspace(0, 2*np.pi, 100)
+    inner_x = radius * np.cos(theta)
+    inner_y = radius * np.sin(theta)
+    outer_x = outer_radius * np.cos(theta)
+    outer_y = outer_radius * np.sin(theta)
+
+    ax_xy.plot(outer_x, outer_y, 'r-', linewidth=2, label='Outer wall')
+    ax_xy.fill(outer_x, outer_y, 'lightcoral', alpha=0.3)
+    ax_xy.plot(inner_x, inner_y, 'w-', linewidth=2, label='Hollow core')
+    ax_xy.fill(inner_x, inner_y, 'white', alpha=1.0)
+
+    ax_xy.set_xlim(-outer_radius*1.3, outer_radius*1.3)
+    ax_xy.set_ylim(-outer_radius*1.3, outer_radius*1.3)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Annular)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend()
+
+    # XZ plane (side view) - two vertical bars
+    ax_xz.fill([-length/2, -length/2, length/2, length/2],
+               [-outer_radius, outer_radius, outer_radius, -outer_radius],
+               'lightcoral', alpha=0.3)
+    ax_xz.fill([-length/2, -length/2, length/2, length/2],
+               [-radius, radius, radius, -radius],
+               'white', alpha=1.0)
+
+    # Draw outlines
+    ax_xz.plot([-length/2, -length/2, length/2, length/2, -length/2],
+               [-outer_radius, outer_radius, outer_radius, -outer_radius, -outer_radius],
+               'r-', linewidth=2, label='Wall')
+    ax_xz.plot([-length/2, -length/2, length/2, length/2, -length/2],
+               [-radius, radius, radius, -radius, -radius],
+               'b--', linewidth=1, label='Hollow')
+
+    ax_xz.set_xlim(-length/2*1.2, length/2*1.2)
+    ax_xz.set_ylim(-outer_radius*1.3, outer_radius*1.3)
+    ax_xz.set_xlabel('Z (Å)')
+    ax_xz.set_ylabel('X (Å)')
+    ax_xz.set_title('XZ Cross-section (Side View)')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.legend()
+
+    # Annotations
+    ax_xz.text(0, -outer_radius*1.15, f'L = {length:.0f} Å', ha='center', fontsize=9)
+    ax_xz.text(length/2*0.7, (radius + outer_radius)/2, f't = {thickness:.0f}', fontsize=9)
+
+    # YZ plane (front view) - same as XZ
+    ax_yz.fill([-length/2, -length/2, length/2, length/2],
+               [-outer_radius, outer_radius, outer_radius, -outer_radius],
+               'lightgreen', alpha=0.3)
+    ax_yz.fill([-length/2, -length/2, length/2, length/2],
+               [-radius, radius, radius, -radius],
+               'white', alpha=1.0)
+    ax_yz.plot([-length/2, -length/2, length/2, length/2, -length/2],
+               [-outer_radius, outer_radius, outer_radius, -outer_radius, -outer_radius],
+               'g-', linewidth=2, label='Wall')
+    ax_yz.plot([-length/2, -length/2, length/2, length/2, -length/2],
+               [-radius, radius, radius, -radius, -radius],
+               'orange', linewidth=1, linestyle='--', label='Hollow')
+
+    ax_yz.set_xlim(-length/2*1.2, length/2*1.2)
+    ax_yz.set_ylim(-outer_radius*1.3, outer_radius*1.3)
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Y (Å)')
+    ax_yz.set_title('YZ Cross-section (Front View)')
+    ax_yz.grid(True, alpha=0.3)
+    ax_yz.legend()
+
 def random():
     """Return a random parameter set for the model."""
     length = 10**np.random.uniform(1, 4.7)

@@ -106,6 +106,114 @@ single = False  # use double precision unless told otherwise
 radius_effective_modes = ["equivalent volume sphere"]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=40):
+    import numpy as np
+    radius = params.get('radius', 80.0)
+    edge_sep = params.get('edge_sep', 350.0)  # surface-to-surface distance
+    thick_string = params.get('thick_string', 2.5)
+    num_pearls = int(round(params.get('num_pearls', 3)))
+    num_pearls = max(num_pearls, 1)
+
+    # Spacing between pearl centers
+    center_step = 2 * radius + edge_sep
+    z_positions = [
+        (i - (num_pearls - 1) / 2.0) * center_step
+        for i in range(num_pearls)
+    ]
+
+    # Sphere (pearl) mesh
+    phi = np.linspace(0, np.pi, resolution // 2)
+    theta = np.linspace(0, 2 * np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    pearls = {}
+    for i, z0 in enumerate(z_positions):
+        x = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+        y = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+        z = radius * np.cos(phi_mesh) + z0
+        pearls[f'pearl_{i}'] = (x, y, z)
+
+    # String segments as thin cylinders between neighboring pearls
+    string_radius = thick_string / 2.0
+    strings = {}
+    if num_pearls > 1 and string_radius > 0:
+        theta_c = np.linspace(0, 2 * np.pi, resolution)
+        for i in range(num_pearls - 1):
+            z_start = z_positions[i] + radius
+            z_end = z_positions[i + 1] - radius
+            z_seg = np.linspace(z_start, z_end, resolution // 2)
+            theta_mesh_c, z_seg_mesh = np.meshgrid(theta_c, z_seg)
+            x_c = string_radius * np.cos(theta_mesh_c)
+            y_c = string_radius * np.sin(theta_mesh_c)
+            strings[f'string_{i}'] = (x_c, y_c, z_seg_mesh)
+
+    mesh = {}
+    mesh.update(pearls)
+    mesh.update(strings)
+    return mesh
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    radius = params.get('radius', 80.0)
+    edge_sep = params.get('edge_sep', 350.0)
+    thick_string = params.get('thick_string', 2.5)
+    num_pearls = int(round(params.get('num_pearls', 3)))
+    num_pearls = max(num_pearls, 1)
+
+    center_step = 2 * radius + edge_sep
+    z_positions = np.array(
+        [(i - (num_pearls - 1) / 2.0) * center_step for i in range(num_pearls)]
+    )
+
+    # XY: top view of a single pearl + string cross-section
+    theta = np.linspace(0, 2 * np.pi, 200)
+    pearl_x = radius * np.cos(theta)
+    pearl_y = radius * np.sin(theta)
+    ax_xy.plot(pearl_x, pearl_y, 'b-', linewidth=2, label='Pearl')
+    ax_xy.fill(pearl_x, pearl_y, 'lightblue', alpha=0.4)
+
+    if thick_string > 0:
+        string_r = thick_string / 2.0
+        sx = string_r * np.cos(theta)
+        sy = string_r * np.sin(theta)
+        ax_xy.plot(sx, sy, 'r--', linewidth=1, label='String')
+        ax_xy.fill(sx, sy, 'lightcoral', alpha=0.3)
+
+    ax_xy.set_xlim(-radius * 1.4, radius * 1.4)
+    ax_xy.set_ylim(-radius * 1.4, radius * 1.4)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Single pearl + string)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend()
+
+    # XZ: chain of circles along Z
+    for z0 in z_positions:
+        circle_z = radius * np.sin(theta)
+        circle_x = radius * np.cos(theta)
+        ax_xz.plot(z0 + circle_z, circle_x, 'b-', alpha=0.7)
+
+    # Draw string as line along centers
+    ax_xz.plot(z_positions, np.zeros_like(z_positions), 'r-', linewidth=2, label='String axis')
+    ax_xz.set_xlabel('Z (Å)')
+    ax_xz.set_ylabel('X (Å)')
+    ax_xz.set_title('XZ Cross-section (Chain of pearls)')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.legend()
+
+    # YZ: same as XZ but in Y
+    for z0 in z_positions:
+        circle_z = radius * np.sin(theta)
+        circle_y = radius * np.cos(theta)
+        ax_yz.plot(z0 + circle_z, circle_y, 'g-', alpha=0.7)
+    ax_yz.plot(z_positions, np.zeros_like(z_positions), 'r-', linewidth=2, label='String axis')
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Y (Å)')
+    ax_yz.set_title('YZ Cross-section (Chain of pearls)')
+    ax_yz.grid(True, alpha=0.3)
+    ax_yz.legend()
+
 def random():
     """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1, 3) # 1 - 1000

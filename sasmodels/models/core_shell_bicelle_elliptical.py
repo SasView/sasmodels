@@ -154,6 +154,148 @@ radius_effective_modes = [
     ]
 has_shape_visualization = True
 
+def create_shape_mesh(params, resolution=50):
+    import numpy as np
+    radius = params.get('radius', 30)  # r_minor
+    x_core = params.get('x_core', 3)  # r_major/r_minor ratio
+    thick_rim = params.get('thick_rim', 8)
+    thick_face = params.get('thick_face', 14)
+    length = params.get('length', 50)
+
+    r_minor = radius
+    r_major = radius * x_core
+
+    # Outer dimensions
+    outer_r_minor = r_minor + thick_rim
+    outer_r_major = r_major + thick_rim
+    outer_length = length + 2 * thick_face
+
+    # Create core elliptical cylinder
+    theta = np.linspace(0, 2*np.pi, resolution)
+    z_core = np.linspace(-length/2, length/2, resolution//2)
+    theta_core, z_core_mesh = np.meshgrid(theta, z_core)
+    x_core_mesh = r_major * np.cos(theta_core)
+    y_core_mesh = r_minor * np.sin(theta_core)
+
+    # Create shell elliptical cylinder (outer surface)
+    z_shell = np.linspace(-outer_length/2, outer_length/2, resolution//2)
+    theta_shell, z_shell_mesh = np.meshgrid(theta, z_shell)
+    x_shell = outer_r_major * np.cos(theta_shell)
+    y_shell = outer_r_minor * np.sin(theta_shell)
+
+    # Create end caps
+    # Core end caps (elliptical)
+    u = np.linspace(0, 1, resolution//4)
+    theta_cap = np.linspace(0, 2*np.pi, resolution)
+    u_mesh, theta_cap_mesh = np.meshgrid(u, theta_cap)
+
+    x_cap_core = u_mesh * r_major * np.cos(theta_cap_mesh)
+    y_cap_core = u_mesh * r_minor * np.sin(theta_cap_mesh)
+    z_cap_core_top = np.full_like(x_cap_core, length/2)
+    z_cap_core_bottom = np.full_like(x_cap_core, -length/2)
+
+    # Shell end caps (elliptical)
+    x_cap_shell = u_mesh * outer_r_major * np.cos(theta_cap_mesh)
+    y_cap_shell = u_mesh * outer_r_minor * np.sin(theta_cap_mesh)
+    z_cap_shell_top = np.full_like(x_cap_shell, outer_length/2)
+    z_cap_shell_bottom = np.full_like(x_cap_shell, -outer_length/2)
+
+    return {
+        'core_cylinder': (x_core_mesh, y_core_mesh, z_core_mesh),
+        'shell_cylinder': (x_shell, y_shell, z_shell_mesh),
+        'core_cap_top': (x_cap_core, y_cap_core, z_cap_core_top),
+        'core_cap_bottom': (x_cap_core, y_cap_core, z_cap_core_bottom),
+        'shell_cap_top': (x_cap_shell, y_cap_shell, z_cap_shell_top),
+        'shell_cap_bottom': (x_cap_shell, y_cap_shell, z_cap_shell_bottom),
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    import numpy as np
+    radius = params.get('radius', 30)
+    x_core = params.get('x_core', 3)
+    thick_rim = params.get('thick_rim', 8)
+    thick_face = params.get('thick_face', 14)
+    length = params.get('length', 50)
+
+    r_minor = radius
+    r_major = radius * x_core
+    outer_r_minor = r_minor + thick_rim
+    outer_r_major = r_major + thick_rim
+    outer_length = length + 2 * thick_face
+
+    # XY plane (top view) - nested ellipses
+    theta = np.linspace(0, 2*np.pi, 100)
+
+    # Core ellipse
+    core_x = r_major * np.cos(theta)
+    core_y = r_minor * np.sin(theta)
+
+    # Shell ellipse
+    shell_x = outer_r_major * np.cos(theta)
+    shell_y = outer_r_minor * np.sin(theta)
+
+    ax_xy.plot(shell_x, shell_y, 'r-', linewidth=2, label='Shell rim')
+    ax_xy.fill(shell_x, shell_y, 'lightcoral', alpha=0.3)
+    ax_xy.plot(core_x, core_y, 'b-', linewidth=2, label='Core')
+    ax_xy.fill(core_x, core_y, 'lightblue', alpha=0.5)
+
+    ax_xy.set_xlim(-outer_r_major*1.2, outer_r_major*1.2)
+    ax_xy.set_ylim(-outer_r_minor*1.2, outer_r_minor*1.2)
+    ax_xy.set_xlabel('X (Å) - Major axis')
+    ax_xy.set_ylabel('Y (Å) - Minor axis')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend()
+
+    # XZ plane (side view along major axis) - nested rectangles
+    # Core rectangle (using major axis)
+    core_rect_x = [-length/2, -length/2, length/2, length/2, -length/2]
+    core_rect_z = [-r_major, r_major, r_major, -r_major, -r_major]
+
+    # Full outer shell with face thickness
+    shell_full_x = [-outer_length/2, -outer_length/2, outer_length/2, outer_length/2, -outer_length/2]
+    shell_full_z = [-outer_r_major, outer_r_major, outer_r_major, -outer_r_major, -outer_r_major]
+
+    ax_xz.plot(shell_full_x, shell_full_z, 'r-', linewidth=2, label='Shell (rim+face)')
+    ax_xz.fill(shell_full_x, shell_full_z, 'lightcoral', alpha=0.3)
+    ax_xz.plot(core_rect_x, core_rect_z, 'b-', linewidth=2, label='Core')
+    ax_xz.fill(core_rect_x, core_rect_z, 'lightblue', alpha=0.5)
+
+    ax_xz.set_xlim(-outer_length/2*1.2, outer_length/2*1.2)
+    ax_xz.set_ylim(-outer_r_major*1.3, outer_r_major*1.3)
+    ax_xz.set_xlabel('Z (Å)')
+    ax_xz.set_ylabel('X (Å) - Major axis')
+    ax_xz.set_title('XZ Cross-section (Major axis)')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.legend()
+
+    # Annotations
+    ax_xz.text(0, -outer_r_major*1.15, f'L = {length:.0f} Å', ha='center', fontsize=9)
+    ax_xz.text(0, outer_r_major*1.15, f'r_major = {r_major:.0f} Å', ha='center', fontsize=9)
+    ax_xz.text(outer_length/2*0.7, outer_r_major*0.7, f't_rim = {thick_rim:.0f}', fontsize=8)
+    ax_xz.text(length/2 + thick_face/2, 0, f't_face = {thick_face:.0f}', fontsize=8, rotation=90)
+
+    # YZ plane (side view along minor axis)
+    core_rect_y = [-r_minor, r_minor, r_minor, -r_minor, -r_minor]
+    shell_body_y = [-outer_r_minor, outer_r_minor, outer_r_minor, -outer_r_minor, -outer_r_minor]
+
+    ax_yz.plot(shell_full_x, shell_body_y, 'g-', linewidth=2, label='Shell (rim+face)')
+    ax_yz.fill(shell_full_x, shell_body_y, 'lightgreen', alpha=0.3)
+    ax_yz.plot(core_rect_x, core_rect_y, 'orange', linewidth=2, label='Core')
+    ax_yz.fill(core_rect_x, core_rect_y, 'moccasin', alpha=0.5)
+
+    ax_yz.set_xlim(-outer_length/2*1.2, outer_length/2*1.2)
+    ax_yz.set_ylim(-outer_r_minor*1.3, outer_r_minor*1.3)
+    ax_yz.set_xlabel('Z (Å)')
+    ax_yz.set_ylabel('Y (Å) - Minor axis')
+    ax_yz.set_title('YZ Cross-section (Minor axis)')
+    ax_yz.grid(True, alpha=0.3)
+    ax_yz.legend()
+
+    ax_yz.text(0, outer_r_minor*1.15, f'r_minor = {r_minor:.0f} Å', ha='center', fontsize=9)
+    ax_yz.text(0, -outer_r_minor*1.15, f'X_core = {x_core:.1f}', ha='center', fontsize=9)
+
 def random():
     """Return a random parameter set for the model."""
     outer_major = 10**np.random.uniform(1, 4.7)
