@@ -1,5 +1,5 @@
-# octahedron model
-# Note: model title and parameter table are inserted automatically
+# Fibonacci quadrature
+# number of points on the unit sphere is adjustable
 r"""
 This module provides a function to generate quasi-uniformly distributed points on the unit sphere
 using the Fibonacci quadrature. These points can be used for numerical integration over the sphere,
