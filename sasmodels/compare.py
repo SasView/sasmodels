@@ -544,7 +544,7 @@ def constrain_pars(model_info, pars):
         name = name.split('*')[0]
 
     # Suppress magnetism for python models (not yet implemented)
-    if callable(model_info.Iq):
+    if not model_info.compiled:
         pars.update(suppress_magnetism(pars))
 
     if name == 'barbell':

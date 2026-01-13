@@ -162,10 +162,17 @@ class PyKernel(Kernel):
             form = model_info.Iqxy
             qx, qy = q_input.q[:, 0], q_input.q[:, 1]
             self._form = lambda: form(qx, qy, *kernel_args)
+            self._nq_copies = 1
         else:
-            form = model_info.Iq
             q = q_input.q
-            self._form = lambda: form(q, *kernel_args)
+            if model_info.have_Fq:
+                form = model_info.Fq
+                self._form = lambda: _pack_fq(*form(q, *kernel_args))
+                self._nq_copies = 2
+            else:
+                form = model_info.Iq
+                self._form = lambda: form(q, *kernel_args)
+                self._nq_copies = 1
 
         # Generate a closure which calls the form_volume if it exists.
         self._volume_args = volume_args
@@ -189,7 +196,7 @@ class PyKernel(Kernel):
                   else (lambda: self._radius(radius_effective_mode)))
         self.result = _loops(
             self._parameter_vector, self._form, self._volume, radius,
-            self.q_input.nq, call_details, values, cutoff)
+            self.q_input.nq*self._nq_copies, call_details, values, cutoff)
 
     def release(self):
         # type: () -> None
@@ -199,6 +206,13 @@ class PyKernel(Kernel):
         self.q_input.release()
         self.q_input = None
 
+def _pack_fq(fq, fqsq):
+    result = np.empty(2*fq.shape[0], dtype=fq.dtype)
+    # PAK: For reasons unknown, the original author (me) decided to pack the
+    # values into the returned array as (f^2, f) pairs.
+    result[0::2] = fqsq
+    result[1::2] = fq
+    return result
 
 def _loops(parameters, form, form_volume, form_radius, nq, call_details,
            values, cutoff):
@@ -292,6 +306,7 @@ def _create_default_functions(model_info):
     """
     # Note: Must call create_vector_Iq before create_vector_Iqxy.
     _create_vector_Iq(model_info)
+    _create_vector_Fq(model_info)
     _create_vector_Iqxy(model_info)
 
 
@@ -310,6 +325,22 @@ def _create_vector_Iq(model_info):
         vector_Iq.vectorized = True
         model_info.Iq = vector_Iq
 
+def _create_vector_Fq(model_info):
+    """
+    Define Fq as a vector function if it exists.
+    """
+    # Note that this is doing slightly too much work since we are composing
+    # two vector results which are then interlaced via _pack_fq above.
+    Fq = model_info.Fq
+    if callable(Fq) and not getattr(Fq, 'vectorized', False):
+        def vector_Fq(q, *args):
+            """
+            Vectorized 1D kernel returning Fq, Fq**2
+            """
+            fq, fqsq = zip(*(Fq(qi, *args) for qi in q))
+            return np.array(fq), np.array(fqsq)
+        vector_Fq.vectorized = True
+        model_info.Fq = vector_Fq
 
 def _create_vector_Iqxy(model_info):
     """
