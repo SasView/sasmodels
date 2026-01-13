@@ -194,16 +194,21 @@ References
    J Appl Cryst 54, 580-587 (2021)
    https://doi.org/10.1107/S160057672100171
 
+4. Álvaro González. Measurement of areas on a sphere using Fibonacci and latitude–longitude lattices.
+Mathematical geosciences 42 (2010), pp. 49–64
+
+5. MB Kozin, VV Volkov, and DI Svergun. ASSA, a program for three-dimensional rendering in solution
+scattering from biopolymers. Applied Crystallography 30.5 (1997), pp. 811–815
+
 Authorship and Verification
 ----------------------------
 
 * **Authors:** Marianne Imperor-Clerc (marianne.imperor@cnrs.fr)
-             Helen Ibrahim (helenibrahim1@outlook.com)
              Sara Mokhtari (smokhtari@insa-toulouse.fr)
 
-* **Last Modified by:** MIC **Date:** 11 December 2025
+* **Last Modified by:** SM **Date:** 13th January 2026
 
-* **Last Reviewed by:** SM **Date:** 10 December 2025
+* **Last Reviewed by:** MIC **Date:** 13th January 2026
 
 """
 
