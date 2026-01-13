@@ -38,7 +38,7 @@ A regular octahedron corresponds to:
 
 A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
-.. math:: 
+.. math::
 
     length_a = length_b = length_c, \quad t = \frac{1}{2}
 
@@ -84,7 +84,7 @@ For a regular shape (no elongation):
     V = \frac{4}{3} \, length_{\text{a}}^{3} \, \bigl(1 - 3 (1 - t)^3 \bigr)
 
 The reference orientation of the shape is: a along x, b along y and c along z.
-Amplitude of the form factor AP for the reference orientation of the shape reads 
+Amplitude of the form factor AP for the reference orientation of the shape reads
 
 .. math::
 
