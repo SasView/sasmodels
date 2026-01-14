@@ -82,35 +82,44 @@ Fq(double q,
     const double dr2 = vol2*(sld_rim-sld_solvent);
     const double dr3 = vol3*(sld_face-sld_rim);
 
+    const double qr_max = q*(halfheight+thick_face);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     //initialize integral
     double outer_total_F1 = 0.0;
     double outer_total_F2 = 0.0;
-    for(int i=0;i<GAUSS_N;i++) {
+    for(int i=0;i<n;i++) {
         //setup inner integral over the ellipsoidal cross-section
-        //const double cos_theta = ( GAUSS_Z[i]*(vb-va) + va + vb )/2.0;
-        const double cos_theta = ( GAUSS_Z[i] + 1.0 )/2.0;
+        //const double cos_theta = ( z[i]*(vb-va) + va + vb )/2.0;
+        const double cos_theta = ( z[i] + 1.0 )/2.0;
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
         const double si1 = sas_sinx_x(halfheight*qc);
         const double si2 = sas_sinx_x((halfheight+thick_face)*qc);
+
+        const double qr_max_inner = qab*fmax(r_minor, r_major);
+        constant double *w_inner, *z_inner;
+        int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
+
         double inner_total_F1 = 0;
         double inner_total_F2 = 0;
-        for(int j=0;j<GAUSS_N;j++) {
+        for(int j=0;j<n_inner;j++) {
             //76 gauss points for the inner integral (WAS 20 points,so this may make unecessarily slow, but playing safe)
-            //const double beta = ( GAUSS_Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
-            const double beta = ( GAUSS_Z[j] +1.0)*M_PI_2;
+            //const double beta = ( z_inner[j]*(vbj-vaj) + vaj + vbj )/2.0;
+            const double beta = ( z_inner[j] +1.0)*M_PI_2;
             const double rr = sqrt(r2A - r2B*cos(beta));
             const double be1 = sas_2J1x_x(rr*qab);
             const double be2 = sas_2J1x_x((rr+thick_rim)*qab);
             const double f = dr1*si1*be1 + dr2*si2*be2 + dr3*si2*be1;
 
-            inner_total_F1 += GAUSS_W[j] * f;
-            inner_total_F2 += GAUSS_W[j] * f * f;
+            inner_total_F1 += w_inner[j] * f;
+            inner_total_F2 += w_inner[j] * f * f;
         }
         //now calculate outer integral
-        outer_total_F1 += GAUSS_W[i] * inner_total_F1;
-        outer_total_F2 += GAUSS_W[i] * inner_total_F2;
+        outer_total_F1 += w[i] * inner_total_F1;
+        outer_total_F2 += w[i] * inner_total_F2;
     }
     // now complete change of integration variables (1-0)/(1-(-1))= 0.5
     outer_total_F1 *= 0.25;

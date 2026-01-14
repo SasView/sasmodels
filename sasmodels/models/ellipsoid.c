@@ -64,18 +64,23 @@ Fq(double q,
     //     u = sin, du = cos dT
     //     i(h) = int_0^1 Phi^2(h a sqrt(1 + u^2(v^2-1)) du
     const double v_square_minus_one = square(radius_polar/radius_equatorial) - 1.0;
+
+    const double qr_max = q*fmax(radius_polar,radius_equatorial);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // translate a point in [-1,1] to a point in [0, 1]
-    // const double u = GAUSS_Z[i]*(upper-lower)/2 + (upper+lower)/2;
+    // const double u = z[i]*(upper-lower)/2 + (upper+lower)/2;
     const double zm = 0.5;
     const double zb = 0.5;
     double total_F2 = 0.0;
     double total_F1 = 0.0;
-    for (int i=0;i<GAUSS_N;i++) {
-        const double u = GAUSS_Z[i]*zm + zb;
+    for (int i=0;i<n;i++) {
+        const double u = z[i]*zm + zb;
         const double r = radius_equatorial*sqrt(1.0 + u*u*v_square_minus_one);
         const double f = sas_3j1x_x(q*r);
-        total_F2 += GAUSS_W[i] * f * f;
-        total_F1 += GAUSS_W[i] * f;
+        total_F2 += w[i] * f * f;
+        total_F1 += w[i] * f;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     total_F1 *= zm;

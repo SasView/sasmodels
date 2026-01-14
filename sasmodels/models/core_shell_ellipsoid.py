@@ -149,7 +149,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/adaptive.c", "core_shell_ellipsoid.c"]
 have_Fq = True
 radius_effective_modes = [
     "average outer curvature", "equivalent volume sphere",
@@ -194,10 +194,10 @@ tests = [
       'sld_solvent': 6.3,
       'background': 0.001,
       'scale': 1.0,
-     }, 1.0, 0.00189402],
+     }, 1.0, 0.00199393783025264],
 
     # Additional tests with larger range of parameters
-    [{'background': 0.01}, 0.1, 11.6915],
+    [{'background': 0.01}, 0.1, 11.6915291814002],
 
     [{'radius_equat_core': 20.0,
       'x_core': 200.0,
@@ -208,13 +208,13 @@ tests = [
       'sld_solvent': 6.0,
       'background': 0.0,
       'scale': 1.0,
-     }, 0.01, 8688.53],
+     }, 0.01, 8688.52423647087],
 
     # 2D tests
     [{'background': 0.001,
       'theta': 90.0,
       'phi': 0.0,
-     }, (0.4, 0.5), 0.00690673],
+     }, (0.4, 0.5), 0.00690673646263621],
 
     [{'radius_equat_core': 20.0,
       'x_core': 200.0,
@@ -227,5 +227,5 @@ tests = [
       'scale': 0.01,
       'theta': 90.0,
       'phi': 0.0,
-     }, (qx, qy), 0.01000025],
+     }, (qx, qy), 0.010000250020321],
 ]

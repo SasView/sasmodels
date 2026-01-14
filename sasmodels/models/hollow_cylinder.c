@@ -70,18 +70,21 @@ static void
 Fq(double q, double *F1, double *F2, double radius, double thickness, double length,
     double sld, double solvent_sld)
 {
+    const double qr_max= q * fmax(radius + thickness, 0.5*length);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     const double lower = 0.0;
     const double upper = 1.0;        //limits of numerical integral
-
     double total_F1 = 0.0;            //initialize intergral
     double total_F2 = 0.0;
-    for (int i=0;i<GAUSS_N;i++) {
-        const double cos_theta = 0.5*( GAUSS_Z[i] * (upper-lower) + lower + upper );
+    for (int i=0;i<n;i++) {
+        const double cos_theta = 0.5*( z[i] * (upper-lower) + lower + upper );
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
         const double form = _fq(q*sin_theta, q*cos_theta,
                                 radius, thickness, length);
-        total_F1 += GAUSS_W[i] * form;
-        total_F2 += GAUSS_W[i] * form * form;
+        total_F1 += w[i] * form;
+        total_F2 += w[i] * form * form;
     }
     total_F1 *= 0.5*(upper-lower);
     total_F2 *= 0.5*(upper-lower);

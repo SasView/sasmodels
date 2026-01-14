@@ -453,14 +453,18 @@ def test_reparameterize():
     except Exception:
         pass
 
-def _direct_calculate(model, data, pars):
+def _direct_calculate(model, data, pars, ngauss=0):
     from .core import build_model, load_model_info
+    from .generate import set_integration_size
+
     model_info = load_model_info(model)
+    if ngauss != 0:
+        set_integration_size(model_info, ngauss)
     kernel = build_model(model_info)
     calculator = DirectModel(data, kernel)
     return calculator(**pars)
 
-def Iq(model, q, dq=None, ql=None, qw=None, **pars):
+def Iq(model, q, dq=None, ql=None, qw=None, ngauss=0, **pars):
     """
     Compute I(q) for *model*. Resolution is *dq* for pinhole or *ql* and *qw*
     for slit geometry. Use 0 or None for infinite slits.
@@ -498,16 +502,16 @@ def Iq(model, q, dq=None, ql=None, qw=None, **pars):
             else np.full(len(q), v) if np.isscalar(v)
             else _as_numpy(v))
     data.dxl, data.dxw = broadcast(ql), broadcast(qw)
-    return _direct_calculate(model, data, pars)
+    return _direct_calculate(model, data, pars, ngauss=ngauss)
 
-def Iqxy(model, qx, qy, dqx=None, dqy=None, **pars):
+def Iqxy(model, qx, qy, dqx=None, dqy=None, ngauss=0, **pars):
     """
     Compute I(qx, qy) for *model*. Resolution is *dqx* and *dqy*.
     See :func:`Iq` for details on model and parameters.
     """
     from .data import Data2D
     data = Data2D(x=qx, y=qy, dx=dqx, dy=dqy)
-    return _direct_calculate(model, data, pars)
+    return _direct_calculate(model, data, pars, ngauss=ngauss)
 
 def Gxi(model, xi, **pars):
     """
@@ -528,6 +532,8 @@ def main():
     if len(sys.argv) < 3:
         print("usage: python -m sasmodels.direct_model modelname (q|qx,qy) par=val ...")
         sys.exit(1)
+
+    ngauss = 0
     model = sys.argv[1]
     call = sys.argv[2].upper()
     pars = dict((k, (float(v) if not k.endswith("_pd_type") else v))
@@ -542,13 +548,13 @@ def main():
         dq = dqw = dql = None
         #dq = [q*0.05] # 5% pinhole resolution
         #dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
-        print(Iq(model, [q], dq=dq, qw=dqw, ql=dql, **pars)[0])
+        print(Iq(model, [q], dq=dq, qw=dqw, ql=dql, ngauss=ngauss, **pars)[0])
         #print(Gxi(model, [q], **pars)[0])
     elif len(values) == 2:
         qx, qy = values
         dq = None
         #dq = [0.005] # 5% pinhole resolution at q = 0.1
-        print(Iqxy(model, [qx], [qy], dqx=dq, dqy=dq, **pars)[0])
+        print(Iqxy(model, [qx], [qy], dqx=dq, dqy=dq, ngauss=ngauss, **pars)[0])
     else:
         print("use q or qx,qy")
         sys.exit(1)

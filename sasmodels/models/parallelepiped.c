@@ -75,34 +75,42 @@ Fq(double q,
     const double a_scaled = length_a / length_b;
     const double c_scaled = length_c / length_b;
 
+    const double qr_max = mu*c_scaled;
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, &w, &z);
+
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_total_F1 = 0.0; //initialize integral
     double outer_total_F2 = 0.0; //initialize integral
-    for( int i=0; i<GAUSS_N; i++) {
-        const double sigma = 0.5 * ( GAUSS_Z[i] + 1.0 );
+    for( int i=0; i<n; i++) {
+        const double sigma = 0.5 * ( z[i] + 1.0 );
         const double mu_proj = mu * sqrt(1.0-sigma*sigma);
+
+        const double qr_max_inner = mu_proj*fmax(a_scaled, 1.0);  // = qab*max(len)/2
+        constant double *w_inner, *z_inner;
+        int n_inner = gauss_weights(qr_max, &w_inner, &z_inner);
 
         // inner integral (with gauss points), integration limits = 0, 1
         // corresponding to angles from 0 to pi/2.
         double inner_total_F1 = 0.0;
         double inner_total_F2 = 0.0;
-        for(int j=0; j<GAUSS_N; j++) {
-            const double uu = 0.5 * ( GAUSS_Z[j] + 1.0 );
+        for(int j=0; j<n_inner; j++) {
+            const double uu = 0.5 * ( z_inner[j] + 1.0 );
             double sin_uu, cos_uu;
             SINCOS(M_PI_2*uu, sin_uu, cos_uu);
             const double si1 = sas_sinx_x(mu_proj * sin_uu * a_scaled);
             const double si2 = sas_sinx_x(mu_proj * cos_uu);
             const double fq = si1 * si2;
-            inner_total_F1 += GAUSS_W[j] * fq;
-            inner_total_F2 += GAUSS_W[j] * fq * fq;
+            inner_total_F1 += w_inner[j] * fq;
+            inner_total_F2 += w_inner[j] * fq * fq;
         }
         // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
         inner_total_F1 *= 0.5;
         inner_total_F2 *= 0.5;
 
         const double si = sas_sinx_x(mu * c_scaled * sigma);
-        outer_total_F1 += GAUSS_W[i] * inner_total_F1 * si;
-        outer_total_F2 += GAUSS_W[i] * inner_total_F2 * si * si;
+        outer_total_F1 += w[i] * inner_total_F1 * si;
+        outer_total_F2 += w[i] * inner_total_F2 * si * si;
     }
     // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
     outer_total_F1 *= 0.5;
