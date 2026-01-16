@@ -10,7 +10,7 @@ Definition
 
 We consider particles having the shape of a right prism of length L and a cross section made of a regular polygon with n sides as illustrated in the figure below.
 
-.. figure:: img/nanoprisms_geometry.png
+.. figure:: img/nanoprisms_geometry.jpg
 
 The size of a regular polygon can be characterized by its edge length E or by R, the circumradius of the polygon shown in black in the figure, with :
 
