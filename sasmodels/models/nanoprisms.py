@@ -30,7 +30,7 @@ The area of the n-sided regular polygon is given by :
 
 .. math::
 
-   A = \pi R^{2} \, \mathrm{sinc}(\frac{2\pi}{n}\right)
+   A = \pi R^{2} \, \mathrm{sinc}\left(\frac{2\pi}{n}\right)
      = \pi R_{\mathrm{ave}}^{2}
 
 and the volume of the nanoprism is therefore given by:
@@ -44,7 +44,7 @@ It is also the squared average of the distance from the center of the polygon to
 
 .. math::
 
-    R_{\mathrm{ave}}^{2} = R^{2} \, \mathrm{sinc}(\frac{2\pi}{n}\right)
+    R_{\mathrm{ave}}^{2} = R^{2} \, \mathrm{sinc}\left(\frac{2\pi}{n}\right)
 
 Form factor for a prism: Following Wuttke's expression, the form factor :math:`F(\mathbf{q})` for any right prism can be decomposed into the product of two factors.
 One factor corresponds to the component :math:`\mathbf{q}_{\perp}` of the scattering vector that is perpendicular to the cross section and depends
@@ -74,7 +74,7 @@ of circumradius :math:`R` can be expressed as
    \hat{\mathbf{n}} \cdot
    \left( \mathbf{q}_{\|} \times \mathbf{E}_{j} \right)
    \,
-   \mathrm{sinc}( \mathbf{q}_{\|} \cdot \mathbf{E}_{j} \right)
+   \mathrm{sinc}\left( \mathbf{q}_{\|} \cdot \mathbf{E}_{j} \right)
    \exp(
      i \mathbf{q}_{\|} \cdot \mathbf{M}_{j})
 
