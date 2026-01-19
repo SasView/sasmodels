@@ -330,6 +330,7 @@ def halfedges_generator(vertices:list):
     return halfedge
 
 # useful function sinc(x) = sin(x)/x
+# to replace with the already implemented function in SASView (look in the documentation)
 def sinc(x):
     """
     Computes the cardinal sinus of x since in numpy sinc is defined with pi*x for the argument.
@@ -428,7 +429,8 @@ def Amp_nanoprism(q,nsides,edge,L): # From factor in 3D of the nanoprism q with 
     radius = radius_from_edge(nsides,edge)
     vertices = shape_generator(nsides,radius)
 #   A=parallel_factor(vertices,qab,0.)*sinc(qc*L/2)/surface_from_radius(nsides,radius)
-    perpendicular_factor = sinc(qc*L/2)
+#    perpendicular_factor = sinc(qc*L/2)
+    perpendicular_factor = L*sinc(qc*L/2) # to test, multiply by L is needed to have A proportional to the volume
     A = parallel_factor(vertices,qab,0.)*perpendicular_factor # parallel form factor * perpendicular form factor
     return A
 
@@ -454,8 +456,8 @@ def Iqabc(qa,qb,qc,nsides,Rave,L): # proportionnal to the volume**2
     edge = edge_from_gyration_radius(nsides, Rave)
     # intensity = I_nanoprism([qa,qb,qc], nsides, edge, L)
     A = Amp_nanoprism([qa,qb,qc], nsides, edge, L)
-    intensity = (np.abs(A))**2
-    intensity = intensity * (L)**2  # multiplication by the volume at the power 2 (? volume or L only ?)
+    intensity = (np.abs(A))**2 # to test, A should be already proportional to the volume
+    # intensity = intensity * (L)**2  # multiplication by the volume at the power 2 (? volume or L only ?)
     return intensity
 
 def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
