@@ -95,7 +95,99 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for adsorbed layer visualization."""
+    import numpy as np
+    radius = params.get('radius', 500)
+    second_moment = params.get('second_moment', 23)
+    
+    # Estimate layer thickness from second moment
+    # For a step function, sigma = sqrt(t^2/12), so t = sigma * sqrt(12)
+    layer_thickness = second_moment * np.sqrt(12)
+    
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    mesh_data = {}
+    
+    # Core sphere (contrast matched, shown as wireframe conceptually)
+    x_core = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_core = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_core = radius * np.cos(phi_mesh)
+    mesh_data['core'] = (x_core, y_core, z_core)
+    
+    # Adsorbed layer (outer surface)
+    outer_radius = radius + layer_thickness
+    x_layer = outer_radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_layer = outer_radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_layer = outer_radius * np.cos(phi_mesh)
+    mesh_data['adsorbed_layer'] = (x_layer, y_layer, z_layer)
+    
+    return mesh_data
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of adsorbed layer on particle."""
+    import numpy as np
+    radius = params.get('radius', 500)
+    second_moment = params.get('second_moment', 23)
+    
+    layer_thickness = second_moment * np.sqrt(12)
+    outer_radius = radius + layer_thickness
+    
+    theta = np.linspace(0, 2*np.pi, 100)
+    max_r = outer_radius * 1.2
+    
+    # Core circle
+    core_x = radius * np.cos(theta)
+    core_y = radius * np.sin(theta)
+    
+    # Outer circle (with layer)
+    outer_x = outer_radius * np.cos(theta)
+    outer_y = outer_radius * np.sin(theta)
+    
+    # XY plane
+    ax_xy.fill(outer_x, outer_y, 'lightgreen', alpha=0.4, label='Adsorbed layer')
+    ax_xy.fill(core_x, core_y, 'lightgray', alpha=0.5, label='Core (matched)')
+    ax_xy.plot(outer_x, outer_y, 'g-', linewidth=2)
+    ax_xy.plot(core_x, core_y, 'k--', linewidth=1.5)
+    ax_xy.set_xlim(-max_r, max_r)
+    ax_xy.set_ylim(-max_r, max_r)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section')
+    ax_xy.set_aspect('equal')
+    ax_xy.legend(loc='upper right', fontsize=7)
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane
+    ax_xz.fill(outer_x, outer_y, 'lightgreen', alpha=0.4)
+    ax_xz.fill(core_x, core_y, 'lightgray', alpha=0.5)
+    ax_xz.plot(outer_x, outer_y, 'g-', linewidth=2)
+    ax_xz.plot(core_x, core_y, 'k--', linewidth=1.5)
+    ax_xz.set_xlim(-max_r, max_r)
+    ax_xz.set_ylim(-max_r, max_r)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title(f'XZ Cross-section (layer~{layer_thickness:.1f}Å)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane
+    ax_yz.fill(outer_x, outer_y, 'lightgreen', alpha=0.4)
+    ax_yz.fill(core_x, core_y, 'lightgray', alpha=0.5)
+    ax_yz.plot(outer_x, outer_y, 'g-', linewidth=2)
+    ax_yz.plot(core_x, core_y, 'k--', linewidth=1.5)
+    ax_yz.set_xlim(-max_r, max_r)
+    ax_yz.set_ylim(-max_r, max_r)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
+
 def random():
     """Return a random parameter set for the model."""
     # only care about the value of second_moment:

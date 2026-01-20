@@ -175,8 +175,95 @@ description = """
         sldSolv: SLD of the solvent
         """
 category = "shape:paracrystal"
-has_shape_visualization = False
+has_shape_visualization = True
 single = False
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for simple cubic paracrystal visualization."""
+    import numpy as np
+    dnn = params.get('dnn', 220)  # nearest neighbor distance
+    radius = params.get('radius', 40)
+    
+    phi = np.linspace(0, np.pi, resolution//3)
+    theta = np.linspace(0, 2*np.pi, resolution//2)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    mesh_data = {}
+    
+    # Create a 3x3x3 lattice of spheres
+    positions = []
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            for k in range(-1, 2):
+                positions.append((i * dnn, j * dnn, k * dnn))
+    
+    for idx, (px, py, pz) in enumerate(positions):
+        x = radius * np.sin(phi_mesh) * np.cos(theta_mesh) + px
+        y = radius * np.sin(phi_mesh) * np.sin(theta_mesh) + py
+        z = radius * np.cos(phi_mesh) + pz
+        mesh_data[f'sphere_{idx}'] = (x, y, z)
+    
+    return mesh_data
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of simple cubic paracrystal."""
+    import numpy as np
+    dnn = params.get('dnn', 220)
+    radius = params.get('radius', 40)
+    
+    theta = np.linspace(0, 2*np.pi, 100)
+    max_extent = dnn * 1.5 + radius
+    
+    # XY plane - show central layer
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            cx, cy = i * dnn, j * dnn
+            circle_x = radius * np.cos(theta) + cx
+            circle_y = radius * np.sin(theta) + cy
+            ax_xy.plot(circle_x, circle_y, 'b-', linewidth=1.5)
+            ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.3)
+    
+    ax_xy.set_xlim(-max_extent, max_extent)
+    ax_xy.set_ylim(-max_extent, max_extent)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'XY Cross-section (SC lattice, a={dnn:.0f}Å)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane
+    for i in range(-1, 2):
+        for k in range(-1, 2):
+            cx, cz = i * dnn, k * dnn
+            circle_x = radius * np.cos(theta) + cx
+            circle_z = radius * np.sin(theta) + cz
+            ax_xz.plot(circle_x, circle_z, 'r-', linewidth=1.5)
+            ax_xz.fill(circle_x, circle_z, 'lightcoral', alpha=0.3)
+    
+    ax_xz.set_xlim(-max_extent, max_extent)
+    ax_xz.set_ylim(-max_extent, max_extent)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane
+    for j in range(-1, 2):
+        for k in range(-1, 2):
+            cy, cz = j * dnn, k * dnn
+            circle_y = radius * np.cos(theta) + cy
+            circle_z = radius * np.sin(theta) + cz
+            ax_yz.plot(circle_y, circle_z, 'g-', linewidth=1.5)
+            ax_yz.fill(circle_y, circle_z, 'lightgreen', alpha=0.3)
+    
+    ax_yz.set_xlim(-max_extent, max_extent)
+    ax_yz.set_ylim(-max_extent, max_extent)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "Nearest neighbor distance"],

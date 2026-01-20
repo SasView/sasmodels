@@ -156,7 +156,150 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
 radius_effective_modes = ["radius_large", "radius_outer"]
 
-has_shape_visualization = False
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for raspberry (Pickering emulsion) visualization."""
+    import numpy as np
+    radius_lg = params.get('radius_lg', 5000)
+    radius_sm = params.get('radius_sm', 100)
+    penetration = params.get('penetration', 0)
+    
+    # Scale down for visualization if too large
+    scale = 1.0
+    if radius_lg > 1000:
+        scale = 1000 / radius_lg
+        radius_lg *= scale
+        radius_sm *= scale
+    
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    # Large central sphere
+    x_lg = radius_lg * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_lg = radius_lg * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_lg = radius_lg * np.cos(phi_mesh)
+    
+    mesh_data = {'large_sphere': (x_lg, y_lg, z_lg)}
+    
+    # Add small spheres on the surface (representative sample)
+    # Distance from center to small sphere center
+    dist = radius_lg + radius_sm * (1 - penetration)
+    
+    # Place small spheres at strategic positions
+    positions = [
+        (0, 0, 1),      # top
+        (0, 0, -1),     # bottom
+        (1, 0, 0),      # front
+        (-1, 0, 0),     # back
+        (0, 1, 0),      # right
+        (0, -1, 0),     # left
+        (0.7, 0.7, 0),  # diagonal positions
+        (-0.7, 0.7, 0),
+        (0.7, -0.7, 0),
+        (-0.7, -0.7, 0),
+        (0, 0.7, 0.7),
+        (0, -0.7, 0.7),
+    ]
+    
+    phi_sm = np.linspace(0, np.pi, resolution//4)
+    theta_sm = np.linspace(0, 2*np.pi, resolution//2)
+    phi_sm_mesh, theta_sm_mesh = np.meshgrid(phi_sm, theta_sm)
+    
+    for i, (px, py, pz) in enumerate(positions):
+        norm = np.sqrt(px**2 + py**2 + pz**2)
+        if norm > 0:
+            px, py, pz = px/norm, py/norm, pz/norm
+        cx, cy, cz = dist * px, dist * py, dist * pz
+        
+        x_sm = radius_sm * np.sin(phi_sm_mesh) * np.cos(theta_sm_mesh) + cx
+        y_sm = radius_sm * np.sin(phi_sm_mesh) * np.sin(theta_sm_mesh) + cy
+        z_sm = radius_sm * np.cos(phi_sm_mesh) + cz
+        
+        mesh_data[f'small_sphere_{i}'] = (x_sm, y_sm, z_sm)
+    
+    return mesh_data
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of raspberry structure."""
+    import numpy as np
+    radius_lg = params.get('radius_lg', 5000)
+    radius_sm = params.get('radius_sm', 100)
+    penetration = params.get('penetration', 0)
+    
+    # Scale for visualization
+    scale = 1.0
+    if radius_lg > 1000:
+        scale = 1000 / radius_lg
+        radius_lg *= scale
+        radius_sm *= scale
+    
+    theta = np.linspace(0, 2*np.pi, 100)
+    dist = radius_lg + radius_sm * (1 - penetration)
+    
+    # Large sphere
+    lg_x = radius_lg * np.cos(theta)
+    lg_y = radius_lg * np.sin(theta)
+    
+    max_r = dist + radius_sm * 1.3
+    
+    # XY plane
+    ax_xy.plot(lg_x, lg_y, 'b-', linewidth=2, label='Large sphere')
+    ax_xy.fill(lg_x, lg_y, 'lightblue', alpha=0.3)
+    
+    # Small spheres around equator
+    for angle in np.linspace(0, 2*np.pi, 8, endpoint=False):
+        cx = dist * np.cos(angle)
+        cy = dist * np.sin(angle)
+        sm_x = radius_sm * np.cos(theta) + cx
+        sm_y = radius_sm * np.sin(theta) + cy
+        ax_xy.plot(sm_x, sm_y, 'r-', linewidth=1)
+        ax_xy.fill(sm_x, sm_y, 'lightcoral', alpha=0.3)
+    
+    ax_xy.set_xlim(-max_r, max_r)
+    ax_xy.set_ylim(-max_r, max_r)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Equatorial)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane
+    ax_xz.plot(lg_x, lg_y, 'b-', linewidth=2)
+    ax_xz.fill(lg_x, lg_y, 'lightblue', alpha=0.3)
+    # Small spheres at poles and sides
+    for pos in [(dist, 0), (-dist, 0), (0, dist), (0, -dist)]:
+        sm_x = radius_sm * np.cos(theta) + pos[0]
+        sm_z = radius_sm * np.sin(theta) + pos[1]
+        ax_xz.plot(sm_x, sm_z, 'r-', linewidth=1)
+        ax_xz.fill(sm_x, sm_z, 'lightcoral', alpha=0.3)
+    
+    ax_xz.set_xlim(-max_r, max_r)
+    ax_xz.set_ylim(-max_r, max_r)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Meridional)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane
+    ax_yz.plot(lg_x, lg_y, 'b-', linewidth=2)
+    ax_yz.fill(lg_x, lg_y, 'lightblue', alpha=0.3)
+    for pos in [(dist, 0), (-dist, 0), (0, dist), (0, -dist)]:
+        sm_y = radius_sm * np.cos(theta) + pos[0]
+        sm_z = radius_sm * np.sin(theta) + pos[1]
+        ax_yz.plot(sm_y, sm_z, 'r-', linewidth=1)
+        ax_yz.fill(sm_y, sm_z, 'lightcoral', alpha=0.3)
+    
+    ax_yz.set_xlim(-max_r, max_r)
+    ax_yz.set_ylim(-max_r, max_r)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Meridional)')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
+
 def random():
     """Return a random parameter set for the model."""
     # Limit volume fraction to 20% each

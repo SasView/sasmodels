@@ -177,8 +177,133 @@ description = """
     """
 category = "shape:paracrystal"
 
-has_shape_visualization = False
+has_shape_visualization = True
 single = False
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for face-centered cubic paracrystal visualization."""
+    import numpy as np
+    dnn = params.get('dnn', 220)  # nearest neighbor distance
+    radius = params.get('radius', 40)
+    
+    # For FCC, conventional cell parameter a = sqrt(2)*dnn
+    a = np.sqrt(2) * dnn
+    
+    phi = np.linspace(0, np.pi, resolution//3)
+    theta = np.linspace(0, 2*np.pi, resolution//2)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    mesh_data = {}
+    
+    # FCC lattice: corners + face centers
+    positions = []
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            for k in range(-1, 2):
+                # Corner positions
+                positions.append((i * a, j * a, k * a))
+                # Face centers (6 faces, but only add those within our range)
+                if i < 1 and j < 1:
+                    positions.append(((i + 0.5) * a, (j + 0.5) * a, k * a))  # xy face
+                if i < 1 and k < 1:
+                    positions.append(((i + 0.5) * a, j * a, (k + 0.5) * a))  # xz face
+                if j < 1 and k < 1:
+                    positions.append((i * a, (j + 0.5) * a, (k + 0.5) * a))  # yz face
+    
+    # Remove duplicates
+    positions = list(set(positions))
+    
+    for idx, (px, py, pz) in enumerate(positions):
+        x = radius * np.sin(phi_mesh) * np.cos(theta_mesh) + px
+        y = radius * np.sin(phi_mesh) * np.sin(theta_mesh) + py
+        z = radius * np.cos(phi_mesh) + pz
+        mesh_data[f'sphere_{idx}'] = (x, y, z)
+    
+    return mesh_data
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of FCC paracrystal."""
+    import numpy as np
+    dnn = params.get('dnn', 220)
+    radius = params.get('radius', 40)
+    
+    a = np.sqrt(2) * dnn
+    theta = np.linspace(0, 2*np.pi, 100)
+    max_extent = a * 1.5 + radius
+    
+    # XY plane at z=0 - shows corner atoms and xy-face centers
+    for i in range(-1, 2):
+        for j in range(-1, 2):
+            # Corner atoms
+            cx, cy = i * a, j * a
+            circle_x = radius * np.cos(theta) + cx
+            circle_y = radius * np.sin(theta) + cy
+            ax_xy.plot(circle_x, circle_y, 'b-', linewidth=1.5)
+            ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.3)
+            # Face center atoms
+            if i < 1 and j < 1:
+                cx_f = (i + 0.5) * a
+                cy_f = (j + 0.5) * a
+                circle_x_f = radius * np.cos(theta) + cx_f
+                circle_y_f = radius * np.sin(theta) + cy_f
+                ax_xy.plot(circle_x_f, circle_y_f, 'r-', linewidth=1.5)
+                ax_xy.fill(circle_x_f, circle_y_f, 'lightcoral', alpha=0.3)
+    
+    ax_xy.set_xlim(-max_extent, max_extent)
+    ax_xy.set_ylim(-max_extent, max_extent)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'XY Cross-section (FCC, dnn={dnn:.0f}Å)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane at y=0
+    for i in range(-1, 2):
+        for k in range(-1, 2):
+            cx, cz = i * a, k * a
+            circle_x = radius * np.cos(theta) + cx
+            circle_z = radius * np.sin(theta) + cz
+            ax_xz.plot(circle_x, circle_z, 'b-', linewidth=1.5)
+            ax_xz.fill(circle_x, circle_z, 'lightblue', alpha=0.3)
+            if i < 1 and k < 1:
+                cx_f = (i + 0.5) * a
+                cz_f = (k + 0.5) * a
+                circle_x_f = radius * np.cos(theta) + cx_f
+                circle_z_f = radius * np.sin(theta) + cz_f
+                ax_xz.plot(circle_x_f, circle_z_f, 'r-', linewidth=1.5)
+                ax_xz.fill(circle_x_f, circle_z_f, 'lightcoral', alpha=0.3)
+    
+    ax_xz.set_xlim(-max_extent, max_extent)
+    ax_xz.set_ylim(-max_extent, max_extent)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane at x=0
+    for j in range(-1, 2):
+        for k in range(-1, 2):
+            cy, cz = j * a, k * a
+            circle_y = radius * np.cos(theta) + cy
+            circle_z = radius * np.sin(theta) + cz
+            ax_yz.plot(circle_y, circle_z, 'b-', linewidth=1.5)
+            ax_yz.fill(circle_y, circle_z, 'lightblue', alpha=0.3)
+            if j < 1 and k < 1:
+                cy_f = (j + 0.5) * a
+                cz_f = (k + 0.5) * a
+                circle_y_f = radius * np.cos(theta) + cy_f
+                circle_z_f = radius * np.sin(theta) + cz_f
+                ax_yz.plot(circle_y_f, circle_z_f, 'r-', linewidth=1.5)
+                ax_yz.fill(circle_y_f, circle_z_f, 'lightcoral', alpha=0.3)
+    
+    ax_yz.set_xlim(-max_extent, max_extent)
+    ax_yz.set_ylim(-max_extent, max_extent)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],

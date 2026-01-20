@@ -92,8 +92,90 @@ description = """\
 """
 category = "shape:lamellae"
 
-has_shape_visualization = False
+has_shape_visualization = True
 single = False  # TODO: check
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for stacked lamellar (Caille) visualization."""
+    import numpy as np
+    thickness = params.get('thickness', 30)
+    Nlayers = int(params.get('Nlayers', 20))
+    d_spacing = params.get('d_spacing', 200)
+    
+    n_vis = min(Nlayers, 5)
+    sheet_size = d_spacing * 2
+    
+    x_grid = np.linspace(-sheet_size/2, sheet_size/2, resolution)
+    y_grid = np.linspace(-sheet_size/2, sheet_size/2, resolution)
+    x_mesh, y_mesh = np.meshgrid(x_grid, y_grid)
+    
+    mesh_data = {}
+    total_height = (n_vis - 1) * d_spacing
+    start_z = -total_height / 2
+    
+    for i in range(n_vis):
+        z_center = start_z + i * d_spacing
+        z_top = np.full_like(x_mesh, z_center + thickness/2)
+        z_bottom = np.full_like(x_mesh, z_center - thickness/2)
+        mesh_data[f'layer_{i}_top'] = (x_mesh, y_mesh, z_top)
+        mesh_data[f'layer_{i}_bottom'] = (x_mesh, y_mesh, z_bottom)
+    
+    return mesh_data
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of stacked lamellar (Caille) structure."""
+    import numpy as np
+    thickness = params.get('thickness', 30)
+    Nlayers = int(params.get('Nlayers', 20))
+    d_spacing = params.get('d_spacing', 200)
+    
+    n_vis = min(Nlayers, 5)
+    sheet_size = d_spacing * 2
+    
+    rect_x = [-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2]
+    rect_y = [-sheet_size/2, -sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2]
+    
+    ax_xy.plot(rect_x, rect_y, 'b-', linewidth=2)
+    ax_xy.fill(rect_x, rect_y, 'lightblue', alpha=0.3)
+    ax_xy.set_xlim(-sheet_size*0.7, sheet_size*0.7)
+    ax_xy.set_ylim(-sheet_size*0.7, sheet_size*0.7)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'XY Cross-section ({Nlayers} layers)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    
+    total_height = (n_vis - 1) * d_spacing
+    start_z = -total_height / 2
+    colors = ['lightblue', 'lightcoral', 'lightgreen', 'lightyellow', 'plum']
+    
+    for i in range(n_vis):
+        z_center = start_z + i * d_spacing
+        rect_z = [z_center - thickness/2, z_center - thickness/2, 
+                  z_center + thickness/2, z_center + thickness/2, 
+                  z_center - thickness/2]
+        color = colors[i % len(colors)]
+        
+        ax_xz.plot(rect_x, rect_z, 'b-', linewidth=1)
+        ax_xz.fill(rect_x, rect_z, color, alpha=0.5)
+        ax_yz.plot(rect_y, rect_z, 'b-', linewidth=1)
+        ax_yz.fill(rect_y, rect_z, color, alpha=0.5)
+    
+    max_z = total_height/2 + thickness * 2
+    ax_xz.set_xlim(-sheet_size*0.7, sheet_size*0.7)
+    ax_xz.set_ylim(-max_z, max_z)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title(f'XZ Cross-section (d={d_spacing:.0f}Å)')
+    ax_xz.grid(True, alpha=0.3)
+    
+    ax_yz.set_xlim(-sheet_size*0.7, sheet_size*0.7)
+    ax_yz.set_ylim(-max_z, max_z)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.grid(True, alpha=0.3)
+
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [

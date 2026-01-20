@@ -77,8 +77,95 @@ import numpy as np
 from numpy import inf
 
 category = "shape:sphere"
-has_shape_visualization = False
+has_shape_visualization = True
 single = False  # double precision only!
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for binary hard sphere visualization."""
+    import numpy as np
+    radius_lg = params.get('radius_lg', 100)
+    radius_sm = params.get('radius_sm', 25)
+    
+    # Create spheres
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    # Large sphere (centered at origin)
+    x_lg = radius_lg * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_lg = radius_lg * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_lg = radius_lg * np.cos(phi_mesh)
+    
+    # Small sphere (offset to the side)
+    offset = radius_lg * 1.5
+    x_sm = radius_sm * np.sin(phi_mesh) * np.cos(theta_mesh) + offset
+    y_sm = radius_sm * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_sm = radius_sm * np.cos(phi_mesh)
+    
+    return {
+        'large_sphere': (x_lg, y_lg, z_lg),
+        'small_sphere': (x_sm, y_sm, z_sm)
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of binary hard spheres."""
+    import numpy as np
+    radius_lg = params.get('radius_lg', 100)
+    radius_sm = params.get('radius_sm', 25)
+    
+    theta = np.linspace(0, 2*np.pi, 100)
+    offset = radius_lg * 1.5
+    
+    # Large sphere circle
+    lg_x = radius_lg * np.cos(theta)
+    lg_y = radius_lg * np.sin(theta)
+    
+    # Small sphere circle (offset)
+    sm_x = radius_sm * np.cos(theta) + offset
+    sm_y = radius_sm * np.sin(theta)
+    
+    max_extent = offset + radius_sm * 1.5
+    
+    # XY plane
+    ax_xy.plot(lg_x, lg_y, 'b-', linewidth=2, label=f'Large (R={radius_lg:.0f}Å)')
+    ax_xy.fill(lg_x, lg_y, 'lightblue', alpha=0.3)
+    ax_xy.plot(sm_x, sm_y, 'r-', linewidth=2, label=f'Small (R={radius_sm:.0f}Å)')
+    ax_xy.fill(sm_x, sm_y, 'lightcoral', alpha=0.3)
+    ax_xy.set_xlim(-radius_lg*1.5, max_extent)
+    ax_xy.set_ylim(-radius_lg*1.5, radius_lg*1.5)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section')
+    ax_xy.set_aspect('equal')
+    ax_xy.legend(loc='upper left', fontsize=8)
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane
+    ax_xz.plot(lg_x, lg_y, 'b-', linewidth=2)
+    ax_xz.fill(lg_x, lg_y, 'lightblue', alpha=0.3)
+    ax_xz.plot(sm_x, sm_y, 'r-', linewidth=2)
+    ax_xz.fill(sm_x, sm_y, 'lightcoral', alpha=0.3)
+    ax_xz.set_xlim(-radius_lg*1.5, max_extent)
+    ax_xz.set_ylim(-radius_lg*1.5, radius_lg*1.5)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane
+    ax_yz.plot(lg_y, lg_y, 'b-', linewidth=2)
+    ax_yz.fill(lg_y, lg_y, 'lightblue', alpha=0.3)
+    # Small sphere at origin in YZ plane
+    ax_yz.plot(sm_y - offset, sm_y, 'r-', linewidth=2)
+    ax_yz.fill(sm_y - offset, sm_y, 'lightcoral', alpha=0.3)
+    ax_yz.set_xlim(-radius_lg*1.5, radius_lg*1.5)
+    ax_yz.set_ylim(-radius_lg*1.5, radius_lg*1.5)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 
 name = "binary_hard_sphere"
 title = "binary mixture of hard spheres with hard sphere interactions."

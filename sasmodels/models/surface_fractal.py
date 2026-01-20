@@ -83,8 +83,88 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "surface_fractal.c"]
-has_shape_visualization = False
+has_shape_visualization = True
 # Don't need validity test since fractal_dim_surf is not polydisperse
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for surface fractal visualization."""
+    import numpy as np
+    radius = params.get('radius', 10)
+    fractal_dim_surf = params.get('fractal_dim_surf', 2.0)
+    
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    # Create a sphere with a rough surface (surface fractal)
+    # Add perturbations to simulate surface roughness
+    np.random.seed(42)
+    roughness = (3.0 - fractal_dim_surf) * 0.15 * radius  # Rougher for lower Ds
+    
+    # Generate surface perturbations
+    perturb = roughness * np.random.randn(*phi_mesh.shape)
+    r = radius + perturb
+    
+    x = r * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y = r * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z = r * np.cos(phi_mesh)
+    
+    return {'surface_fractal': (x, y, z)}
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of surface fractal."""
+    import numpy as np
+    radius = params.get('radius', 10)
+    fractal_dim_surf = params.get('fractal_dim_surf', 2.0)
+    
+    # Surface fractal: rough surface on a sphere
+    n_points = 200
+    theta = np.linspace(0, 2*np.pi, n_points)
+    
+    np.random.seed(42)
+    roughness = (3.0 - fractal_dim_surf) * 0.15 * radius
+    
+    # Create rough circles
+    perturb_xy = roughness * np.random.randn(n_points)
+    perturb_xz = roughness * np.random.randn(n_points)
+    perturb_yz = roughness * np.random.randn(n_points)
+    
+    r_xy = radius + perturb_xy
+    r_xz = radius + perturb_xz
+    r_yz = radius + perturb_yz
+    
+    # XY plane
+    ax_xy.plot(r_xy * np.cos(theta), r_xy * np.sin(theta), 'b-', linewidth=1.5)
+    ax_xy.fill(r_xy * np.cos(theta), r_xy * np.sin(theta), 'lightblue', alpha=0.3)
+    ax_xy.set_xlim(-radius*1.5, radius*1.5)
+    ax_xy.set_ylim(-radius*1.5, radius*1.5)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title(f'XY Cross-section (Ds={fractal_dim_surf:.1f})')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane
+    ax_xz.plot(r_xz * np.cos(theta), r_xz * np.sin(theta), 'r-', linewidth=1.5)
+    ax_xz.fill(r_xz * np.cos(theta), r_xz * np.sin(theta), 'lightcoral', alpha=0.3)
+    ax_xz.set_xlim(-radius*1.5, radius*1.5)
+    ax_xz.set_ylim(-radius*1.5, radius*1.5)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane
+    ax_yz.plot(r_yz * np.cos(theta), r_yz * np.sin(theta), 'g-', linewidth=1.5)
+    ax_yz.fill(r_yz * np.cos(theta), r_yz * np.sin(theta), 'lightgreen', alpha=0.3)
+    ax_yz.set_xlim(-radius*1.5, radius*1.5)
+    ax_yz.set_ylim(-radius*1.5, radius*1.5)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 #valid = "fractal_dim_surf > 1.0 && fractal_dim_surf < 3.0"
 
 def random():

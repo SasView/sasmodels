@@ -111,8 +111,95 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-has_shape_visualization = False
+has_shape_visualization = True
 single = False
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for polymer micelle visualization."""
+    import numpy as np
+    radius_core = params.get('radius_core', 45)
+    rg = params.get('rg', 20)  # radius of gyration of corona chains
+    d_penetration = params.get('d_penetration', 1.0)
+    
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+    
+    mesh_data = {}
+    
+    # Core sphere
+    x_core = radius_core * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_core = radius_core * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_core = radius_core * np.cos(phi_mesh)
+    mesh_data['core'] = (x_core, y_core, z_core)
+    
+    # Corona (fuzzy outer region) - represented as a larger transparent sphere
+    corona_radius = radius_core + d_penetration * rg * 2
+    x_corona = corona_radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_corona = corona_radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_corona = corona_radius * np.cos(phi_mesh)
+    mesh_data['corona'] = (x_corona, y_corona, z_corona)
+    
+    return mesh_data
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of polymer micelle."""
+    import numpy as np
+    radius_core = params.get('radius_core', 45)
+    rg = params.get('rg', 20)
+    d_penetration = params.get('d_penetration', 1.0)
+    
+    theta = np.linspace(0, 2*np.pi, 100)
+    corona_radius = radius_core + d_penetration * rg * 2
+    max_r = corona_radius * 1.3
+    
+    # Core circle
+    core_x = radius_core * np.cos(theta)
+    core_y = radius_core * np.sin(theta)
+    
+    # Corona circle
+    corona_x = corona_radius * np.cos(theta)
+    corona_y = corona_radius * np.sin(theta)
+    
+    # XY plane
+    ax_xy.fill(corona_x, corona_y, 'lightyellow', alpha=0.3, label='Corona')
+    ax_xy.plot(corona_x, corona_y, 'orange', linewidth=2, linestyle='--')
+    ax_xy.fill(core_x, core_y, 'lightblue', alpha=0.5, label='Core')
+    ax_xy.plot(core_x, core_y, 'b-', linewidth=2)
+    ax_xy.set_xlim(-max_r, max_r)
+    ax_xy.set_ylim(-max_r, max_r)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section')
+    ax_xy.set_aspect('equal')
+    ax_xy.legend(loc='upper right', fontsize=8)
+    ax_xy.grid(True, alpha=0.3)
+    
+    # XZ plane
+    ax_xz.fill(corona_x, corona_y, 'lightyellow', alpha=0.3)
+    ax_xz.plot(corona_x, corona_y, 'orange', linewidth=2, linestyle='--')
+    ax_xz.fill(core_x, core_y, 'lightblue', alpha=0.5)
+    ax_xz.plot(core_x, core_y, 'b-', linewidth=2)
+    ax_xz.set_xlim(-max_r, max_r)
+    ax_xz.set_ylim(-max_r, max_r)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    
+    # YZ plane
+    ax_yz.fill(corona_x, corona_y, 'lightyellow', alpha=0.3)
+    ax_yz.plot(corona_x, corona_y, 'orange', linewidth=2, linestyle='--')
+    ax_yz.fill(core_x, core_y, 'lightblue', alpha=0.5)
+    ax_yz.plot(core_x, core_y, 'b-', linewidth=2)
+    ax_yz.set_xlim(-max_r, max_r)
+    ax_yz.set_ylim(-max_r, max_r)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
 
 source = ["lib/sas_3j1x_x.c", "polymer_micelle.c"]
 
