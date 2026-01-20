@@ -185,16 +185,16 @@ def create_shape_mesh(params, resolution=50):
     import numpy as np
     dnn = params.get('dnn', 220)  # nearest neighbor distance
     radius = params.get('radius', 40)
-    
+
     # For FCC, conventional cell parameter a = sqrt(2)*dnn
     a = np.sqrt(2) * dnn
-    
+
     phi = np.linspace(0, np.pi, resolution//3)
     theta = np.linspace(0, 2*np.pi, resolution//2)
     phi_mesh, theta_mesh = np.meshgrid(phi, theta)
-    
+
     mesh_data = {}
-    
+
     # FCC lattice: corners + face centers
     positions = []
     for i in range(-1, 2):
@@ -209,16 +209,16 @@ def create_shape_mesh(params, resolution=50):
                     positions.append(((i + 0.5) * a, j * a, (k + 0.5) * a))  # xz face
                 if j < 1 and k < 1:
                     positions.append((i * a, (j + 0.5) * a, (k + 0.5) * a))  # yz face
-    
+
     # Remove duplicates
     positions = list(set(positions))
-    
+
     for idx, (px, py, pz) in enumerate(positions):
         x = radius * np.sin(phi_mesh) * np.cos(theta_mesh) + px
         y = radius * np.sin(phi_mesh) * np.sin(theta_mesh) + py
         z = radius * np.cos(phi_mesh) + pz
         mesh_data[f'sphere_{idx}'] = (x, y, z)
-    
+
     return mesh_data
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
@@ -226,11 +226,11 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     import numpy as np
     dnn = params.get('dnn', 220)
     radius = params.get('radius', 40)
-    
+
     a = np.sqrt(2) * dnn
     theta = np.linspace(0, 2*np.pi, 100)
     max_extent = a * 1.5 + radius
-    
+
     # XY plane at z=0 - shows corner atoms and xy-face centers
     for i in range(-1, 2):
         for j in range(-1, 2):
@@ -248,7 +248,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
                 circle_y_f = radius * np.sin(theta) + cy_f
                 ax_xy.plot(circle_x_f, circle_y_f, 'r-', linewidth=1.5)
                 ax_xy.fill(circle_x_f, circle_y_f, 'lightcoral', alpha=0.3)
-    
+
     ax_xy.set_xlim(-max_extent, max_extent)
     ax_xy.set_ylim(-max_extent, max_extent)
     ax_xy.set_xlabel('X (Å)')
@@ -256,7 +256,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title(f'XY Cross-section (FCC, dnn={dnn:.0f}Å)')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane at y=0
     for i in range(-1, 2):
         for k in range(-1, 2):
@@ -272,7 +272,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
                 circle_z_f = radius * np.sin(theta) + cz_f
                 ax_xz.plot(circle_x_f, circle_z_f, 'r-', linewidth=1.5)
                 ax_xz.fill(circle_x_f, circle_z_f, 'lightcoral', alpha=0.3)
-    
+
     ax_xz.set_xlim(-max_extent, max_extent)
     ax_xz.set_ylim(-max_extent, max_extent)
     ax_xz.set_xlabel('X (Å)')
@@ -280,7 +280,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_title('XZ Cross-section')
     ax_xz.set_aspect('equal')
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane at x=0
     for j in range(-1, 2):
         for k in range(-1, 2):
@@ -296,7 +296,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
                 circle_z_f = radius * np.sin(theta) + cz_f
                 ax_yz.plot(circle_y_f, circle_z_f, 'r-', linewidth=1.5)
                 ax_yz.fill(circle_y_f, circle_z_f, 'lightcoral', alpha=0.3)
-    
+
     ax_yz.set_xlim(-max_extent, max_extent)
     ax_yz.set_ylim(-max_extent, max_extent)
     ax_yz.set_xlabel('Y (Å)')

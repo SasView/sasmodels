@@ -95,23 +95,23 @@ def create_shape_mesh(params, resolution=50):
     import numpy as np
     length_tail = params.get('length_tail', 15)
     length_head = params.get('length_head', 10)
-    
+
     total_thickness = 2 * (length_head + length_tail)  # H+T+T+H
     sheet_size = total_thickness * 3
-    
+
     # Create meshgrid for surfaces
     x_grid = np.linspace(-sheet_size/2, sheet_size/2, resolution)
     y_grid = np.linspace(-sheet_size/2, sheet_size/2, resolution)
     x_mesh, y_mesh = np.meshgrid(x_grid, y_grid)
-    
+
     # Outer surfaces (head groups)
     z_top_outer = np.full_like(x_mesh, total_thickness/2)
     z_bottom_outer = np.full_like(x_mesh, -total_thickness/2)
-    
+
     # Inner surfaces (between head and tail)
     z_top_inner = np.full_like(x_mesh, length_tail)  # Top head/tail interface
     z_bottom_inner = np.full_like(x_mesh, -length_tail)  # Bottom head/tail interface
-    
+
     return {
         'top_head': (x_mesh, y_mesh, z_top_outer),
         'top_interface': (x_mesh, y_mesh, z_top_inner),
@@ -121,17 +121,16 @@ def create_shape_mesh(params, resolution=50):
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     """Plot 2D cross-sections of the lamellar with head groups."""
-    import numpy as np
     length_tail = params.get('length_tail', 15)
     length_head = params.get('length_head', 10)
-    
+
     total_thickness = 2 * (length_head + length_tail)
     sheet_size = total_thickness * 3
-    
+
     # XY plane (top view)
     rect_x = [-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2]
     rect_y = [-sheet_size/2, -sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2]
-    
+
     ax_xy.plot(rect_x, rect_y, 'b-', linewidth=2)
     ax_xy.fill(rect_x, rect_y, 'lightblue', alpha=0.3)
     ax_xy.set_xlim(-sheet_size*0.7, sheet_size*0.7)
@@ -141,7 +140,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title('XY Cross-section (Top View)')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane (side view) - shows head and tail regions
     # Top head group
     head_top = [[-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2],
@@ -152,7 +151,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     # Bottom head group
     head_bottom = [[-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2],
                    [-total_thickness/2, -total_thickness/2, -length_tail, -length_tail, -total_thickness/2]]
-    
+
     ax_xz.fill(head_top[0], head_top[1], 'coral', alpha=0.5, label='Head')
     ax_xz.fill(tail[0], tail[1], 'lightblue', alpha=0.5, label='Tail')
     ax_xz.fill(head_bottom[0], head_bottom[1], 'coral', alpha=0.5)
@@ -165,7 +164,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_title('XZ Cross-section (Side View)')
     ax_xz.legend(loc='upper right', fontsize=8)
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane (front view)
     ax_yz.fill(head_top[0], head_top[1], 'coral', alpha=0.5)
     ax_yz.fill(tail[0], tail[1], 'lightblue', alpha=0.5)

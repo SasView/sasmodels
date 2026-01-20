@@ -183,26 +183,26 @@ def create_shape_mesh(params, resolution=50):
     import numpy as np
     dnn = params.get('dnn', 220)  # nearest neighbor distance
     radius = params.get('radius', 40)
-    
+
     phi = np.linspace(0, np.pi, resolution//3)
     theta = np.linspace(0, 2*np.pi, resolution//2)
     phi_mesh, theta_mesh = np.meshgrid(phi, theta)
-    
+
     mesh_data = {}
-    
+
     # Create a 3x3x3 lattice of spheres
     positions = []
     for i in range(-1, 2):
         for j in range(-1, 2):
             for k in range(-1, 2):
                 positions.append((i * dnn, j * dnn, k * dnn))
-    
+
     for idx, (px, py, pz) in enumerate(positions):
         x = radius * np.sin(phi_mesh) * np.cos(theta_mesh) + px
         y = radius * np.sin(phi_mesh) * np.sin(theta_mesh) + py
         z = radius * np.cos(phi_mesh) + pz
         mesh_data[f'sphere_{idx}'] = (x, y, z)
-    
+
     return mesh_data
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
@@ -210,10 +210,10 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     import numpy as np
     dnn = params.get('dnn', 220)
     radius = params.get('radius', 40)
-    
+
     theta = np.linspace(0, 2*np.pi, 100)
     max_extent = dnn * 1.5 + radius
-    
+
     # XY plane - show central layer
     for i in range(-1, 2):
         for j in range(-1, 2):
@@ -222,7 +222,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
             circle_y = radius * np.sin(theta) + cy
             ax_xy.plot(circle_x, circle_y, 'b-', linewidth=1.5)
             ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.3)
-    
+
     ax_xy.set_xlim(-max_extent, max_extent)
     ax_xy.set_ylim(-max_extent, max_extent)
     ax_xy.set_xlabel('X (Å)')
@@ -230,7 +230,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title(f'XY Cross-section (SC lattice, a={dnn:.0f}Å)')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane
     for i in range(-1, 2):
         for k in range(-1, 2):
@@ -239,7 +239,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
             circle_z = radius * np.sin(theta) + cz
             ax_xz.plot(circle_x, circle_z, 'r-', linewidth=1.5)
             ax_xz.fill(circle_x, circle_z, 'lightcoral', alpha=0.3)
-    
+
     ax_xz.set_xlim(-max_extent, max_extent)
     ax_xz.set_ylim(-max_extent, max_extent)
     ax_xz.set_xlabel('X (Å)')
@@ -247,7 +247,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_title('XZ Cross-section')
     ax_xz.set_aspect('equal')
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane
     for j in range(-1, 2):
         for k in range(-1, 2):
@@ -256,7 +256,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
             circle_z = radius * np.sin(theta) + cz
             ax_yz.plot(circle_y, circle_z, 'g-', linewidth=1.5)
             ax_yz.fill(circle_y, circle_z, 'lightgreen', alpha=0.3)
-    
+
     ax_yz.set_xlim(-max_extent, max_extent)
     ax_yz.set_ylim(-max_extent, max_extent)
     ax_yz.set_xlabel('Y (Å)')

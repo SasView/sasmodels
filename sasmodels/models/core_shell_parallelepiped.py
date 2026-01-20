@@ -267,7 +267,6 @@ def create_shape_mesh(params, resolution=50):
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     """Plot 2D cross-sections of the core-shell parallelepiped."""
-    import numpy as np
     length_a = params.get('length_a', 35)
     length_b = params.get('length_b', 75)
     length_c = params.get('length_c', 400)

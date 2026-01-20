@@ -34,7 +34,7 @@ class ShapeVisualizer(ABC):
         self.parameters = model_info.get('parameters', [])
         self.category = model_info.get('category', 'unknown')
         self._model_module = None  # Cache for model module
-    
+
     def _get_model_module(self):
         """Get the model module, importing it if necessary."""
         if self._model_module is None:

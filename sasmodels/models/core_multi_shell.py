@@ -107,19 +107,19 @@ def create_shape_mesh(params, resolution=50):
     import numpy as np
     radius = params.get('radius', 200)
     n = int(params.get('n', 1))
-    
+
     phi = np.linspace(0, np.pi, resolution//2)
     theta = np.linspace(0, 2*np.pi, resolution)
     phi_mesh, theta_mesh = np.meshgrid(phi, theta)
-    
+
     mesh_data = {}
-    
+
     # Core sphere
     x_core = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
     y_core = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
     z_core = radius * np.cos(phi_mesh)
     mesh_data['core'] = (x_core, y_core, z_core)
-    
+
     # Add shells
     current_radius = radius
     for i in range(n):
@@ -127,12 +127,12 @@ def create_shape_mesh(params, resolution=50):
         if isinstance(thickness, (list, np.ndarray)):
             thickness = thickness[i] if i < len(thickness) else thickness[-1]
         current_radius += thickness
-        
+
         x_shell = current_radius * np.sin(phi_mesh) * np.cos(theta_mesh)
         y_shell = current_radius * np.sin(phi_mesh) * np.sin(theta_mesh)
         z_shell = current_radius * np.cos(phi_mesh)
         mesh_data[f'shell_{i+1}'] = (x_shell, y_shell, z_shell)
-    
+
     return mesh_data
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
@@ -140,10 +140,10 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     import numpy as np
     radius = params.get('radius', 200)
     n = int(params.get('n', 1))
-    
+
     theta = np.linspace(0, 2*np.pi, 100)
     colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
-    
+
     # Calculate all radii
     radii = [radius]
     current_radius = radius
@@ -153,9 +153,9 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
             thickness = thickness[i] if i < len(thickness) else thickness[-1]
         current_radius += thickness
         radii.append(current_radius)
-    
+
     max_r = radii[-1] * 1.2
-    
+
     # XY plane
     for i, r in enumerate(radii):
         circle_x = r * np.cos(theta)
@@ -165,7 +165,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
         ax_xy.plot(circle_x, circle_y, '-', color=color, linewidth=2, label=label)
         if i == 0:
             ax_xy.fill(circle_x, circle_y, color=color, alpha=0.2)
-    
+
     ax_xy.set_xlim(-max_r, max_r)
     ax_xy.set_ylim(-max_r, max_r)
     ax_xy.set_xlabel('X (Å)')
@@ -174,7 +174,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_aspect('equal')
     ax_xy.legend(loc='upper right', fontsize=7)
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane
     for i, r in enumerate(radii):
         circle_x = r * np.cos(theta)
@@ -183,7 +183,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
         ax_xz.plot(circle_x, circle_z, '-', color=color, linewidth=2)
         if i == 0:
             ax_xz.fill(circle_x, circle_z, color=color, alpha=0.2)
-    
+
     ax_xz.set_xlim(-max_r, max_r)
     ax_xz.set_ylim(-max_r, max_r)
     ax_xz.set_xlabel('X (Å)')
@@ -191,7 +191,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_title('XZ Cross-section')
     ax_xz.set_aspect('equal')
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane
     for i, r in enumerate(radii):
         circle_y = r * np.cos(theta)
@@ -200,7 +200,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
         ax_yz.plot(circle_y, circle_z, '-', color=color, linewidth=2)
         if i == 0:
             ax_yz.fill(circle_y, circle_z, color=color, alpha=0.2)
-    
+
     ax_yz.set_xlim(-max_r, max_r)
     ax_yz.set_ylim(-max_r, max_r)
     ax_yz.set_xlabel('Y (Å)')

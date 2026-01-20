@@ -104,44 +104,44 @@ def create_shape_mesh(params, resolution=50):
     radius = params.get('radius', 60)
     thickness = params.get('thickness', 10)
     fractal_dim = params.get('fractal_dim', 2)
-    
+
     outer_radius = radius + thickness
-    
+
     phi = np.linspace(0, np.pi, resolution//3)
     theta = np.linspace(0, 2*np.pi, resolution//2)
     phi_mesh, theta_mesh = np.meshgrid(phi, theta)
-    
+
     mesh_data = {}
-    
+
     # Generate fractal-like distribution
     np.random.seed(42)
     n_spheres = min(20, int(8 * fractal_dim))
-    
+
     positions = [(0, 0, 0)]
     for i in range(1, n_spheres):
         parent = positions[np.random.randint(len(positions))]
         angle_theta = np.random.uniform(0, 2*np.pi)
         angle_phi = np.random.uniform(0, np.pi)
         dist = 2 * outer_radius * (1 + 0.1 * np.random.randn())
-        
+
         new_x = parent[0] + dist * np.sin(angle_phi) * np.cos(angle_theta)
         new_y = parent[1] + dist * np.sin(angle_phi) * np.sin(angle_theta)
         new_z = parent[2] + dist * np.cos(angle_phi)
         positions.append((new_x, new_y, new_z))
-    
+
     for i, (px, py, pz) in enumerate(positions):
         # Outer shell
         x_out = outer_radius * np.sin(phi_mesh) * np.cos(theta_mesh) + px
         y_out = outer_radius * np.sin(phi_mesh) * np.sin(theta_mesh) + py
         z_out = outer_radius * np.cos(phi_mesh) + pz
         mesh_data[f'shell_{i}'] = (x_out, y_out, z_out)
-        
+
         # Inner core
         x_core = radius * np.sin(phi_mesh) * np.cos(theta_mesh) + px
         y_core = radius * np.sin(phi_mesh) * np.sin(theta_mesh) + py
         z_core = radius * np.cos(phi_mesh) + pz
         mesh_data[f'core_{i}'] = (x_core, y_core, z_core)
-    
+
     return mesh_data
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
@@ -150,29 +150,29 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     radius = params.get('radius', 60)
     thickness = params.get('thickness', 10)
     fractal_dim = params.get('fractal_dim', 2)
-    
+
     outer_radius = radius + thickness
     theta = np.linspace(0, 2*np.pi, 100)
-    
+
     # Generate same positions as mesh
     np.random.seed(42)
     n_spheres = min(20, int(8 * fractal_dim))
-    
+
     positions = [(0, 0, 0)]
     for i in range(1, n_spheres):
         parent = positions[np.random.randint(len(positions))]
         angle_theta = np.random.uniform(0, 2*np.pi)
         angle_phi = np.random.uniform(0, np.pi)
         dist = 2 * outer_radius * (1 + 0.1 * np.random.randn())
-        
+
         new_x = parent[0] + dist * np.sin(angle_phi) * np.cos(angle_theta)
         new_y = parent[1] + dist * np.sin(angle_phi) * np.sin(angle_theta)
         new_z = parent[2] + dist * np.cos(angle_phi)
         positions.append((new_x, new_y, new_z))
-    
+
     positions = np.array(positions)
     max_extent = np.max(np.abs(positions)) + outer_radius * 1.5
-    
+
     # XY plane
     for px, py, pz in positions:
         # Shell
@@ -184,7 +184,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
         core_x = radius * np.cos(theta) + px
         core_y = radius * np.sin(theta) + py
         ax_xy.fill(core_x, core_y, 'coral', alpha=0.4)
-    
+
     ax_xy.set_xlim(-max_extent, max_extent)
     ax_xy.set_ylim(-max_extent, max_extent)
     ax_xy.set_xlabel('X (Å)')
@@ -192,7 +192,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title(f'XY Projection (Df={fractal_dim:.1f})')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane
     for px, py, pz in positions:
         shell_x = outer_radius * np.cos(theta) + px
@@ -202,7 +202,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
         core_x = radius * np.cos(theta) + px
         core_z = radius * np.sin(theta) + pz
         ax_xz.fill(core_x, core_z, 'coral', alpha=0.4)
-    
+
     ax_xz.set_xlim(-max_extent, max_extent)
     ax_xz.set_ylim(-max_extent, max_extent)
     ax_xz.set_xlabel('X (Å)')
@@ -210,7 +210,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_title('XZ Projection')
     ax_xz.set_aspect('equal')
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane
     for px, py, pz in positions:
         shell_y = outer_radius * np.cos(theta) + py
@@ -220,7 +220,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
         core_y = radius * np.cos(theta) + py
         core_z = radius * np.sin(theta) + pz
         ax_yz.fill(core_y, core_z, 'coral', alpha=0.4)
-    
+
     ax_yz.set_xlim(-max_extent, max_extent)
     ax_yz.set_ylim(-max_extent, max_extent)
     ax_yz.set_xlabel('Y (Å)')

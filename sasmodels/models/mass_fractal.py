@@ -100,39 +100,39 @@ def create_shape_mesh(params, resolution=50):
     import numpy as np
     radius = params.get('radius', 10)
     fractal_dim_mass = params.get('fractal_dim_mass', 1.9)
-    
+
     phi = np.linspace(0, np.pi, resolution//3)
     theta = np.linspace(0, 2*np.pi, resolution//2)
     phi_mesh, theta_mesh = np.meshgrid(phi, theta)
-    
+
     mesh_data = {}
-    
+
     np.random.seed(42)
     n_spheres = min(25, int(8 * fractal_dim_mass))
-    
+
     positions = [(0, 0, 0)]
     for i in range(1, n_spheres):
         parent = positions[np.random.randint(len(positions))]
         angle_theta = np.random.uniform(0, 2*np.pi)
         angle_phi = np.random.uniform(0, np.pi)
         dist = 2 * radius * (1 + 0.1 * np.random.randn())
-        
+
         new_x = parent[0] + dist * np.sin(angle_phi) * np.cos(angle_theta)
         new_y = parent[1] + dist * np.sin(angle_phi) * np.sin(angle_theta)
         new_z = parent[2] + dist * np.cos(angle_phi)
         positions.append((new_x, new_y, new_z))
-        
+
         xs = radius * np.sin(phi_mesh) * np.cos(theta_mesh) + new_x
         ys = radius * np.sin(phi_mesh) * np.sin(theta_mesh) + new_y
         zs = radius * np.cos(phi_mesh) + new_z
         mesh_data[f'sphere_{i}'] = (xs, ys, zs)
-    
+
     # Central sphere
     x = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
     y = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
     z = radius * np.cos(phi_mesh)
     mesh_data['sphere_0'] = (x, y, z)
-    
+
     return mesh_data
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
@@ -140,33 +140,33 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     import numpy as np
     radius = params.get('radius', 10)
     fractal_dim_mass = params.get('fractal_dim_mass', 1.9)
-    
+
     theta = np.linspace(0, 2*np.pi, 100)
-    
+
     np.random.seed(42)
     n_spheres = min(25, int(8 * fractal_dim_mass))
-    
+
     positions = [(0, 0, 0)]
     for i in range(1, n_spheres):
         parent = positions[np.random.randint(len(positions))]
         angle_theta = np.random.uniform(0, 2*np.pi)
         angle_phi = np.random.uniform(0, np.pi)
         dist = 2 * radius * (1 + 0.1 * np.random.randn())
-        
+
         new_x = parent[0] + dist * np.sin(angle_phi) * np.cos(angle_theta)
         new_y = parent[1] + dist * np.sin(angle_phi) * np.sin(angle_theta)
         new_z = parent[2] + dist * np.cos(angle_phi)
         positions.append((new_x, new_y, new_z))
-    
+
     positions = np.array(positions)
     max_extent = np.max(np.abs(positions)) + radius * 2
-    
+
     for px, py, pz in positions:
         circle_x = radius * np.cos(theta) + px
         circle_y = radius * np.sin(theta) + py
         ax_xy.plot(circle_x, circle_y, 'b-', linewidth=0.8)
         ax_xy.fill(circle_x, circle_y, 'lightblue', alpha=0.3)
-    
+
     ax_xy.set_xlim(-max_extent, max_extent)
     ax_xy.set_ylim(-max_extent, max_extent)
     ax_xy.set_xlabel('X (Å)')
@@ -174,13 +174,13 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title(f'XY Projection (Dm={fractal_dim_mass:.1f})')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     for px, py, pz in positions:
         circle_x = radius * np.cos(theta) + px
         circle_z = radius * np.sin(theta) + pz
         ax_xz.plot(circle_x, circle_z, 'r-', linewidth=0.8)
         ax_xz.fill(circle_x, circle_z, 'lightcoral', alpha=0.3)
-    
+
     ax_xz.set_xlim(-max_extent, max_extent)
     ax_xz.set_ylim(-max_extent, max_extent)
     ax_xz.set_xlabel('X (Å)')
@@ -188,13 +188,13 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_title('XZ Projection')
     ax_xz.set_aspect('equal')
     ax_xz.grid(True, alpha=0.3)
-    
+
     for px, py, pz in positions:
         circle_y = radius * np.cos(theta) + py
         circle_z = radius * np.sin(theta) + pz
         ax_yz.plot(circle_y, circle_z, 'g-', linewidth=0.8)
         ax_yz.fill(circle_y, circle_z, 'lightgreen', alpha=0.3)
-    
+
     ax_yz.set_xlim(-max_extent, max_extent)
     ax_yz.set_ylim(-max_extent, max_extent)
     ax_yz.set_xlabel('Y (Å)')

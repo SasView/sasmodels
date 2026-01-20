@@ -183,7 +183,6 @@ def create_shape_mesh(params, resolution=50):
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     """Plot 2D cross-sections of the rectangular prism."""
-    import numpy as np
     length_a = params.get('length_a', 35)
     b2a_ratio = params.get('b2a_ratio', 1)
     c2a_ratio = params.get('c2a_ratio', 1)

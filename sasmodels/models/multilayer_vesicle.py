@@ -237,7 +237,7 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
     ax_xz.set_xlabel('X (Å)')
     ax_xz.set_ylabel('Z (Å)')
-    ax_xz.set_title(f'XZ Cross-section')
+    ax_xz.set_title('XZ Cross-section')
     ax_xz.set_aspect('equal')
     ax_xz.grid(True, alpha=0.3)
 

@@ -100,25 +100,25 @@ def create_shape_mesh(params, resolution=50):
     """Create 3D mesh for lamellar (flat sheet) visualization."""
     import numpy as np
     thickness = params.get('thickness', 50)
-    
+
     # Create a flat sheet (lamella) - represent as a thin rectangular slab
     sheet_size = thickness * 4  # Make sheet visually larger than thickness
-    
+
     # Top surface
     x_top = np.array([[-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2]])
     y_top = np.array([[-sheet_size/2, -sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2]])
     z_top = np.full_like(x_top, thickness/2)
-    
+
     # Bottom surface
     z_bottom = np.full_like(x_top, -thickness/2)
-    
+
     # Create meshgrid for surfaces
     x_grid = np.linspace(-sheet_size/2, sheet_size/2, resolution)
     y_grid = np.linspace(-sheet_size/2, sheet_size/2, resolution)
     x_mesh, y_mesh = np.meshgrid(x_grid, y_grid)
     z_top_mesh = np.full_like(x_mesh, thickness/2)
     z_bottom_mesh = np.full_like(x_mesh, -thickness/2)
-    
+
     return {
         'top_surface': (x_mesh, y_mesh, z_top_mesh),
         'bottom_surface': (x_mesh, y_mesh, z_bottom_mesh)
@@ -126,14 +126,13 @@ def create_shape_mesh(params, resolution=50):
 
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     """Plot 2D cross-sections of the lamellar structure."""
-    import numpy as np
     thickness = params.get('thickness', 50)
     sheet_size = thickness * 4
-    
+
     # XY plane (top view) - shows the sheet as a square
     rect_x = [-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2]
     rect_y = [-sheet_size/2, -sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2]
-    
+
     ax_xy.plot(rect_x, rect_y, 'b-', linewidth=2, label='Lamella')
     ax_xy.fill(rect_x, rect_y, 'lightblue', alpha=0.3)
     ax_xy.set_xlim(-sheet_size*0.7, sheet_size*0.7)
@@ -143,11 +142,11 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xy.set_title('XY Cross-section (Top View)')
     ax_xy.set_aspect('equal')
     ax_xy.grid(True, alpha=0.3)
-    
+
     # XZ plane (side view) - shows the thickness
     rect_x_side = [-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2]
     rect_z_side = [-thickness/2, -thickness/2, thickness/2, thickness/2, -thickness/2]
-    
+
     ax_xz.plot(rect_x_side, rect_z_side, 'r-', linewidth=2, label='Lamella')
     ax_xz.fill(rect_x_side, rect_z_side, 'lightcoral', alpha=0.3)
     ax_xz.set_xlim(-sheet_size*0.7, sheet_size*0.7)
@@ -156,10 +155,10 @@ def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     ax_xz.set_ylabel('Z (Å)')
     ax_xz.set_title(f'XZ Cross-section (thickness={thickness:.1f}Å)')
     ax_xz.grid(True, alpha=0.3)
-    
+
     # YZ plane (front view) - same as XZ
     rect_y_front = [-sheet_size/2, sheet_size/2, sheet_size/2, -sheet_size/2, -sheet_size/2]
-    
+
     ax_yz.plot(rect_y_front, rect_z_side, 'g-', linewidth=2, label='Lamella')
     ax_yz.fill(rect_y_front, rect_z_side, 'lightgreen', alpha=0.3)
     ax_yz.set_xlim(-sheet_size*0.7, sheet_size*0.7)

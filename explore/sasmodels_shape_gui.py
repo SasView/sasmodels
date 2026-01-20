@@ -21,7 +21,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  needed to enable 3D projection
-
 from shape_visualizer import SASModelsLoader, SASModelsShapeDetector
 
 
@@ -275,10 +274,10 @@ class ShapeVisualizerGUI(tk.Tk):
                 # - Right column (narrower): 3 cross-sections stacked vertically
                 # Increased hspace to prevent legend overlap between cross-sections
                 gs = GridSpec(3, 2, figure=fig, width_ratios=[3, 1], hspace=0.6, wspace=0.3)
-                
+
                 # 3D plot takes entire left column (all 3 rows)
                 ax_3d = fig.add_subplot(gs[:, 0], projection="3d")
-                
+
                 # Cross-sections stacked in right column
                 ax_xy = fig.add_subplot(gs[0, 1])
                 ax_xz = fig.add_subplot(gs[1, 1])
@@ -291,20 +290,20 @@ class ShapeVisualizerGUI(tk.Tk):
             mesh_data = visualizer.create_mesh(params)
             visualizer._plot_mesh_components(ax_3d, mesh_data, show_wire)  # type: ignore[attr-defined]
             visualizer._setup_3d_axis(ax_3d, mesh_data, params)  # type: ignore[attr-defined]
-            
+
             # Remove axes completely, title, and add parameter text
             ax_3d.set_axis_off()  # Hide all axes
             ax_3d.set_title('')  # Remove title (redundant with parameter box)
-            
+
             # Get volume parameters to display
             volume_params = visualizer.get_volume_params()
             param_text_lines = []
-            
+
             # Add model name
             model_name = name.replace('_', ' ').title()
             param_text_lines.append(f"{model_name}")
             param_text_lines.append("")  # Empty line
-            
+
             # Add key parameters
             for param in volume_params[:5]:  # Show up to 5 key parameters
                 if param in params:
@@ -312,7 +311,7 @@ class ShapeVisualizerGUI(tk.Tk):
                     # Format nicely: remove underscores, capitalize, show value
                     param_display = param.replace('_', ' ').title()
                     param_text_lines.append(f"{param_display} = {value:.1f} Å")
-            
+
             if param_text_lines:
                 param_text = '\n'.join(param_text_lines)
                 # Add text annotation in upper left corner of the plot

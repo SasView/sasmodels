@@ -165,8 +165,6 @@ def create_shape_mesh(params, resolution=50):
 def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
     """Plot 2D cross-sections of the barbell matching SasView documentation."""
     import numpy as np
-    from matplotlib.patches import Circle, Arc, Polygon
-    from matplotlib.collections import PatchCollection
 
     radius = params.get('radius', 20)  # r in docs
     radius_bell = params.get('radius_bell', 40)  # R in docs
