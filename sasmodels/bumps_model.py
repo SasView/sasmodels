@@ -217,6 +217,7 @@ class Experiment(DataMixin):
         """
         Return a dictionary of parameters
         """
+        # TODO: tie the background and scale to the data rather than the model
         pars = self.model.parameters()
         if self.extra_pars is not None:
             pars.update(self.extra_pars)
@@ -241,7 +242,9 @@ class Experiment(DataMixin):
         """
         Return theory minus data normalized by uncertainty.
         """
-        #if np.any(self.err ==0): print("zeros in err")
+        # if np.any(self.err ==0): print("zeros in err")
+        # from bumps.fitproblem import fitness_show_parameters
+        # if any(np.isnan(self.theory())): (print("nan in theory for:"),fitness_show_parameters(self))
         return (self.theory() - self.Iq) / self.dIq
 
     def nllf(self):
@@ -258,15 +261,25 @@ class Experiment(DataMixin):
     #def __call__(self):
     #    return 2 * self.nllf() / self.dof
 
-    def plot(self, view=None):
+    def _plot(self, view=None, backend='matplotlib'):
         # type: (str) -> None
         """
         Plot the data and residuals.
         """
         data, theory, resid = self._data, self.theory(), self.residuals()
         # TODO: hack to display oriented usans 2-D pattern
-        Iq_calc = self.Iq_calc if isinstance(self.Iq_calc, tuple) else None
-        plot_theory(data, theory, resid, view, Iq_calc=Iq_calc)
+        #Iq_calc = self.Iq_calc if isinstance(self.Iq_calc, tuple) else None
+        label = f"I(q) {self.model.sasmodel.info.name}"
+        Iq_calc = self.Iq_calc
+        fig = plot_theory(data, theory, resid, view, Iq_calc=Iq_calc, label=label, backend=backend)
+        return fig
+
+    def plot(self, view=None):
+        return self._plot(view=view, backend='matplotlib')
+
+    # # Bumps doesn't yet support 2D plots with plotly.
+    # def plotly(self, view=None):
+    #     return self._plot(view=view, backend='plotly')
 
     def simulate_data(self, noise=None):
         # type: (float) -> None

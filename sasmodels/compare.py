@@ -854,6 +854,14 @@ def run_models(opts, verbose=False):
 
     base_time = comp_time = None
     base_value = comp_value = resid = relerr = None
+    base_name = comp_name = None
+    def name_pair(base_test, comp_test):
+        """
+        iterate over name pairs in reverse order, keeping the first that are different
+        """
+        nonlocal base_name, comp_name
+        if base_test != comp_test:
+            base_name, comp_name = base_test, comp_test
 
     # Base calculation
     try:
@@ -879,21 +887,35 @@ def run_models(opts, verbose=False):
         except ImportError:
             traceback.print_exc()
 
+        # Find a string pair that describes the difference between base and comp.
+        # Go from least interesting to most interesting, updating if different.
+        name_pair("base", "comp")
+        name_pair(
+            " ".join(f"{k}={v}" for k, v in base_pars.items() if comp_pars.get(k, v) != v),
+            " ".join(f"{k}={v}" for k, v in comp_pars.items() if base_pars.get(k, v) != v),
+        )
+        name_pair(base.engine, comp.engine)
+        name_pair(base.model.info.name, comp.model.info.name)
+    else:
+        name_pair(f"{base.model.info.name}:{base.engine}", None)
+
     # Compare, but only if computing both forms
     if comparison:
         resid = (base_value - comp_value)
         relerr = resid/np.where(comp_value != 0., abs(comp_value), 1.0)
         if verbose:
             _print_stats("|%s-%s|"
-                         % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
+                         % (base_name, comp_name) + (" "*(3+len(comp_name))),
                          resid)
             _print_stats("|(%s-%s)/%s|"
-                         % (base.engine, comp.engine, comp.engine),
+                         % (base_name, comp_name, comp_name),
                          relerr)
 
-    return dict(base_value=base_value, comp_value=comp_value,
-                base_time=base_time, comp_time=comp_time,
-                resid=resid, relerr=relerr)
+    return dict(
+        base_name=base_name, comp_name=comp_name,
+        base_value=base_value, comp_value=comp_value,
+        base_time=base_time, comp_time=comp_time,
+        resid=resid, relerr=relerr)
 
 
 def _print_stats(label, err):
@@ -923,6 +945,7 @@ def plot_models(opts, result, limits=None, setnum=0):
     """
     import matplotlib.pyplot as plt
 
+    base_name, comp_name = result['base_name'], result['comp_name']
     base_value, comp_value = result['base_value'], result['comp_value']
     base_time, comp_time = result['base_time'], result['comp_time']
     resid, relerr = result['resid'], result['relerr']
@@ -947,22 +970,30 @@ def plot_models(opts, result, limits=None, setnum=0):
 
     if have_base:
         if have_comp:
-            plt.subplot(131)
-        plot_theory(base_data, base_value, view=view, use_data=use_data, limits=limits)
+            plt.subplot(221)
+        plot_theory(base_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits)
         if setnum > 0:
             plt.legend([f"Set {k+1}" for k in range(setnum+1)], loc='best')
-        plt.title("%s t=%.2f ms"%(base.engine, base_time))
+        plt.title("%s t=%.2f ms"%(base.model.info.name, base_time))
+        if have_comp:
+            plt.gca().tick_params(labelbottom=False)
+            plt.gca().set_xticks([])
+            plt.xlabel('')
+
         #cbar_title = "log I"
     if have_comp:
         if have_base:
-            plt.subplot(132)
+            plt.subplot(223)
         if not opts['is2d'] and have_base:
-            plot_theory(comp_data, base_value, view=view, use_data=use_data, limits=limits)
-        plot_theory(comp_data, comp_value, view=view, use_data=use_data, limits=limits)
-        plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
+            plot_theory(comp_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits)
+        plot_theory(comp_data, comp_value, label=comp_name, view=view, use_data=use_data, limits=limits)
+        plt.title("%s t=%.2f ms"%(comp.model.info.name, comp_time))
+        #plt.gca().tick_params(labelbottom=False, labelleft=False)
+        #plt.gca().set_yticks([])
+        #plt.ylabel('')
         #cbar_title = "log I"
     if have_base and have_comp:
-        plt.subplot(133)
+        plt.subplot(222)
         if not opts['rel_err']:
             err, errstr, errview = resid, "abs err", "linear"
         else:
@@ -977,16 +1008,23 @@ def plot_models(opts, result, limits=None, setnum=0):
         # Note: base_data only since base and comp have same q values (though
         # perhaps different resolution), and we are plotting the difference
         # at each q
-        plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
+        plot_theory(base_data, err, view=errview, label=errstr, use_data=use_data)
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
+        if opts['is2d']:
+            plt.gca().tick_params(labelleft=False)
+            plt.gca().set_yticks([])
+            plt.ylabel('')
+        else:
+            plt.ylabel(errstr)
+
         #cbar_title = errstr if errview=="linear" else "log "+errstr
-    #if is2D:
-    #    h = plt.colorbar()
-    #    h.ax.set_title(cbar_title)
-    fig = plt.gcf()
-    extra_title = ' '+opts['title'] if opts['title'] else ''
-    fig.suptitle(":".join(opts['name']) + extra_title)
+    # if is2D:
+    #     h = plt.colorbar()
+    #     h.ax.set_title(cbar_title)
+    # fig = plt.gcf()
+    # extra_title = ' '+opts['title'] if opts['title'] else ''
+    # fig.suptitle(":".join(opts['name']) + extra_title)
 
     if have_base and have_comp and opts['show_hist']:
         plt.figure()
