@@ -266,7 +266,7 @@ class Experiment(DataMixin):
         data, theory, resid = self._data, self.theory(), self.residuals()
         # TODO: hack to display oriented usans 2-D pattern
         Iq_calc = self.Iq_calc if isinstance(self.Iq_calc, tuple) else None
-        plot_theory(data, theory, resid, view, Iq_calc=Iq_calc)
+        plot_theory(data, theory, resid, view, Iq_calc=Iq_calc, index=self.index)
 
     def simulate_data(self, noise=None):
         # type: (float) -> None
