@@ -7,14 +7,14 @@ create a sasview model class to run that kernel as follows::
     from sasmodels.sasview_model import load_custom_model
     CylinderModel = load_custom_model('sasmodels/models/cylinder.py')
 """
-from __future__ import print_function
 
-import math
-from copy import deepcopy
 import collections
-import traceback
 import logging
-from os.path import basename, splitext, abspath
+import math
+import traceback
+from copy import deepcopy
+from os.path import abspath, basename, splitext
+
 try:
     import _thread as thread
 except ImportError:
@@ -22,14 +22,8 @@ except ImportError:
 
 import numpy as np  # type: ignore
 
-from . import core
-from . import custom
-from . import kernelcl
-from . import product
-from . import generate
-from . import weights
-from . import modelinfo
-from .details import make_kernel_args, dispersion_mesh
+from . import core, custom, generate, kernelcl, modelinfo, product, weights
+from .details import dispersion_mesh, make_kernel_args
 
 # Hack: load in any custom distributions
 # Uses ~/.sasview/weights/*.py unless SASMODELS_WEIGHTS is set in the environ.
@@ -38,14 +32,15 @@ weights.load_weights()
 
 # pylint: disable=unused-import
 try:
-    from typing import (Dict, Mapping, Any, Sequence, Tuple, NamedTuple,
-                        List, Optional, Union, Callable)
+    from collections.abc import Sequence
     from types import ModuleType
-    from .modelinfo import ModelInfo, Parameter
+    from typing import Any, Callable, NamedTuple, Optional, Union
+
     from .kernel import KernelModel
+    from .modelinfo import ModelInfo, Parameter
     MultiplicityInfoType = NamedTuple(
         'MultiplicityInfo',
-        [("number", int), ("control", str), ("choices", List[str]),
+        [("number", int), ("control", str), ("choices", list[str]),
          ("x_axis_label", str)])
     SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
@@ -67,13 +62,13 @@ MultiplicityInfo = collections.namedtuple(
 )
 
 #: set of defined models (standard and custom)
-MODELS = {}  # type: Dict[str, SasviewModelType]
+MODELS = {}  # type: dict[str, SasviewModelType]
 # TODO: remove unused MODEL_BY_PATH cache once sasview no longer references it
 #: custom model {path: model} mapping so we can check timestamps
-MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
+MODEL_BY_PATH = {}  # type: dict[str, SasviewModelType]
 #: Track modules that we have loaded so we can determine whether the model
 #: has changed since we last reloaded.
-_CACHED_MODULE = {}  # type: Dict[str, ModuleType]
+_CACHED_MODULE = {}  # type: dict[str, ModuleType]
 
 def reset_environment():
     # type: () -> None
@@ -105,7 +100,7 @@ def find_model(modelname):
 
 # TODO: figure out how to say that the return type is a subclass
 def load_standard_models():
-    # type: () -> List[SasviewModelType]
+    # type: () -> list[SasviewModelType]
     """
     Load and return the list of predefined models.
 
@@ -214,11 +209,13 @@ def _register_old_models():
     is available to the plugin modules.
     """
     import sys
-    import sas   # needed in order to set sas.models
+
+    import sas  # needed in order to set sas.models
     import sas.sascalc.fit
     sys.modules['sas.models'] = sas.sascalc.fit
     sas.models = sas.sascalc.fit
     import sas.models
+
     from sasmodels.conversion_table import CONVERSION_TABLE
 
     for new_name, conversion in CONVERSION_TABLE.get((3, 1, 2), {}).items():
@@ -244,7 +241,7 @@ def MultiplicationModel(form_factor, structure_factor):
 
 
 def _generate_model_attributes(model_info):
-    # type: (ModelInfo) -> Dict[str, Any]
+    # type: (ModelInfo) -> dict[str, Any]
     """
     Generate the class attributes for the model.
 
@@ -260,7 +257,7 @@ def _generate_model_attributes(model_info):
     control_pars = [p.id for p in model_info.parameters.kernel_parameters
                     if p.is_control]
     control_id = control_pars[0] if control_pars else None
-    non_fittable = []  # type: List[str]
+    non_fittable = []  # type: list[str]
     xlabel = model_info.profile_axes[0] if model_info.profile is not None else ""
     variants = MultiplicityInfo(0, "", [], xlabel)
     for p in model_info.parameters.kernel_parameters:
@@ -297,7 +294,7 @@ def _generate_model_attributes(model_info):
 
 
     # Build class dictionary
-    attrs = {}  # type: Dict[str, Any]
+    attrs = {}  # type: dict[str, Any]
     attrs['_model_info'] = model_info
     attrs['name'] = model_info.name
     attrs['id'] = model_info.id
@@ -315,7 +312,7 @@ def _generate_model_attributes(model_info):
 
     return attrs
 
-class SasviewModel(object):
+class SasviewModel:
     """
     Sasview wrapper for opencl/ctypes model.
     """
@@ -335,11 +332,11 @@ class SasviewModel(object):
     category = None     # type: str
 
     #: names of the orientation parameters in the order they appear
-    orientation_params = None # type: List[str]
+    orientation_params = None # type: list[str]
     #: names of the magnetic parameters in the order they appear
-    magnetic_params = None    # type: List[str]
+    magnetic_params = None    # type: list[str]
     #: names of the fittable parameters
-    fixed = None              # type: List[str]
+    fixed = None              # type: list[str]
     # TODO: the attribute fixed is ill-named
 
     # Axis labels
@@ -366,16 +363,16 @@ class SasviewModel(object):
 
     # Per-instance variables
     #: parameter {name: value} mapping
-    params = None      # type: Dict[str, float]
+    params = None      # type: dict[str, float]
     #: values for dispersion width, npts, nsigmas and type
-    dispersion = None  # type: Dict[str, Any]
+    dispersion = None  # type: dict[str, Any]
     #: units and limits for each parameter
-    details = None     # type: Dict[str, Sequence[Any]]
-    #                  # actual type is Dict[str, List[str, float, float]]
+    details = None     # type: dict[str, Sequence[Any]]
+    #                  # actual type is dict[str, list[str, float, float]]
     #: multiplicity value, or None if no multiplicity on the model
     multiplicity = None     # type: Optional[int]
     #: memory for polydispersity array if using ArrayDispersion (used by sasview).
-    _persistency_dict = None # type: Dict[str, Tuple[np.ndarray, np.ndarray]]
+    _persistency_dict = None # type: dict[str, tuple[np.ndarray, np.ndarray]]
 
     def __init__(self, multiplicity=None):
         # type: (Optional[int]) -> None
@@ -431,7 +428,7 @@ class SasviewModel(object):
                 }
 
     def __get_state__(self):
-        # type: () -> Dict[str, Any]
+        # type: () -> dict[str, Any]
         state = self.__dict__.copy()
         state.pop('_model')
         # May need to reload model info on set state since it has pointers
@@ -440,7 +437,7 @@ class SasviewModel(object):
         return state
 
     def __set_state__(self, state):
-        # type: (Dict[str, Any]) -> None
+        # type: (dict[str, Any]) -> None
         self.__dict__ = state  # pylint: disable=attribute-defined-outside-init
         self._model = None
 
@@ -464,21 +461,21 @@ class SasviewModel(object):
 
 
     def getProfile(self):
-        # type: () -> Tuple[np.ndarray, np.ndarray]
+        # type: () -> tuple[np.ndarray, np.ndarray]
         """
         Get SLD profile
 
         : return: (z, beta) where z is a list of depth of the transition points
                 beta is a list of the corresponding SLD values
         """
-        args = {} # type: Dict[str, Any]
+        args = {} # type: dict[str, Any]
         for p in self._model_info.parameters.kernel_parameters:
             if p.id == self.multiplicity_info.control:
                 value = float(self.multiplicity)
             elif p.length == 1:
-                value = self.params.get(p.id, np.NaN)
+                value = self.params.get(p.id, np.nan)
             else:
-                value = np.array([self.params.get(p.id+str(k), np.NaN)
+                value = np.array([self.params.get(p.id+str(k), np.nan)
                                   for k in range(1, p.length+1)])
             args[p.id] = value
 
@@ -564,7 +561,7 @@ class SasviewModel(object):
         return deepcopy(self)
 
     def run(self, x=0.0):
-        # type: (Union[float, Tuple[float, float], Sequence[float]]) -> float
+        # type: (Union[float, tuple[float, float], Sequence[float]]) -> float
         """
         Evaluate the model
 
@@ -603,7 +600,7 @@ class SasviewModel(object):
             return result[0]
 
     def evalDistribution(self, qdist):
-        # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]]) -> np.ndarray
+        # type: (Union[np.ndarray, tuple[np.ndarray, np.ndarray], list[np.ndarray]]) -> np.ndarray
         r"""
         Evaluate a distribution of q-values.
 
@@ -690,7 +687,7 @@ class SasviewModel(object):
             return None
 
     def calculate_Iq(self, qx, qy=None):
-        # type: (Sequence[float], Optional[Sequence[float]]) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
+        # type: (Sequence[float], Optional[Sequence[float]]) -> tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
 
@@ -740,7 +737,7 @@ class SasviewModel(object):
                             magnetic=is_magnetic)
         lazy_results = getattr(calculator, 'results',
                                lambda: collections.OrderedDict())
-        #print("result", result)
+        #print("result", result, lazy_results())
 
         calculator.release()
         #self._model.release()
@@ -817,7 +814,7 @@ class SasviewModel(object):
                              % parameter)
 
     def _dispersion_mesh(self):
-        # type: () -> List[Tuple[np.ndarray, np.ndarray]]
+        # type: () -> list[tuple[np.ndarray, np.ndarray]]
         """
         Create a mesh grid of dispersion parameters and weights.
 
@@ -831,7 +828,7 @@ class SasviewModel(object):
         return dispersion_mesh(self._model_info, pars)
 
     def _get_weights(self, par):
-        # type: (Parameter) -> Tuple[np.ndarray, np.ndarray]
+        # type: (Parameter) -> tuple[np.ndarray, np.ndarray]
         """
         Return dispersion weights for parameter
         """
@@ -841,7 +838,7 @@ class SasviewModel(object):
             else:
                 # For hidden parameters use default values.  This sets
                 # scale=1 and background=0 for structure factors
-                default = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                default = self._model_info.parameters.defaults.get(par.name, np.nan)
                 return default, [default], [1.0]
         elif par.polydisperse:
             value = self.params[par.name]
@@ -874,7 +871,8 @@ def test_cylinder():
     """
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
-    return cylinder.evalDistribution([0.1, 0.1])
+    # Smoke test: does it run without error?
+    cylinder.evalDistribution([0.1, 0.1])
 
 def test_structure_factor():
     # type: () -> float
@@ -909,7 +907,8 @@ def test_rpa():
     """
     RPA = _make_standard_model('rpa')
     rpa = RPA(3)
-    return rpa.evalDistribution([0.1, 0.1])
+    # Smoke test: does it run without error?
+    rpa.evalDistribution([0.1, 0.1])
 
 def test_empty_distribution():
     # type: () -> None
@@ -957,8 +956,8 @@ def test_structure_factor_background():
     """
     Check that sasview model and direct model match, with background=0.
     """
+    from .core import build_model, load_model_info
     from .data import empty_data1D
-    from .core import load_model_info, build_model
     from .direct_model import DirectModel
 
     model_name = "hardsphere"
@@ -997,7 +996,7 @@ def magnetic_demo():
     pylab.show()
 
 if __name__ == "__main__":
-    print("cylinder(0.1,0.1)=%g"%test_cylinder())
+    test_cylinder()
     #magnetic_demo()
     #test_product()
     #test_structure_factor()

@@ -2,17 +2,15 @@
 SAS distributions for polydispersity.
 """
 # TODO: include dispersion docs with the disperser models
-from __future__ import division, print_function
 
-from math import sqrt  # type: ignore
 from collections import OrderedDict
+from math import sqrt  # type: ignore
 
 import numpy as np  # type: ignore
 from scipy.special import gammaln  # type: ignore
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, List
     from .modelinfo import ModelInfo
 except ImportError:
     pass
@@ -20,7 +18,7 @@ except ImportError:
 
 # TODO: include dispersion docs with the disperser models
 
-class Dispersion(object):
+class Dispersion:
     """
     Base dispersion object.
 
@@ -245,11 +243,12 @@ def load_weights(pattern=None):
     """
     Load dispersion distributions matching the given glob pattern
     """
+    import glob
     import logging
     import os
     import os.path
-    import glob
     import traceback
+
     from .custom import load_custom_kernel_module
     if pattern is None:
         path = os.environ.get("SAS_WEIGHTS_PATH", SAS_WEIGHTS_PATH)
@@ -293,7 +292,7 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
 
 
 def plot_weights(model_info, mesh):
-    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> None
+    # type: (ModelInfo, list[tuple[float, np.ndarray, np.ndarray]]) -> None
     """
     Plot the weights returned by :func:`get_weights`.
 

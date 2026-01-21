@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Periodic Table documentation build configuration file, created by
 # sphinx-quickstart on Tue Jun  2 11:16:08 2009.
@@ -11,7 +10,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import os
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -24,9 +24,9 @@ sys.path.insert(0, os.path.abspath('.')) # needed for extension tests
 print("\n".join(sys.path))
 import sasmodels
 
-
 nitpick_ignore = [
     ('py:class', 'argparse.Namespace'),
+    ('py:class', 'bumps.parameter.Parameter'),
     ('py:class', 'collections.OrderedDict'),
     ('py:class', 'cuda.Context'),
     ('py:class', 'cuda.Function'),
@@ -40,6 +40,7 @@ nitpick_ignore = [
     ('py:class', 'pyopencl._cl.Device'),
     ('py:class', 'pyopencl._cl.Kernel'),
     ('py:class', 'QWebView'),
+    ('py:class', 'types.ModuleType'),
     ('py:class', 'unittest.suite.TestSuite'),
     ('py:class', 'wx.Frame'),
     # autodoc and namedtuple is completely broken
@@ -55,6 +56,7 @@ nitpick_ignore = [
     ('py:class', 'module'),
     ('py:class', 'SesansData'),
     ('py:class', 'SourceModule'),
+    ('py:class', 'TestCondition'),
     # KernelModel and Calculator breaking on git actions tests, even though
     # KernelModel is already listed. astropy example sometimes includes full
     # path to complaining symbol. Let's see if that helps here:
@@ -140,40 +142,6 @@ pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
-
-nitpick_ignore = [
-    ('py:class', 'argparse.Namespace'),
-    ('py:class', 'bumps.parameter.Parameter'),
-    ('py:class', 'collections.OrderedDict'),
-    ('py:class', 'cuda.Context'),
-    ('py:class', 'cuda.Function'),
-    ('py:class', 'np.dtype'),
-    ('py:class', 'numpy.dtype'),
-    ('py:class', 'np.ndarray'),
-    ('py:class', 'numpy.ndarray'),
-    ('py:class', 'pyopencl.Program'),
-    ('py:class', 'pyopencl._cl.Context'),
-    ('py:class', 'pyopencl._cl.CommandQueue'),
-    ('py:class', 'pyopencl._cl.Device'),
-    ('py:class', 'pyopencl._cl.Kernel'),
-    ('py:class', 'QWebView'),
-    ('py:class', 'unittest.suite.TestSuite'),
-    ('py:class', 'wx.Frame'),
-    # autodoc and namedtuple is completely broken
-    ('py:class', 'integer -- return number of occurrences of value'),
-    ('py:class', 'integer -- return first index of value.'),
-    # autodoc doesn't handle these type definitions
-    ('py:class', 'Data'),
-    ('py:class', 'Data1D'),
-    ('py:class', 'Data2D'),
-    ('py:class', 'Kernel'),
-    ('py:class', 'ModelInfo'),
-    ('py:class', 'module'),
-    ('py:class', 'SesansData'),
-    ('py:class', 'SourceModule'),
-    ('py:class', 'TestCondition'),
-]
-
 
 
 # -- Options for HTML output ---------------------------------------------------

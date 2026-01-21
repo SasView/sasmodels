@@ -1,33 +1,28 @@
 """
 Core model handling routines.
 """
-from __future__ import print_function
 
 __all__ = [
     "list_models", "load_model", "load_model_info",
     "build_model", "precompile_dlls", "reparameterize",
     ]
 
-import os
-from os.path import basename, join as joinpath
-from glob import glob
-import re
 import copy
+import os
+import re
+from glob import glob
+from os.path import basename
+from os.path import join as joinpath
 
-import numpy as np # type: ignore
+import numpy as np  # type: ignore
 
 # NOTE: delay loading of kernelcl, kernelcuda, kerneldll and kernelpy
 # cl and cuda in particular take awhile since they try to establish a
 # connection with the card to verify that the environment works.
-from . import generate
-from . import modelinfo
-from . import product
-from . import mixture
-from . import custom
+from . import custom, generate, mixture, modelinfo, product
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Union, Optional, Any, Tuple
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
 except ImportError:
@@ -55,7 +50,7 @@ if CUSTOM_MODEL_PATH == "":
 KINDS = ("all", "py", "c", "double", "single", "opencl", "1d", "2d",
          "nonmagnetic", "magnetic")
 def list_models(kind=None):
-    # type: (str) -> List[str]
+    # type: (str) -> list[str]
     """
     Return the list of available models on the model path.
 
@@ -167,7 +162,7 @@ def load_model_info(model_string):
         # Use ModelName to find the path to the custom model file
         model_path = joinpath(CUSTOM_MODEL_PATH, model_name + ".py")
         if not os.path.isfile(model_path):
-            raise ValueError("The model file {} doesn't exist".format(model_path))
+            raise ValueError(f"The model file {model_path} doesn't exist")
         kernel_module = custom.load_custom_kernel_module(model_path)
         return modelinfo.make_model_info(kernel_module)
     kernel_module = generate.load_kernel_module(model_string)
@@ -222,7 +217,7 @@ def reparameterize(
     be included in the table after the existing parameter *par*, or at
     the beginning if *par* is the empty string.
 
-    *docs* constains the doc string for the translated model, which by default
+    *docs* contains the doc string for the translated model, which by default
     references the base model and gives the *translation* text.
 
     *name* is the model name (default = :code:`"constrained_" + base.name`).
@@ -346,7 +341,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
 def precompile_dlls(path, dtype="double"):
-    # type: (str, str) -> List[str]
+    # type: (str, str) -> list[str]
     """
     Precompile the dlls for all builtin models, returning a list of dll paths.
 
@@ -377,7 +372,7 @@ def precompile_dlls(path, dtype="double"):
     return compiled_dlls
 
 def parse_dtype(model_info, dtype=None, platform=None):
-    # type: (ModelInfo, str, str) -> Tuple[np.dtype, bool, str]
+    # type: (ModelInfo, str, str) -> tuple[np.dtype, bool, str]
     """
     Interpret dtype string, returning np.dtype, fast flag and platform.
 
@@ -478,7 +473,7 @@ def test_composite_order():
                for p in fst.info.parameters.kernel_parameters]
         snd = [[x for x in p.name if x == x.lower()]
                for p in snd.info.parameters.kernel_parameters]
-        assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
+        assert sorted(fst) == sorted(snd), f"{fst} != {snd}"
 
     test_models(
         "cylinder+sphere",
@@ -511,7 +506,7 @@ def test_composite_order():
 def test_composite():
     # type: () -> None
     """Check that model load works"""
-    from .product import RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID
+    from .product import RADIUS_ID, RADIUS_MODE_ID, STRUCTURE_MODE_ID, VOLFRAC_ID
     #Test the the model produces the parameters that we would expect
     model = load_model("cylinder@hardsphere*sphere")
     actual = [p.name for p in model.info.parameters.kernel_parameters]

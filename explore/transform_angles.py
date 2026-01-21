@@ -5,13 +5,13 @@ new angle definition in SasView 4.x and above.
 
 Usage: python explore/transform_angles.py theta phi psi
 """
-from __future__ import print_function, division
 
 import sys
 
 import numpy as np
-from numpy import pi, cos, sin, sqrt, exp, degrees, radians
+from numpy import cos, radians, sin
 from scipy.optimize import fmin
+
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations

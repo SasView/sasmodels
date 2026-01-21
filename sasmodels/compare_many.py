@@ -11,7 +11,6 @@ as bad and written to the output, along with the random seed used to
 generate that parameter value.  This seed can be used with :mod:`.compare`
 to reload and display the details of the model.
 """
-from __future__ import print_function
 
 import sys
 import traceback
@@ -19,18 +18,7 @@ import traceback
 import numpy as np  # type: ignore
 
 from . import core
-from .compare import (
-    randomize_pars, suppress_pd, make_data, make_engine, get_pars,
-    constrain_pars)
-
-# pylint: disable=unused-import
-try:
-    from typing import Tuple, Any, Dict, List
-except ImportError:
-    pass
-else:
-    from .data import Data
-# pylint: enable=unused-import
+from .compare import constrain_pars, get_pars, make_data, make_engine, randomize_pars, suppress_pd
 
 MODELS = core.list_models()
 
@@ -142,9 +130,9 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
             traceback.print_exc()
             print("when comparing %s for %d"%(name, seed))
             if hasattr(data, 'qx_data'):
-                result = np.NaN*data.data
+                result = np.nan*data.data
             else:
-                result = np.NaN*data.x
+                result = np.nan*data.x
         return result
     def check_model(pars):
         """
@@ -165,7 +153,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     except Exception as exc:
         #raise
         print('"Error: %s"'%str(exc).replace('"', "'"))
-        print('"good","%d of %d","max diff",%g' % (0, N, np.NaN))
+        print('"good","%d of %d","max diff",%g' % (0, N, np.nan))
         return
     expected = max(PRECISION[base], PRECISION[comp])
 
@@ -250,11 +238,11 @@ def main(argv):
     try:
         model_list = [target] if target in MODELS else core.list_models(target)
     except ValueError:
-        msg = """\
+        msg = f"""\
 Bad model {target}. Use available model or model type.
   available models: ./sascomp -models
   model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic\
-""".format(target=target)
+"""
         print(msg, file=sys.stderr)
         return
     try:

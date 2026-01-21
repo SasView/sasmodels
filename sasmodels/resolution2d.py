@@ -4,10 +4,9 @@
 #project funded by the US National Science Foundation.
 #See the license text in license.txt
 """
-from __future__ import division
 
 import numpy as np  # type: ignore
-from numpy import pi, cos, sin, sqrt  # type: ignore
+from numpy import cos, pi, sin, sqrt  # type: ignore
 
 from . import resolution
 from .resolution import Resolution

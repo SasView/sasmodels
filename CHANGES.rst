@@ -1,7 +1,53 @@
 Release notes
 =============
 
-v1.0.7 2023-02-??
+v1.0.12 2025-12-02
+------------------
+
+* Include the 2-Yukawa structure factor model
+* Add Ruff pre-commit hooks for developers
+* Figures are cached between builds for CI speed up
+* Plugin model location docs updated
+
+v1.0.11 2025-08-19
+------------------
+
+* Integration of Ruff linting into CI
+* Code cleanup to fix linting errors
+* Fix map() bug in "sasfit_compare"
+
+v1.0.10 2025-06-25
+------------------
+* Reorganisation of project structure for wheel support
+* Round to nearest integer for star polymer arms
+* Fix pickle errors with product models
+* Fix random model generator for Hayter MSA
+* Doc update: Make equations in core shell sphere docs match the code
+* Package dependency: Use tccbox instead of tinycc
+
+v1.0.9 2025-02-28
+-----------------
+* Fix precision and improve stability at low Q for both the star_polymer and binary_hard_sphere models
+* Fix C wrapper generation using proper parameter table when using inline C code
+* Remove two unused and redundant functions from the magnetic function library
+* Package dependency: NumPy 2+ compatibility
+* Package dependency: Fix incompatibility between SciPy 1.15 and pytest
+* Package dependency: Increment github action `upload-artifact` version
+* Package dependency: Add support for python 3.12
+* Doc update: Fixed broken links in README
+* Doc update: Clarity on the Polymer Micelle model
+* Doc update: Fix typo in equation in Lamellar Stack Paracrystal documentation
+* Doc update: Complex number support
+
+v1.0.8 2024-09-26
+-----------------
+* New model: Bulk ferromagnets model from marketplace
+* Doc update: Archive built docs on Github
+* Doc update: Display math correctly
+* Fix error in FCC paracrystaline models
+* Fix parameter name checking in kernel call
+
+v1.0.7 2023-03-23
 ------------------
 * Doc upate: corefunc and optimizer documentation
 * Doc update: various models (cylinder, gel_fit, paracrystal, core_shell_ellipsoid)

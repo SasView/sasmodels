@@ -37,39 +37,29 @@ of parallelism (maybe 2-4 processes), allowing matplotlib to run in
 parallel.  More parallelism won't help, and may overwhelm the GPU if you
 have one.
 """
-from __future__ import print_function
 
-import sys
-import os
-from os.path import basename, dirname, realpath, join as joinpath, exists
+import argparse
 import math
+import os
 import re
 import shutil
-import argparse
 import subprocess
-
-# CRUFT: python 2.7 backport of makedirs(path, exist_ok=False)
-if sys.version_info[0] >= 3:
-    from os import makedirs
-else:
-    def makedirs(path, exist_ok=False):
-        try:
-            os.makedirs(path)
-        except Exception:
-            if not exist_ok or not exists(path):
-                raise
+import sys
+from os import makedirs
+from os.path import basename, dirname, exists, realpath
+from os.path import join as joinpath
 
 import numpy as np
 
 # TODO: Remove this line when genmodel is moved to the sasmodels directory.
 sys.path.insert(0, realpath(joinpath(dirname(__file__), '..')))
-from sasmodels import generate, core
-from sasmodels.direct_model import DirectModel, call_profile
+from sasmodels import core, generate
 from sasmodels.data import empty_data1D, empty_data2D
+from sasmodels.direct_model import DirectModel, call_profile
 
 try:
-    from typing import Dict, Any
-    #from matplotlib.axes import Axes
+    from typing import Any
+
     from sasmodels.kernel import KernelModel
     from sasmodels.modelinfo import ModelInfo
 except ImportError:
@@ -81,7 +71,7 @@ except ImportError:
 TARGET_DIR = "model" # relative to current path
 
 def plot_1d(model, opts, ax):
-    # type: (KernelModel, Dict[str, Any], Axes) -> None
+    # type: (KernelModel, dict[str, Any], Axes) -> None
     """
     Create a 1-D image.
     """
@@ -101,7 +91,7 @@ def plot_1d(model, opts, ax):
     #ax.legend(loc='best')
 
 def plot_2d(model, opts, ax):
-    # type: (KernelModel, Dict[str, Any], Axes) -> None
+    # type: (KernelModel, dict[str, Any], Axes) -> None
     """
     Create a 2-D image.
     """
@@ -143,16 +133,16 @@ def figfile(model_info):
     return model_info.id + '_autogenfig.png'
 
 def make_figure(model_info, opts):
-    # type: (ModelInfo, Dict[str, Any]) -> None
+    # type: (ModelInfo, dict[str, Any]) -> None
     """
     Generate the figure file to include in the docs.
     """
     import matplotlib.pyplot as plt
 
-    print("Build model")
+    # print("Build model")
     model = core.build_model(model_info)
 
-    print("Set up figure")
+    # print("Set up figure")
     fig_height = 3.0 # in
     fig_left = 0.6 # in
     fig_right = 0.5 # in
@@ -170,10 +160,10 @@ def make_figure(model_info, opts):
         ax_width = ax_height/ratio # square axes
         fig = plt.figure(figsize=aspect)
         ax2d = fig.add_axes([0.5+ax_left, ax_bottom, ax_width, ax_height])
-        print("2D plot")
+        # print("2D plot")
         plot_2d(model, opts, ax2d)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
-        print("1D plot")
+        # print("1D plot")
         plot_1d(model, opts, ax1d)
         #ax.set_aspect('square')
     else:
@@ -187,14 +177,14 @@ def make_figure(model_info, opts):
         aspect = (fig_width, fig_height)
         fig = plt.figure(figsize=aspect)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
-        print("1D plot")
+        # print("1D plot")
         plot_1d(model, opts, ax1d)
 
     if model_info.profile:
-        print("Profile inset")
+        # print("Profile inset")
         plot_profile_inset(model_info, ax1d)
 
-    print("Save")
+    # print("Save")
     # Save image in model/img
     makedirs(joinpath(TARGET_DIR, 'img'), exist_ok=True)
     path = joinpath(TARGET_DIR, 'img', figfile(model_info))
@@ -312,16 +302,17 @@ def make_figure_cached(model_info, opts):
     into the cache.
 
     Be sure to clear the cache from time to time.  Even though the model
-    source
+    source hasn't changed, the supporting infrastructure may change the rendering
+    of the figure.
     """
     import hashlib
 
     # check if we are caching
     cache_dir = os.environ.get('SASMODELS_BUILD_CACHE', None)
     if cache_dir is None:
-        print("Nothing cashed, creating...")
+        # print("No figure cache directory, creating...")
         make_figure(model_info, opts)
-        print("Made a figure")
+        # print("Made a figure")
         return
 
     # TODO: changing default parameters won't trigger a rebuild.
@@ -370,9 +361,10 @@ def process_model(py_file, force=False):
 
     If *force* then generate the rst file regardless of time stamps.
     """
-    rst_file = joinpath(TARGET_DIR, basename(py_file).replace('.py', '.rst'))
+    model_name = basename(py_file).rsplit('.', 1)[0]
+    rst_file = joinpath(TARGET_DIR, f"{model_name}.rst")
     if not (force or newer(py_file, rst_file) or newer(__file__, rst_file)):
-        #print("skipping", rst_file)
+        # print("skipping", rst_file)
         return rst_file
 
     # Load the model file
@@ -397,17 +389,15 @@ def process_model(py_file, force=False):
     }
 
     # Generate the RST file and the figure.  Order doesn't matter.
-    print("generating rst", rst_file)
-    print("1: docs")
+    print(f"{model_name}: make docs in {rst_file}")
     gen_docs(model_info, rst_file)
-    print("2: figure", end='')
+    print(f"{model_name}: make figure")
+    # TODO: Caching isn't used. Should remove it to simplify the code.
+    # TODO: If we don't remove it, then update the cache on forced rebuild.
     if force:
-        print()
         make_figure(model_info, PLOT_OPTS)
     else:
-        print(" (cached)")
         make_figure_cached(model_info, PLOT_OPTS)
-    print("Done process_model")
 
     return rst_file
 
@@ -416,7 +406,7 @@ def run_sphinx(rst_files, output):
     Use sphinx to build *rst_files*, storing the html in *output*.
     """
 
-    print("Building index...")
+    # print("Building index...")
 
     conf_dir = dirname(realpath(__file__))
     with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
@@ -424,7 +414,7 @@ def run_sphinx(rst_files, output):
         for path in rst_files:
             fid.write("    %s\n"%basename(path))
 
-    print("Running sphinx command...")
+    # print("Running sphinx command...")
 
     command = [
         sys.executable,
@@ -474,17 +464,16 @@ def main():
     global TARGET_DIR
     TARGET_DIR = os.path.expanduser(args.rst)
     if not os.path.exists(TARGET_DIR) and not args.sphinx:
-        print("build directory %r does not exist"%TARGET_DIR)
+        print("Build directory %r does not exist"%TARGET_DIR)
         sys.exit(1)
     makedirs(TARGET_DIR, exist_ok=True)
 
-    print("** 'Normal' processing **")
+    # print("** Generating all .rst files and figures **")
     rst_files = [process_model(py_file, args.force)
                      for py_file in args.files]
-    print("normal .rst file processing complete")
 
     if args.sphinx:
-        print("running sphinx")
+        # print("** running sphinx **")
         run_sphinx(rst_files, args.build)
 
 

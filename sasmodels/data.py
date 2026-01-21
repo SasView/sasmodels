@@ -36,14 +36,14 @@ import traceback
 from functools import wraps
 
 import numpy as np  # type: ignore
-from numpy import sqrt, sin, cos, pi
+from numpy import cos, pi, sin, sqrt
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Dict, List, Optional, Tuple, Callable
+    from typing import Callable, Optional, Union
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
-    OptLimits = Optional[Tuple[float, float]]
+    OptLimits = Optional[tuple[float, float]]
     OptString = Optional[str]
 except ImportError:
     pass
@@ -59,13 +59,14 @@ def load_data(filename, index=0):
     except ImportError as ie:
         raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     loader = Loader()
+    filename = str(filename)  # In case a Path was given.
     # Allow for one part in multipart file
     if '[' in filename:
         filename, indexstr = filename[:-1].split('[')
         index = int(indexstr)
     datasets = loader.load(filename)
     if not datasets:  # None or []
-        raise IOError("Data %r could not be loaded" % filename)
+        raise OSError("Data %r could not be loaded" % filename)
     if not isinstance(datasets, list):
         datasets = [datasets]
     for data in datasets:
@@ -129,15 +130,10 @@ def set_top(data, cutoff):
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
 
-class Source:
-    ...
-class Sample:
-    ...
-
 def _as_numpy(data):
     return None if data is None else np.asarray(data)
 
-class Data1D(object):
+class Data1D:
     """
     1D data object.
 
@@ -170,8 +166,8 @@ class Data1D(object):
         self.y, self.dy = _as_numpy(y), _as_numpy(dy)
         self.dxl = None
         self.filename = None
-        self.qmin = self.x.min() if self.x is not None else np.NaN
-        self.qmax = self.x.max() if self.x is not None else np.NaN
+        self.qmin = self.x.min() if self.x is not None else np.nan
+        self.qmax = self.x.max() if self.x is not None else np.nan
         # TODO: why is 1D mask False and 2D mask True?
         self.mask = (np.isnan(y) if y is not None
                      else np.zeros_like(x, 'b') if x is not None
@@ -210,7 +206,7 @@ class SesansData(Data1D):
         self.xaxis("SE length", "A")
         self.yaxis("log(P)/(t L^2)", "1/A^2 1/cm")
 
-class Data2D(object):
+class Data2D:
     """
     2D data object.
 
@@ -291,7 +287,7 @@ class Data2D(object):
         self._zunit = unit
 
 
-class Vector(object):
+class Vector:
     """
     3-space vector of *x*, *y*, *z*
     """
@@ -299,25 +295,25 @@ class Vector(object):
         # type: (float, float, Optional[float]) -> None
         self.x, self.y, self.z = x, y, z
 
-class Detector(object):
+class Detector:
     """
     Detector attributes.
     """
     def __init__(self, pixel_size=(None, None), distance=None):
-        # type: (Tuple[float, float], float) -> None
+        # type: (tuple[float, float], float) -> None
         self.pixel_size = Vector(*pixel_size)
         self.distance = distance
 
-class Source(object):
+class Source:
     """
     Beam attributes.
     """
     def __init__(self):
         # type: () -> None
-        self.wavelength = np.NaN
+        self.wavelength = np.nan
         self.wavelength_unit = "A"
 
-class Sample(object):
+class Sample:
     """
     Sample attributes.
     """
@@ -349,10 +345,14 @@ def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     r"""
     Create empty 1D data using the given *q* as the x value.
 
-    rms *resolution* $\Delta q/q$ defaults to 0%.  If wavelength *L* and rms
-    wavelength divergence *dL* are defined, then *resolution* defines
-    rms $\Delta \theta/\theta$ for the lowest *q*, with $\theta$ derived from
-    $q = 4\pi/\lambda \sin(\theta)$.
+    rms *resolution* $\Delta q/q$ defaults to 0.0. Note that this is
+    expressed as a fraction rather than a percentage.
+
+    If wavelength *L* and rms wavelength divergence *dL* are given, then
+    angle *theta* is infered from $q = 4\pi/\lambda \sin(\theta)$, and
+    the *resolution* term applies to rms $\Delta \theta/\theta$ instead
+    of $\Delta q/q$. Resolution $\Delta q$ is then calculated from wavelength
+    and angular resolution.
     """
 
     #Iq = 100 * np.ones_like(q)
@@ -383,7 +383,7 @@ def empty_data2D(qx, qy=None, resolution=0.0):
 
     If *qy* is missing, create a square mesh with *qy=qx*.
 
-    *resolution* dq/q defaults to 5%.
+    *resolution* dq/q defaults to 0.0.
     """
     if qy is None:
         qy = qx
@@ -501,7 +501,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
     Plot the data and residuals for 1D data.
     """
     import matplotlib.pyplot as plt  # type: ignore
-    from numpy.ma import masked_array, masked  # type: ignore
+    from numpy.ma import masked, masked_array  # type: ignore
 
     # Default to 'log' view
     if view is None:
@@ -631,7 +631,7 @@ def _plot_result_sesans(data, theory, resid, view, use_data, limits=None):
         if limits is not None:
             plt.ylim(*limits)
 
-        plt.xlabel('spin echo length ({})'.format(data._xunit))
+        plt.xlabel(f'spin echo length ({data._xunit})')
         plt.ylabel(r'$\log(P)/(t\lambda^2) (\mathrm{A}^{-2}\mathrm{cm}^{-1})$')
         plt.xscale('log')
 
@@ -640,7 +640,7 @@ def _plot_result_sesans(data, theory, resid, view, use_data, limits=None):
         if num_plots > 1:
             plt.subplot(1, num_plots, (use_data or use_theory) + 1)
         plt.plot(data.x, resid, 'x')
-        plt.xlabel('spin echo length ({})'.format(data._xunit))
+        plt.xlabel(f'spin echo length ({data._xunit})')
         plt.ylabel('polarization residuals')
         plt.xscale('log')
 
@@ -710,7 +710,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
 
 @protect
 def _plot_2d_signal(data, signal, vmin=None, vmax=None, view=None):
-    # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> Tuple[float, float]
+    # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> tuple[float, float]
     """
     Plot the target value for the data.  This could be the data itself,
     the theory calculation, or the residuals.

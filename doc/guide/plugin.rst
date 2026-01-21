@@ -29,7 +29,7 @@ Models can be of three types:
 
 
 When using SasView, plugin models should be saved to the SasView
-*plugin_models* folder *C:\\Users\\{username}\\.sasview\\plugin_models*
+*plugin_models* folder *C:\\Users\\{username}\\AppData\\Local\\sasview\\SasView\\plugin_models*
 (on Windows) or */Users/{username}/.sasview\\plugin_models* (on Mac).
 The next time SasView is started it will compile the plugin and add
 it to the list of *Plugin Models* in a FitPage.  Scripts can load
@@ -568,7 +568,7 @@ value at a time::
 
     Iq.vectorized = False
 
-Return np.NaN if the parameters are not valid (e.g., cap_radius < radius in
+Return np.nan if the parameters are not valid (e.g., cap_radius < radius in
 barbell).  If I(q; pars) is NaN for any $q$, then those parameters will be
 ignored, and not included in the calculation of the weighted polydispersity.
 
@@ -589,6 +589,9 @@ The structure factor calculation needs the volume fraction of the filled
 shapes for its calculation, so the volume fraction parameter in the model
 is automatically scaled by *form_volume/shell_volume* prior to calling the
 structure factor.
+
+:ref:`Special_Functions` for scattering such as $3j_1(x)/x$
+are available for both C and python.
 
 Embedded C Models
 .................
@@ -616,8 +619,8 @@ includes only the volume parameters.
 python models, it includes only the volume parameters.
 
 **source=['fn.c', ...]** includes the listed C source files in the
-program before *Iq* and *form_volume* are defined. This allows you to
-extend the library of C functions available to your model.
+program before *Iq* and *form_volume* are defined. These can include
+files from the :ref:`Special_Functions` library.
 
 *c_code* includes arbitrary C code into your kernel, which can be
 handy for defining helper functions for *Iq* and *form_volume*. Note that
@@ -800,238 +803,6 @@ to compute the proper magnetism and orientation, which you can implement
 using *Iqxy(qx, qy, par1, par2, ...)*.
 
 **Note: Magnetism is not supported in pure Python models.**
-
-Special Functions
-.................
-
-The C code follows the C99 standard, with the usual math functions,
-as defined in
-`OpenCL <https://www.khronos.org/registry/cl/sdk/1.1/docs/man/xhtml/mathFunctions.html>`_.
-This includes the following:
-
-    M_PI, M_PI_2, M_PI_4, M_SQRT1_2, M_E:
-        $\pi$, $\pi/2$, $\pi/4$, $1/\sqrt{2}$ and Euler's constant $e$
-    exp, log, pow(x,y), expm1, log1p, sqrt, cbrt:
-        Power functions $e^x$, $\ln x$, $x^y$, $e^x - 1$, $\ln 1 + x$,
-        $\sqrt{x}$, $\sqrt[3]{x}$. The functions expm1(x) and log1p(x)
-        are accurate across all $x$, including $x$ very close to zero.
-    sin, cos, tan, asin, acos, atan:
-        Trigonometry functions and inverses, operating on radians.
-    sinh, cosh, tanh, asinh, acosh, atanh:
-        Hyperbolic trigonometry functions.
-    atan2(y,x):
-        Angle from the $x$\ -axis to the point $(x,y)$, which is equal to
-        $\tan^{-1}(y/x)$ corrected for quadrant.  That is, if $x$ and $y$ are
-        both negative, then atan2(y,x) returns a value in quadrant III where
-        atan(y/x) would return a value in quadrant I. Similarly for
-        quadrants II and IV when $x$ and $y$ have opposite sign.
-    fabs(x), fmin(x,y), fmax(x,y), trunc, rint:
-        Floating point functions.  rint(x) returns the nearest integer.
-    NAN:
-        NaN, Not a Number, $0/0$.  Use isnan(x) to test for NaN.  Note that
-        you cannot use :code:`x == NAN` to test for NaN values since that
-        will always return false.  NAN does not equal NAN!  The alternative,
-        :code:`x != x` may fail if the compiler optimizes the test away.
-    INFINITY:
-        $\infty, 1/0$.  Use isinf(x) to test for infinity, or isfinite(x)
-        to test for finite and not NaN.
-    erf, erfc, tgamma, lgamma:  **do not use**
-        Special functions that should be part of the standard, but are missing
-        or inaccurate on some platforms. Use sas_erf, sas_erfc, sas_gamma
-        and sas_lgamma instead (see below).
-
-Some non-standard constants and functions are also provided:
-
-    M_PI_180, M_4PI_3:
-        $\frac{\pi}{180}$, $\frac{4\pi}{3}$
-    SINCOS(x, s, c):
-        Macro which sets s=sin(x) and c=cos(x). The variables *c* and *s*
-        must be declared first.
-    square(x):
-        $x^2$
-    cube(x):
-        $x^3$
-    sas_sinx_x(x):
-        $\sin(x)/x$, with limit $\sin(0)/0 = 1$.
-    powr(x, y):
-        $x^y$ for $x \ge 0$; this is faster than general $x^y$ on some GPUs.
-    pown(x, n):
-        $x^n$ for $n$ integer; this is faster than general $x^n$ on some GPUs.
-    FLOAT_SIZE:
-        The number of bytes in a floating point value.  Even though all
-        variables are declared double, they may be converted to single
-        precision float before running. If your algorithm depends on
-        precision (which is not uncommon for numerical algorithms), use
-        the following::
-
-            #if FLOAT_SIZE>4
-            ... code for double precision ...
-            #else
-            ... code for single precision ...
-            #endif
-    SAS_DOUBLE:
-        A replacement for :code:`double` so that the declared variable will
-        stay double precision; this should generally not be used since some
-        graphics cards do not support double precision.  There is no provision
-        for forcing a constant to stay double precision.
-
-The following special functions and scattering calculations are defined in
-`sasmodels/models/lib <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib>`_.
-These functions have been tuned to be fast and numerically stable down
-to $q=0$ even in single precision.  In some cases they work around bugs
-which appear on some platforms but not others, so use them where needed.
-Add the files listed in :code:`source = ["lib/file.c", ...]` to your *model.py*
-file in the order given, otherwise these functions will not be available.
-
-    polevl(x, c, n):
-        Polynomial evaluation $p(x) = \sum_{i=0}^n c_i x^i$ using Horner's
-        method so it is faster and more accurate.
-
-        $c = \{c_n, c_{n-1}, \ldots, c_0 \}$ is the table of coefficients,
-        sorted from highest to lowest.
-
-        :code:`source = ["lib/polevl.c", ...]` (`link to code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/polevl.c>`_)
-
-    p1evl(x, c, n):
-        Evaluation of normalized polynomial $p(x) = x^n + \sum_{i=0}^{n-1} c_i x^i$
-        using Horner's method so it is faster and more accurate.
-
-        $c = \{c_{n-1}, c_{n-2} \ldots, c_0 \}$ is the table of coefficients,
-        sorted from highest to lowest.
-
-        :code:`source = ["lib/polevl.c", ...]`
-        (`polevl.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/polevl.c>`_)
-
-    sas_gamma(x):
-        Gamma function sas_gamma\ $(x) = \Gamma(x)$.
-
-        The standard math function, tgamma(x), is unstable for $x < 1$
-        on some platforms.
-
-        :code:`source = ["lib/sas_gamma.c", ...]`
-        (`sas_gamma.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gamma.c>`_)
-
-    sas_gammaln(x):
-        log gamma function sas_gammaln\ $(x) = \log \Gamma(|x|)$.
-
-        The standard math function, lgamma(x), is incorrect for single
-        precision on some platforms.
-
-        :code:`source = ["lib/sas_gammainc.c", ...]`
-        (`sas_gammainc.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gammainc.c>`_)
-
-    sas_gammainc(a, x), sas_gammaincc(a, x):
-        Incomplete gamma function
-        sas_gammainc\ $(a, x) = \int_0^x t^{a-1}e^{-t}\,dt / \Gamma(a)$
-        and complementary incomplete gamma function
-        sas_gammaincc\ $(a, x) = \int_x^\infty t^{a-1}e^{-t}\,dt / \Gamma(a)$
-
-        :code:`source = ["lib/sas_gammainc.c", ...]`
-        (`sas_gammainc.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gammainc.c>`_)
-
-    sas_erf(x), sas_erfc(x):
-        Error function
-        sas_erf\ $(x) = \frac{2}{\sqrt\pi}\int_0^x e^{-t^2}\,dt$
-        and complementary error function
-        sas_erfc\ $(x) = \frac{2}{\sqrt\pi}\int_x^{\infty} e^{-t^2}\,dt$.
-
-        The standard math functions erf(x) and erfc(x) are slower and broken
-        on some platforms.
-
-        :code:`source = ["lib/polevl.c", "lib/sas_erf.c", ...]`
-        (`sas_erf.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_erf.c>`_)
-
-    sas_J0(x):
-        Bessel function of the first kind sas_J0\ $(x)=J_0(x)$ where
-        $J_0(x) = \frac{1}{\pi}\int_0^\pi \cos(x\sin(\tau))\,d\tau$.
-
-        The standard math function j0(x) is not available on all platforms.
-
-        :code:`source = ["lib/polevl.c", "lib/sas_J0.c", ...]`
-        (`sas_J0.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J0.c>`_)
-
-    sas_J1(x):
-        Bessel function of the first kind  sas_J1\ $(x)=J_1(x)$ where
-        $J_1(x) = \frac{1}{\pi}\int_0^\pi \cos(\tau - x\sin(\tau))\,d\tau$.
-
-        The standard math function j1(x) is not available on all platforms.
-
-        :code:`source = ["lib/polevl.c", "lib/sas_J1.c", ...]`
-        (`sas_J1.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J1.c>`_)
-
-    sas_JN(n, x):
-        Bessel function of the first kind and integer order $n$,
-        sas_JN\ $(n, x) =J_n(x)$ where
-        $J_n(x) = \frac{1}{\pi}\int_0^\pi \cos(n\tau - x\sin(\tau))\,d\tau$.
-        If $n$ = 0 or 1, it uses sas_J0($x$) or sas_J1($x$), respectively.
-
-        Warning: JN(n,x) can be very inaccurate (0.1%) for x not in [0.1, 100].
-
-        The standard math function jn(n, x) is not available on all platforms.
-
-        :code:`source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", "lib/sas_JN.c", ...]`
-        (`sas_JN.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_JN.c>`_)
-
-    sas_Si(x):
-        Sine integral Si\ $(x) = \int_0^x \tfrac{\sin t}{t}\,dt$.
-
-        Warning: Si(x) can be very inaccurate (0.1%) for x in [0.1, 100].
-
-        This function uses Taylor series for small and large arguments:
-
-        For large arguments use the following Taylor series,
-
-        .. math::
-
-             \text{Si}(x) \sim \frac{\pi}{2}
-             - \frac{\cos(x)}{x}\left(1 - \frac{2!}{x^2} + \frac{4!}{x^4} - \frac{6!}{x^6} \right)
-             - \frac{\sin(x)}{x}\left(\frac{1}{x} - \frac{3!}{x^3} + \frac{5!}{x^5} - \frac{7!}{x^7}\right)
-
-        For small arguments,
-
-        .. math::
-
-           \text{Si}(x) \sim x
-           - \frac{x^3}{3\times 3!} + \frac{x^5}{5 \times 5!} - \frac{x^7}{7 \times 7!}
-           + \frac{x^9}{9\times 9!} - \frac{x^{11}}{11\times 11!}
-
-        :code:`source = ["lib/Si.c", ...]`
-        (`Si.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_Si.c>`_)
-
-    sas_3j1x_x(x):
-        Spherical Bessel form
-        sph_j1c\ $(x) = 3 j_1(x)/x = 3 (\sin(x) - x \cos(x))/x^3$,
-        with a limiting value of 1 at $x=0$, where $j_1(x)$ is the spherical
-        Bessel function of the first kind and first order.
-
-        This function uses a Taylor series for small $x$ for numerical accuracy.
-
-        :code:`source = ["lib/sas_3j1x_x.c", ...]`
-        (`sas_3j1x_x.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_3j1x_x.c>`_)
-
-
-    sas_2J1x_x(x):
-        Bessel form sas_J1c\ $(x) = 2 J_1(x)/x$, with a limiting value
-        of 1 at $x=0$, where $J_1(x)$ is the Bessel function of first kind
-        and first order.
-
-        :code:`source = ["lib/polevl.c", "lib/sas_J1.c", ...]`
-        (`sas_J1.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J1.c>`_)
-
-
-    Gauss76Z[i], Gauss76Wt[i]:
-        Points $z_i$ and weights $w_i$ for 76-point Gaussian quadrature, respectively,
-        computing $\int_{-1}^1 f(z)\,dz \approx \sum_{i=1}^{76} w_i\,f(z_i)$.
-
-        Similar arrays are available in :code:`gauss20.c` for 20-point
-        quadrature and in :code:`gauss150.c` for 150-point quadrature.
-        The macros :code:`GAUSS_N`, :code:`GAUSS_Z` and :code:`GAUSS_W` are
-        defined so that you can change the order of the integration by
-        selecting an different source without touching the C code.
-
-        :code:`source = ["lib/gauss76.c", ...]`
-        (`gauss76.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/gauss76.c>`_)
-
 
 
 Problems with C models
@@ -1259,7 +1030,7 @@ you have added using the **test =** values.
 From SasView, switch to the *Shell* tab and type the following::
 
     from sasmodels.model_test import run_one
-    run_one("~/.sasview/plugin_models/model.py")
+    run_one("~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 This should print::
 
@@ -1268,15 +1039,15 @@ This should print::
 To check whether single precision is good enough, type the following::
 
     from sasmodels.compare import main as compare
-    compare("~/.sasview/plugin_models/model.py")
+    compare("~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 This will pop up a plot showing the difference between single precision
 and double precision on a range of $q$ values.
 
 These commands can also be run directly in the python interpreter:
 
-    $ python -m sasmodels.model_test -v ~/.sasview/plugin_models/model.py
-    $ python -m sasmodels.compare ~/.sasview/plugin_models/model.py
+    $ python -m sasmodels.model_test -v ~/AppData/Local/sasview/SasView/plugin_models/model.py
+    $ python -m sasmodels.compare ~/AppData/Local/sasview/SasView/plugin_models/model.py
 
 The options to compare are quite extensive; type the following for help::
 
@@ -1285,7 +1056,7 @@ The options to compare are quite extensive; type the following for help::
 Options will need to be passed as separate strings.
 For example to run your model with a random set of parameters::
 
-    compare("-random", "-pars", "~/.sasview/plugin_models/model.py")
+    compare("-random", "-pars", "~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 For the random models,
 
@@ -1304,7 +1075,7 @@ across multiple parameters can be very slow).
 If your model has 2D orientation calculation, then you should also
 test with::
 
-    compare("-2d", "~/.sasview/plugin_models/model.py")
+    compare("-2d", "~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 Check The Docs
 ^^^^^^^^^^^^^^
@@ -1312,7 +1083,7 @@ Check The Docs
 You can get a rough idea of how the documentation will look using the
 following::
 
-    compare("-help", "~/.sasview/plugin_models/model.py")
+    compare("-help", "~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 This does not use the same styling as the rest of the docs, but it will
 allow you to check that your ReStructuredText and LaTeX formatting.
@@ -1336,7 +1107,7 @@ you can ignore this section!**
 
 Run the lint check with::
 
-    python -m pylint --rcfile=extra/pylint.rc ~/.sasview/plugin_models/model.py
+    python -m pylint --rcfile=extra/pylint.rc ~/AppData/Local/sasview/SasView/plugin_models/model.py
 
 We are not aiming for zero lint just yet, only keeping it to a minimum.
 For now, don't worry too much about *invalid-name*. If you really want a

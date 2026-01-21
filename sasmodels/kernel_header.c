@@ -89,26 +89,8 @@
    #else // !__cplusplus
      #include <inttypes.h>  // C99 guarantees that int32_t types is here
      #include <stdio.h>
-     #if defined(__TINYC__)
-         typedef int int32_t;
-         #include <math.h>
-         // TODO: check isnan is correct
-         inline double _isnan(double x) { return x != x; } // hope this doesn't optimize away!
-         #undef isnan
-         #define isnan(x) _isnan(x)
-         // Defeat the double->float conversion since we don't have tgmath
-         inline SAS_DOUBLE trunc(SAS_DOUBLE x) { return x>=0?floor(x):-floor(-x); }
-         inline SAS_DOUBLE fmin(SAS_DOUBLE x, SAS_DOUBLE y) { return x>y ? y : x; }
-         inline SAS_DOUBLE fmax(SAS_DOUBLE x, SAS_DOUBLE y) { return x<y ? y : x; }
-         #define NEED_ERF
-         #define NEED_EXPM1
-         #define NEED_TGAMMA
-         #define NEED_CBRT
-         // expf missing from windows?
-         #define expf exp
-     #else
-         #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
-     #endif
+     #define NEED_ERF
+     #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
      #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
@@ -187,7 +169,53 @@
 #endif
 inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
+// clip() follows numpy.clip() semantics, returning (x < low ? low : x > high ? high : x)
+// OpenCL/CUDA clamp() returns fmin(fmax(x, low), high)
+// C++(17) clamp() matches numpy.clip()
+// If x is NaN numpy.clip() returns NaN but OpenCL clamp() returns low.
+inline double clip(double x, double low, double high) { return x < low ? low : x > high ? high : x; }
 inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
+
+// vector algebra
+static void SET_VEC(double *vector, double v0, double v1, double v2)
+{
+    vector[0] = v0;
+    vector[1] = v1;
+    vector[2] = v2;
+}
+
+static void SCALE_VEC(double *vector, double a)
+{
+    vector[0] = a*vector[0];
+    vector[1] = a*vector[1];
+    vector[2] = a*vector[2];
+}
+
+static void ADD_VEC(double *result_vec, double *vec1, double *vec2)
+{
+    result_vec[0] = vec1[0] + vec2[0];
+    result_vec[1] = vec1[1] + vec2[1];
+    result_vec[2] = vec1[2] + vec2[2];
+}
+
+static double SCALAR_VEC( double *vec1, double *vec2)
+{
+    return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
+}
+
+static double MAG_VEC( double *vec)
+{
+    return sqrt(SCALAR_VEC(vec,vec));
+}
+
+
+static void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
+{
+    double scale =  SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2);
+    result_vec[0] = vec1[0] - scale * vec2[0];
+    result_vec[1] = vec1[1] - scale * vec2[1];
+    result_vec[2] = vec1[2] - scale * vec2[2];
+}
 
 // CRUFT: support old style models with orientation received qx, qy and angles
 

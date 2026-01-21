@@ -55,23 +55,21 @@ drivers produce compiler output even when there is no error.  You
 can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
-from __future__ import print_function
 
-import os
-import logging
-import time
-import re
 import atexit
+import logging
+import os
+import re
+import time
 
 import numpy as np  # type: ignore
-
 
 # Attempt to setup CUDA. This may fail if the pycuda package is not
 # installed or if it is installed but there are no devices available.
 try:
     import pycuda.driver as cuda  # type: ignore
     from pycuda.compiler import SourceModule
-    from pycuda.tools import make_default_context, clear_context_caches
+    from pycuda.tools import clear_context_caches, make_default_context
     # Ask CUDA for the default context (so that we know that one exists)
     # then immediately throw it away in case the user doesn't want it.
     # Note: cribbed from pycuda.autoinit
@@ -87,13 +85,12 @@ except Exception as exc:
     CUDA_ERROR = str(exc)
 
 from . import generate
-from .kernel import KernelModel, Kernel
+from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any, Dict, List
-    from .modelinfo import ModelInfo
     from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -235,7 +232,7 @@ def compile_model(source, dtype, fast=False):
 
 # For now, this returns one device in the context.
 # TODO: Create a context that contains all devices on all platforms.
-class GpuEnvironment(object):
+class GpuEnvironment:
     """
     GPU context for CUDA.
     """
@@ -277,8 +274,8 @@ class GpuEnvironment(object):
         """
         return has_type(dtype)
 
-    def compile_program(self, name, source, dtype, fast, timestamp):
-        # type: (str, str, np.dtype, bool, float) -> SourceModule
+    def compile_program(self, name, source, dtype, fast, timestamp, kernel_names):
+        # type: (str, str, np.dtype, bool, float, list[str]) -> SourceModule
         """
         Compile the program for the device in the given context.
         """
@@ -287,14 +284,15 @@ class GpuEnvironment(object):
         tag = generate.tag_source(source)
         key = "%s-%s-%s%s"%(name, dtype, tag, ("-fast" if fast else ""))
         # Check timestamp on program.
-        program, program_timestamp = self.compiled.get(key, (None, np.inf))
-        if program_timestamp < timestamp:
+        program, compile_timestamp, kernels = self.compiled.get(key, (None, np.inf, []))
+        if compile_timestamp < timestamp:
             del self.compiled[key]
         if key not in self.compiled:
             logging.info("building %s for CUDA", key)
             program = compile_model(str(source), dtype, fast)
-            self.compiled[key] = (program, timestamp)
-        return program
+            kernels = [getattr(program, k) for k in kernel_names]
+            self.compiled[key] = (program, timestamp, kernels)
+        return kernels
 
 
 class GpuModel(KernelModel):
@@ -317,26 +315,26 @@ class GpuModel(KernelModel):
     dtype = None  # type: np.dtype
     fast = False  # type: bool
     _program = None  # type: SourceModule
-    _kernels = None  # type: Dict[str, cuda.Function]
+    _kernels = None  # type: dict[str, cuda.Function]
 
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
-        # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
+        # type: (dict[str,str], ModelInfo, np.dtype, bool) -> None
         self.info = model_info
         self.source = source
         self.dtype = dtype
         self.fast = fast
 
     def __getstate__(self):
-        # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
+        # type: () -> tuple[ModelInfo, str, np.dtype, bool]
         return self.info, self.source, self.dtype, self.fast
 
     def __setstate__(self, state):
-        # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
+        # type: (tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
         self._program = self._kernels = None
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> "GpuKernel"
+        # type: (list[np.ndarray]) -> "GpuKernel"
         return GpuKernel(self, q_vectors)
 
     def get_function(self, name):
@@ -352,23 +350,21 @@ class GpuModel(KernelModel):
     def _prepare_program(self):
         # type: (str) -> None
         env = environment()
+        variants = ['Iq', 'Iqxy', 'Imagnetic']
+        kernel_names = [generate.kernel_name(self.info, k) for k in variants]
         timestamp = generate.ocl_timestamp(self.info)
-        program = env.compile_program(
+        kernels = env.compile_program(
             self.info.name,
             self.source['opencl'],
             self.dtype,
             self.fast,
-            timestamp)
-        variants = ['Iq', 'Iqxy', 'Imagnetic']
-        names = [generate.kernel_name(self.info, k) for k in variants]
-        functions = [program.get_function(k) for k in names]
-        self._kernels = {k: v for k, v in zip(variants, functions)}
-        # Keep a handle to program so GC doesn't collect.
-        self._program = program
+            timestamp,
+            kernel_names)
+        self._kernels = {k: v for k, v in zip(variants, kernels)}
 
 
 # TODO: Check that we don't need a destructor for buffers which go out of scope.
-class GpuInput(object):
+class GpuInput:
     """
     Make q data available to the gpu.
 
@@ -388,7 +384,7 @@ class GpuInput(object):
     buffer will be released when the data object is freed.
     """
     def __init__(self, q_vectors, dtype=generate.F32):
-        # type: (List[np.ndarray], np.dtype) -> None
+        # type: (list[np.ndarray], np.dtype) -> None
         # TODO: Do we ever need double precision q?
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
@@ -450,7 +446,7 @@ class GpuKernel(Kernel):
     result = None  # type: np.ndarray
 
     def __init__(self, model, q_vectors):
-        # type: (GpuModel, List[np.ndarray]) -> None
+        # type: (GpuModel, list[np.ndarray]) -> None
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
         self._model = model

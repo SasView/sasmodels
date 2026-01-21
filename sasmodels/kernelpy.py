@@ -6,12 +6,12 @@ Polydispersity is supported by looping over different parameter sets and
 summing the results.  The interface to :class:`PyModel` matches those for
 :class:`.kernelcl.GpuModel` and :class:`.kerneldll.DllModel`.
 """
-from __future__ import division, print_function
 
 import logging
 
 import numpy as np  # type: ignore
 from numpy import pi
+
 try:
     from numpy import cbrt
 except ImportError:
@@ -20,11 +20,12 @@ except ImportError:
         return x ** (1.0/3.0)
 
 from .generate import F64
-from .kernel import KernelModel, Kernel
+from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Callable, List
+    from typing import Callable
+
     from .details import CallDetails
     from .modelinfo import ModelInfo
 except ImportError:
@@ -57,7 +58,7 @@ class PyModel(KernelModel):
         pass
 
 
-class PyInput(object):
+class PyInput:
     """
     Make q data available to the gpu.
 
@@ -115,7 +116,7 @@ class PyKernel(Kernel):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, model_info, q_input):
-        # type: (ModelInfo, List[np.ndarray]) -> None
+        # type: (ModelInfo, list[np.ndarray]) -> None
         self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input
@@ -235,8 +236,8 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
         weighted_form = 0.0
         weighted_shell = 0.0
         weighted_radius = 0.0
-        partial_weight = np.NaN
-        weight = np.NaN
+        partial_weight = np.nan
+        weight = np.nan
 
         p0_par = call_details.pd_par[0]
         p0_length = call_details.pd_length[0]

@@ -50,13 +50,12 @@ drivers produce compiler output even when there is no error.  You
 can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
-from __future__ import print_function
 
-import sys
-import os
-import warnings
 import logging
+import os
+import sys
 import time
+import warnings
 
 try:
     from time import perf_counter as clock
@@ -74,6 +73,7 @@ try:
     import pyopencl as cl  # type: ignore
     from pyopencl import mem_flags as mf
     from pyopencl.characterize import get_fast_inaccurate_build_options
+
     # CRUFT: pyopencl<2019.1.2 is breaking on intel drivers for mac
     from pyopencl.version import VERSION_TEXT
     if sys.platform == 'darwin' and VERSION_TEXT < '2019.1.2':
@@ -88,13 +88,12 @@ except Exception as exc:
 
 from . import generate
 from .generate import F32, F64
-from .kernel import KernelModel, Kernel
+from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any, List, Dict
-    from .modelinfo import ModelInfo
     from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -110,7 +109,7 @@ def quote_path(v):
     and do not quote it.  This is fragile:  -Ipath with space needs to
     be quoted.
     """
-    return '"'+v+'"' if v and ' ' in v and not v[0] in "\"'-" else v
+    return '"'+v+'"' if v and ' ' in v and v[0] not in "\"'-" else v
 
 
 def fix_pyopencl_include():
@@ -244,7 +243,7 @@ def compile_model(context, source, dtype, fast=False):
 
 # For now, this returns one device in the context.
 # TODO: Create a context that contains all devices on all platforms.
-class GpuEnvironment(object):
+class GpuEnvironment:
     """
     GPU context for OpenCL, with possibly many devices and one queue per device.
     """
@@ -290,8 +289,8 @@ class GpuEnvironment(object):
         """
         return self.context.get(dtype, None) is not None
 
-    def compile_program(self, name, source, dtype, fast, timestamp):
-        # type: (str, str, np.dtype, bool, float) -> cl.Program
+    def compile_program(self, name, source, dtype, fast, timestamp, kernel_names):
+        # type: (str, str, np.dtype, bool, float, list[str]) -> cl.Program
         """
         Compile the program for the device in the given context.
         """
@@ -300,8 +299,8 @@ class GpuEnvironment(object):
         tag = generate.tag_source(source)
         key = "%s-%s-%s%s"%(name, dtype, tag, ("-fast" if fast else ""))
         # Check timestamp on program.
-        program, program_timestamp = self.compiled.get(key, (None, np.inf))
-        if program_timestamp < timestamp:
+        program, compile_timestamp, kernels = self.compiled.get(key, (None, np.inf, []))
+        if compile_timestamp < timestamp:
             del self.compiled[key]
         if key not in self.compiled:
             context = self.context[dtype]
@@ -309,8 +308,9 @@ class GpuEnvironment(object):
                          context.devices[0].name.strip())
             program = compile_model(self.context[dtype],
                                     str(source), dtype, fast)
-            self.compiled[key] = (program, timestamp)
-        return program
+            kernels = [getattr(program, k) for k in kernel_names]
+            self.compiled[key] = (program, timestamp, kernels)
+        return kernels
 
 
 def _create_some_context():
@@ -345,7 +345,7 @@ def _create_some_context():
 
 
 def _get_default_context():
-    # type: () -> List[cl.Context]
+    # type: () -> list[cl.Context]
     """
     Get an OpenCL context, preferring GPU over CPU, and preferring Intel
     drivers over AMD drivers.
@@ -421,10 +421,10 @@ class GpuModel(KernelModel):
     dtype = None  # type: np.dtype
     fast = False  # type: bool
     _program = None  # type: cl.Program
-    _kernels = None  # type: Dict[str, cl.Kernel]
+    _kernels = None  # type: dict[str, cl.Kernel]
 
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
-        # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
+        # type: (dict[str,str], ModelInfo, np.dtype, bool) -> None
         #print("create model", id(self))
         self.info = model_info
         self.source = source
@@ -433,16 +433,16 @@ class GpuModel(KernelModel):
         # TODO: can a model be freed?
 
     def __getstate__(self):
-        # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
+        # type: () -> tuple[ModelInfo, str, np.dtype, bool]
         return self.info, self.source, self.dtype, self.fast
 
     def __setstate__(self, state):
-        # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
+        # type: (tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
         self._program = self._kernels = None
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> "GpuKernel"
+        # type: (list[np.ndarray]) -> "GpuKernel"
         return GpuKernel(self, q_vectors)
 
     def get_function(self, name):
@@ -458,23 +458,21 @@ class GpuModel(KernelModel):
     def _prepare_program(self):
         # type: (str) -> None
         env = environment()
+        variants = ['Iq', 'Iqxy', 'Imagnetic']
+        kernel_names = [generate.kernel_name(self.info, k) for k in variants]
         timestamp = generate.ocl_timestamp(self.info)
-        program = env.compile_program(
+        kernels = env.compile_program(
             self.info.name,
             self.source['opencl'],
             self.dtype,
             self.fast,
-            timestamp)
-        variants = ['Iq', 'Iqxy', 'Imagnetic']
-        names = [generate.kernel_name(self.info, k) for k in variants]
-        functions = [getattr(program, k) for k in names]
-        self._kernels = {k: v for k, v in zip(variants, functions)}
-        # Keep a handle to program so GC doesn't collect.
-        self._program = program
-
+            timestamp,
+            kernel_names,
+            )
+        self._kernels = {k: v for k, v in zip(variants, kernels)}
 
 # TODO: Check that we don't need a destructor for buffers which go out of scope.
-class GpuInput(object):
+class GpuInput:
     """
     Make q data available to the gpu.
 
@@ -499,7 +497,7 @@ class GpuInput(object):
     q = None
     q_b = None
     def __init__(self, q_vectors, dtype=generate.F32):
-        # type: (List[np.ndarray], np.dtype) -> None
+        # type: (list[np.ndarray], np.dtype) -> None
         #print("create input", id(self))
         # TODO: Do we ever need double precision q?
         self.nq = q_vectors[0].size
@@ -573,7 +571,7 @@ class GpuKernel(Kernel):
     _result_b = None # type: cl.Buffer
 
     def __init__(self, model, q_vectors):
-        # type: (GpuModel, List[np.ndarray]) -> None
+        # type: (GpuModel, list[np.ndarray]) -> None
         #print("create kernel", id(self))
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)

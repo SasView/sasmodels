@@ -1,22 +1,19 @@
-from __future__ import division, print_function
 
-import cmath
-import time
-from copy import copy
-import os
 import argparse
+import cmath
+import os
 from collections import OrderedDict
-from timeit import default_timer as timer
-from typing import Tuple
+from copy import copy
 from inspect import getfullargspec
+from timeit import default_timer as timer
 
 import numpy as np
-from numpy import pi, radians, sin, cos, sqrt, clip
-from numpy.random import poisson, uniform, randn, rand
+from numpy import clip, cos, pi, radians, sin, sqrt
 from numpy.polynomial.legendre import leggauss
+from numpy.random import poisson, rand, randn, uniform
 from scipy.integrate import simps
-from scipy.special import j1 as J1
 from scipy.special import gamma
+from scipy.special import j1 as J1
 
 try:
     from numba import njit, prange
@@ -204,7 +201,7 @@ class Superball(Shape):
         # Sample from cube[-a/2, a/2]
         num_points = poisson(density*self.a**3)
         points = uniform(-1, 1, size=(num_points, 3))
-        # Trim points outside maximum "squared radius", x^2p + y^2p + z^2p < 1 
+        # Trim points outside maximum "squared radius", x^2p + y^2p + z^2p < 1
         radius_sq = np.sum((points**2)**self.p, axis=1)
         points = points[radius_sq <= 1]
         values = self.value.repeat(points.shape[0])
@@ -549,7 +546,7 @@ if 0 and USE_CUDA:
             if new_size > old_size:
                 new = np.empty(new_size, dtype=old.dtype)
                 new[:old_size] = old
-                new[old_size:] = np.NaN
+                new[old_size:] = np.nan
                 yield new
             else:
                 yield old
@@ -941,7 +938,6 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
         plt.title('max rel. err=%g' % np.max(abs(rel)))
 
 def plot_points(rho, points):
-    import mpl_toolkits.mplot3d
     import matplotlib.pyplot as plt
 
     ax = plt.axes(projection='3d')
@@ -1074,7 +1070,6 @@ def csbox_Iqxy(qx, qy, a, b, c, da, db, dc, slda, sldb, sldc, sld_core, view=(0,
     qa, qb, qc = invert_view(qx, qy, view)
 
     sld_solvent = 0
-    overlapping = False
     dr0 = sld_core - sld_solvent
     drA, drB, drC = slda-sld_solvent, sldb-sld_solvent, sldc-sld_solvent
     tA, tB, tC = a + 2*da, b + 2*db, c + 2*dc
@@ -1115,7 +1110,7 @@ def _sasmodels_Iqxy(kernel, qx, qy, pars, view):
     # calculator avoids masked values; instead set masked values to NaN
     result = np.empty_like(qx)
     result[calculator.index] = Iqxy
-    result[~calculator.index] = np.NaN
+    result[~calculator.index] = np.nan
     return result
 
 def wrap_sasmodel(name, **pars):
@@ -1357,9 +1352,6 @@ def check_shape(title, shape, fn=None, show_points=False,
 
 def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
                    mesh=100, qmax=1.0, samples=5000):
-    rho_solvent = 0
-    #qx = np.linspace(0.0, qmax, mesh)
-    #qy = np.linspace(0.0, qmax, mesh)
     qx = np.linspace(-qmax, qmax, mesh)
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
@@ -1408,9 +1400,6 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
                     mesh=100, qmax=1.0, samples=5000,
                     up_frac_i=0, up_frac_f=0, up_theta=0, up_phi=0):
-    rho_solvent = 0
-    #qx = np.linspace(0.0, qmax, mesh)
-    #qy = np.linspace(0.0, qmax, mesh)
     qx = np.linspace(-qmax, qmax, mesh)
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
@@ -1525,6 +1514,6 @@ if __name__ == "__main__":
         import sasmodels
     except ImportError:
         import sys
-        from os.path import realpath, dirname, join as joinpath
+        from os.path import dirname, realpath
         sys.path.insert(0, dirname(dirname(realpath(__file__))))
     main()

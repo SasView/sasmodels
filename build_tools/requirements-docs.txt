@@ -1,0 +1,3 @@
+docutils
+siphash24
+sphinx
