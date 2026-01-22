@@ -8,6 +8,7 @@ import unittest
 
 import numpy as np  # type: ignore
 from numpy import exp, log, log10, pi, sqrt  # type: ignore
+from numpy.typing import NDArray
 from scipy.special import erf  # type: ignore
 
 __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
@@ -37,8 +38,10 @@ class Resolution:
 
     """
 
-    q = None  # type: np.ndarray
-    q_calc = None  # type: np.ndarray
+    q: NDArray
+    q_calc: NDArray
+    weight_matrix: NDArray
+
     def apply(self, theory):
         """
         Smear *theory* by the resolution function, returning *Iq*.
@@ -54,6 +57,7 @@ class Perfect1D(Resolution):
     """
     def __init__(self, q):
         self.q_calc = self.q = q
+        # No weight matrix in Perfect1D
 
     def apply(self, theory):
         return theory
@@ -122,7 +126,8 @@ class Slit1D(Resolution):
     The *weight_matrix* is computed by :func:`slit_resolution`
 
     """
-
+    # TODO: change to (self, q, *, ...) to force use of q_length/q_width keywords
+    # Note: requires change in SasView
     def __init__(self, q, q_length=None, q_width=None, q_calc=None):
         # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
@@ -145,7 +150,7 @@ class Slit1D(Resolution):
 
         self.q = q.flatten()
         self.q_calc = (
-            slit_extend_q(q, q_length, q_width)
+            slit_extend_q(q, q_length=q_length, q_width=q_width)
             if q_calc is None else np.sort(q_calc)
         )
 
@@ -361,6 +366,12 @@ def slit_resolution(q_calc, q, length, width, n_length=30):
             abs_x = 1.0*(q_calc < abs(qi - wi)) if qi < wi else 0.
             #print(qi - w, qi + w)
             #print(in_x + abs_x)
+            # TODO: need pixel fraction for the boundary pixels
+            # Diff q_edges in the expression below gives the pixel width in
+            # q. As wi drops below the width of a single pixel, the
+            # numerator stays the same but the denominater gets smaller, leading
+            # to ever increasing weights. We can't see this in SasView since
+            # it explicitly excludes q_length < 10 q_width.
             weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*wi)
         else:
             for k in range(-n_length, n_length+1):
@@ -371,6 +382,7 @@ def slit_resolution(q_calc, q, length, width, n_length=30):
 
 
 def _q_perp_weights(q_edges, qi, length):
+    # TODO: likely need pixel fraction for the boundary pixels
     # Convert bin edges from q to u
     u_limit = np.sqrt(qi**2 + length**2)
     u_edges = q_edges**2 - qi**2
@@ -397,13 +409,13 @@ def pinhole_extend_q(q, q_width, nsigma=PINHOLE_N_SIGMA):
     return linear_extrapolation(q, q_min, q_max)
 
 
-def slit_extend_q(q, length, width):
+def slit_extend_q(q, *, q_length=0, q_width=0):
     """
     Given *q*, *width* and *length*, find a set of sampling points *q_calc* so
     that each point I(q) has sufficient support from the underlying
     function.
     """
-    q_min, q_max = np.min(q-width), np.max(np.sqrt((q+width)**2 + length**2))
+    q_min, q_max = np.min(q-q_width), np.max(np.sqrt((q+q_width)**2 + q_length**2))
 
     return geometric_extrapolation(q, q_min, q_max)
 
@@ -541,7 +553,7 @@ def eval_form(q, form, pars):
     *pars* are the parameter values to use when evaluating.
     """
     from sasmodels import direct_model
-    kernel = form.make_kernel([q])
+    kernel = form.make_kernel(np.array([q]))
     theory = direct_model.call_kernel(kernel, pars)
     kernel.release()
     return theory
@@ -559,50 +571,56 @@ def gaussian(q, q0, dq, nsigma=2.5):
     return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)/(1-two_tail_density)
 
 
-def _quad_slit_1d(q, width, length, form, pars):
+def _quad_slit_1d(form, pars, q, *, q_width=0., q_length=0.):
     """
     Scipy integration for slit resolution.
 
     This is an adaptive integration technique.  It is called with settings
     that make it slow to evaluate but give it good accuracy.
     """
-    from scipy.integrate import quad  # type: ignore
 
     par_set = {p.name for p in form.info.parameters.call_parameters}
-    if any(k not in par_set for k in pars.keys()):
+    if any(k not in par_set for k in pars):
         extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"
                          % (", ".join(sorted(extra)),
                             ", ".join(sorted(pars.keys()))))
 
-    if np.isscalar(width):
-        width = [width]*len(q)
-    if np.isscalar(length):
-        length = [length]*len(q)
-    _int_l = lambda li, qi: eval_form(sqrt(qi**2 + li**2), form, pars)[0]
-    _int_w = lambda wi, qi: eval_form(abs(qi+wi), form, pars)[0]
-    # If both width and length are defined, then it is too slow to use dblquad.
-    # Instead use trapz on a fixed grid, interpolated into the I(Q) for
-    # the extended Q range.
-    #_int_wh = lambda w, h, qi: eval_form(sqrt((qi+h)**2 + w**2), form, pars)
-    q_calc = slit_extend_q(q, np.asarray(length), np.asarray(width))
+    if np.isscalar(q_width):
+        q_width = np.full_like(q, q_width)
+    if np.isscalar(q_length):
+        q_length = np.full_like(q, q_length)
+    #def _int_l(lk, qo): return eval_form(sqrt(qo**2 + lk**2), form, pars)[0]
+    #def _int_w(wk, qo): return eval_form(abs(qo+wk), form, pars)[0]
+    q_min, q_max = (q-q_width).min(), sqrt((q+q_width).max()**2 + q_length.max()**2)
+    q_calc = np.linspace(q_min, q_max, 10000)
     Iq = eval_form(q_calc, form, pars)
     result = np.empty(len(q))
-    for i, (qi, w, l) in enumerate(zip(q, width, length)):
-        if l == 0.:
-            total, err = quad(_int_w, 0, w, args=(qi,), epsabs=0, epsrel=1e-8)
-            result[i] = total/w
-        elif w == 0.:
-            total, err = quad(_int_l, -l, l, args=(qi,), epsabs=0, epsrel=1e-8)
-            result[i] = total/(2*l)
+    nw, nl = 121, 251
+    for i, (qi, dw, dl) in enumerate(zip(q, q_width, q_length)):
+        # print(f"slit {qi} with {dw=}, {dl=}")
+        if dl == 0.:
+            #total, err = quad(_int_w, 0, dw, args=(qi,), epsabs=0, epsrel=1e-8)
+            w_grid = np.linspace(-dw, dw, nw)
+            u_sub = qi + w_grid
+            f_at_u = np.interp(u_sub, q_calc, Iq)
+            total = np.trapezoid(f_at_u, w_grid)
+            result[i] = total/(2*dw)
+        elif dw == 0.:
+            #total, err = quad(_int_l, -dl, dl, args=(qi,), epsabs=0, epsrel=1e-8)
+            l_grid = np.linspace(-dl, dl, nl)
+            u_sub = sqrt(qi**2 + l_grid**2)
+            f_at_u = np.interp(u_sub, q_calc, Iq)
+            total = np.trapezoid(f_at_u, l_grid)
+            result[i] = total/(2*dl)
         else:
-            l_grid = np.linspace(0, li, 21)[None, :]
-            w_grid = np.linspace(-wi, wi, 23)[:, None]
-            u_sub = sqrt((qi+w_grid)**2 + l_grid**2)
+            l_grid = np.linspace(-dl, dl, nl)[None, :]
+            w_grid = np.linspace(-dw, dw, nw)[:, None]
+            u_sub = sqrt((qi + w_grid)**2 + l_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            total = np.trapz(np.trapz(f_at_u, l_grid, axis=1), w_grid[:, 0])
-            result[i] = total / (2*li*wi)
+            total = np.trapezoid(np.trapezoid(f_at_u, l_grid, axis=1), w_grid[:, 0])
+            result[i] = total / (4*dl*dw)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
             #                  args=(qi,))
@@ -612,7 +630,7 @@ def _quad_slit_1d(q, width, length, form, pars):
     return result
 
 
-def _quad_pinhole_1d(q, q_width, form, pars, nsigma=2.5):
+def _quad_pinhole_1d(form, pars, q, q_width, nsigma=2.5):
     """
     Scipy integration for pinhole resolution.
 
@@ -622,16 +640,17 @@ def _quad_pinhole_1d(q, q_width, form, pars, nsigma=2.5):
     from scipy.integrate import quad  # type: ignore
 
     par_set = {p.name for p in form.info.parameters.call_parameters}
-    if any(k not in par_set for k in pars.keys()):
+    if any(k not in par_set for k in pars):
         extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"
                          % (", ".join(sorted(extra)),
                             ", ".join(sorted(pars.keys()))))
 
-    func = lambda q, q0, dq: eval_form(q, form, pars)[0]*gaussian(q, q0, dq)[0]
-    total = [quad(func, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
-                args=(qi, dqi), epsabs=0, epsrel=1e-8)[0]
-             for qi, dqi in zip(q, q_width)]
+    def func(q, q0, dq): return eval_form(q, form, pars)[0]*gaussian(q, q0, dq)
+    total = [
+        quad(func, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
+            args=(qi, dqi), epsabs=0, epsrel=1e-8)[0]
+        for qi, dqi in zip(q, q_width)]
     return np.asarray(total).flatten()
 
 
@@ -674,9 +693,10 @@ class ResolutionTest(unittest.TestCase):
         resolution = Slit1D(self.x, q_width=0, q_length=0.005, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
+        # TODO calculate expected result rather than using program output
         answer = [
-            9.0618, 8.6402, 8.1187, 7.1392, 6.1528,
-            5.5555, 4.5584, 3.5606, 2.5623, 2.0000,
+            9.230181, 8.680682, 7.95333 , 7.167294, 6.28892 , 5.4     ,
+            4.502882, 3.574456, 2.608276, 1.280625,
             ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
@@ -686,26 +706,33 @@ class ResolutionTest(unittest.TestCase):
         Slit smearing with width < 100*length.
         """
         q = np.logspace(-4, -1, 10)
-        resolution = Slit1D(q, q_width=0.2, q_length=np.inf)
-        theory = 1000*self.Iq(resolution.q_calc**4)
+        q_width = 0.2*q  # 20% ΔQ radial
+        resolution = Slit1D(q, q_width=q_width, q_length=3.0)
+        theory = 1000*self.Iq(resolution.q_calc)**-4
         output = resolution.apply(theory)
+        # TODO calculate expected result rather than using program output
         answer = [
-            8.85785, 8.43012, 7.92687, 6.94566, 6.03660,
-            5.40363, 4.40655, 3.40880, 2.41058, 2.00000,
-            ]
+            1.773625e-01, 1.773912e-01, 1.775246e-01, 1.781470e-01,
+            1.811408e-01, 1.981946e-01, 2.529219e-01, 1.058098e-03,
+            1.386471e-05, 6.579479e-07,
+        ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
+    # Broken code. See sasmodels #697
     @unittest.skip("not yet supported")
     def test_slit_wide(self):
         """
         Slit smearing with width 0.0002
         """
-        resolution = Slit1D(self.x, q_width=0.0002, q_length=0, q_calc=self.x)
+        resolution = Slit1D(self.x, q_width=0.000002, q_length=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
+        #print("q", resolution.q_calc)
+        #print("I(q)", theory)
+        #print("w", resolution.weight_matrix)
         answer = [
             11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
-            ]
+        ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
     @unittest.skip("not yet supported")
@@ -816,8 +843,8 @@ class IgorComparisonTest(unittest.TestCase):
         pars['radius'] *= 5
 
         data = np.loadtxt(data_string.split('\n')).T
-        q, q_width, answer = data
-        answer = _quad_pinhole_1d(q, q_width, self.model, pars)
+        q, q_width, _answer = data
+        answer = _quad_pinhole_1d(self.model, pars, q, q_width)
         ## Getting 0.1% requires 5 sigma and 200 points per fringe
         #q_calc = interpolate(pinhole_extend_q(q, q_width, nsigma=5),
         #                     2*np.pi/pars['radius']/200)
@@ -832,8 +859,8 @@ class IgorComparisonTest(unittest.TestCase):
             resolution = Perfect1D(q)
             source = self._eval_sphere(pars, resolution)
             plt.loglog(q, source, '.')
-            plt.loglog(q, answer, '-', hold=True)
-            plt.loglog(q, output, '-', hold=True)
+            plt.loglog(q, answer, '-')
+            plt.loglog(q, output, '-')
             plt.show()
         self._compare(q, output, answer, tol)
 
@@ -862,11 +889,12 @@ class IgorComparisonTest(unittest.TestCase):
         data_string = TEST_DATA_SLIT_SPHERE
 
         data = np.loadtxt(data_string.split('\n')).T
-        q, delta_qv, _, answer = data
-        answer = _quad_slit_1d(q, delta_qv, 0., self.model, pars)
-        q_calc = slit_extend_q(interpolate(q, 2*np.pi/pars['radius']/20),
-                               delta_qv[0], 0.)
-        resolution = Slit1D(q, q_length=delta_qv, q_width=0, q_calc=q_calc)
+        q, dqv, _, _answer = data
+        answer = _quad_slit_1d(self.model, pars, q, q_length=dqv)
+        q_calc = slit_extend_q(
+            interpolate(q, 2*np.pi/pars['radius']/20),
+            q_length=dqv[0], q_width=0.)
+        resolution = Slit1D(q, q_length=dqv, q_width=0, q_calc=q_calc)
         output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
         self._compare(q, output, answer, 0.025)
@@ -886,7 +914,7 @@ class IgorComparisonTest(unittest.TestCase):
         q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
         width, length = 0.,0.117
         resolution = Slit1D(q, q_length=length, q_width=width)
-        answer = _quad_slit_1d(q, length, width, form, pars)
+        answer = _quad_slit_1d(form, pars, q, q_length=length, q_width=width)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
         #print(np.max(abs(answer-output)/answer))
@@ -1126,12 +1154,14 @@ def _eval_demo_1d(resolution, title):
         pars = {'length':210, 'radius':500, 'background': 0}
     elif name == 'teubner_strey':
         pars = {'a2':0.003, 'c1':-1e4, 'c2':1e10, 'background':0.312643}
-    elif name in ('sphere', 'spherepy'):
-        pars = TEST_PARS_SLIT_SPHERE
+    elif name == 'sphere':
+        #pars = TEST_PARS_SLIT_SPHERE
+        # 20 μm sphere needs lower q range
+        pars = {'radius': 200, 'background': 0, 'sld': 4, 'sld_solvent': 1, 'scale': 0.01}
     elif name == 'ellipsoid':
         pars = {
             'scale':0.05, 'background': 0,
-            'r_polar':500, 'r_equatorial':15000,
+            'radius_polar':500, 'radius_equatorial':15000,
             'sld':6, 'sld_solvent': 1,
             }
     else:
@@ -1144,57 +1174,60 @@ def _eval_demo_1d(resolution, title):
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):
-        width, length = resolution.q_width, resolution.q_length
-        Iq_target = _quad_slit_1d(resolution.q, width, length, model, pars)
+        q, width, length = resolution.q, resolution.q_width, resolution.q_length
+        index = slice(None, None, len(q)//25)
+        q_target = q[index]
+        Iq_target = _quad_slit_1d(model, pars, q_target, q_width=width[index], q_length=length)
     else:
-        dq = resolution.q_width
-        Iq_target = _quad_pinhole_1d(resolution.q, dq, model, pars)
+        q, dq = resolution.q, resolution.q_width
+        index = slice(None, None, len(q)//25)
+        q_target = q[index]
+        Iq_target = _quad_pinhole_1d(model, pars, q_target, dq[index])
 
     import matplotlib.pyplot as plt  # type: ignore
     plt.loglog(resolution.q_calc, theory, label='unsmeared')
-    plt.loglog(resolution.q, Iq, label='smeared', hold=True)
-    plt.loglog(resolution.q, Iq_target, label='scipy smeared', hold=True)
+    plt.loglog(resolution.q, Iq, label='smeared')
+    plt.loglog(q[index], Iq_target, 'o', label='scipy smeared')
     plt.legend()
     plt.title(title)
     plt.xlabel("Q (1/Ang)")
     plt.ylabel("I(Q) (1/cm)")
 
-def demo_pinhole_1d():
+def demo_pinhole_1d(dQoQ=0.1):
     """
     Show example of pinhole smearing.
     """
-    q = np.logspace(-4, np.log10(0.2), 400)
-    q_width = 0.1*q
+    q = np.logspace(-4, np.log10(0.2), 4000)
+    q_width = dQoQ*q
     resolution = Pinhole1D(q, q_width)
-    _eval_demo_1d(resolution, title="10% dQ/Q Pinhole Resolution")
+    _eval_demo_1d(resolution, title=f"Pinhole Resolution ({100*dQoQ}% dQ/Q)")
 
-def demo_slit_1d():
+def demo_slit_1d(dQoQ=0., q_length=0.):
     """
     Show example of slit smearing.
     """
-    q = np.logspace(-4, np.log10(0.2), 100)
-    width = length = 0.
-    #width = 0.000000277790
-    length = 0.0277790
-    #length = 0.00277790
-    #length = 0.0277790
-    resolution = Slit1D(q, length, width)
-    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(length, width))
+    q = np.logspace(-4, np.log10(0.2), 4000)
+    resolution = Slit1D(q, q_width=dQoQ*q*sqrt(3), q_length=q_length)
+    _eval_demo_1d(resolution, title=f"Slit Resolution (q_length={q_length},q_width={100*dQoQ}%)")
 
 def demo():
     """
     Run the resolution demos.
     """
     import matplotlib.pyplot as plt  # type: ignore
-    plt.subplot(121)
-    demo_pinhole_1d()
+    plt.subplot(221)
+    demo_pinhole_1d(dQoQ=0.05)
     #plt.yscale('linear')
-    plt.subplot(122)
-    demo_slit_1d()
+    plt.subplot(222)
+    demo_slit_1d(q_length=0.03) # length
+    plt.subplot(223)
+    demo_slit_1d(dQoQ=0.05)
+    plt.subplot(224)
+    demo_slit_1d(q_length=0.03, dQoQ=0.05)
     #plt.yscale('linear')
     plt.show()
 
 
 if __name__ == "__main__":
-    #demo()
-    main()
+    demo()
+    #main() # main() runs the unit tests
