@@ -443,7 +443,7 @@ class GpuModel(KernelModel):
 
     def make_kernel(self, q_vectors):
         # type: (list[np.ndarray]) -> "GpuKernel"
-        return GpuKernel(self, q_vectors)
+        return GpuKernel(self, np.asarray(q_vectors, dtype=self.dtype))
 
     def get_function(self, name):
         # type: (str) -> cl.Kernel
