@@ -541,7 +541,7 @@ def main():
         q, = values
         dq = dqw = dql = None
         #dq = [q*0.05] # 5% pinhole resolution
-        #dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
+        dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
         print(Iq(model, [q], dq=dq, qw=dqw, ql=dql, **pars)[0])
         #print(Gxi(model, [q], **pars)[0])
     elif len(values) == 2:
@@ -554,24 +554,28 @@ def main():
         sys.exit(1)
 
 def test_simple_interface():
-    def near(value, target):
+    def assert_near(value: np.ndarray, target: list[float]):
         """Close enough in single precision"""
         #print(f"value: {value}, target: {target}")
-        return np.allclose(value, target, rtol=1e-6, atol=0, equal_nan=True)
-    # Note: target values taken from running main() on parameters.
+        if not np.allclose(value, target, rtol=1e-6, atol=0, equal_nan=True):
+            assert value.tolist() == target
+            #raise ValueError(f"Expected {value} but got {target}")
+    # Target values taken from adusting main() with target resolution then running with:
+    #  python -m sasmodels.direct_model sphere 0.1 radius=200 background=0
+    #  python -m sasmodels.direct_model sphere 0.1,0.1 radius=200 background=0
     # Resolution was 5% dq/q.
     pars = dict(radius=200, background=0)  # default background=1e-3, scale=1
     # simple sphere in 1D (perfect, pinhole, slit)
     perfect_target = 0.6190146273894904
-    assert near(Iq('sphere', [0.1], **pars), [perfect_target])
-    assert near(Iq('sphere', [0.1], dq=[0.005], **pars), [2.3009224683980215])
-    assert near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.3663431784535172])
+    assert_near(Iq('sphere', [0.1], **pars), [perfect_target])
+    assert_near(Iq('sphere', [0.1], dq=[0.005], **pars), [2.3009224683980215])
+    assert_near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.1650934496236075])
     # simple sphere in 2D (perfect, pinhole)
-    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
-    assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars),
+    assert_near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
+    assert_near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars),
         [0.8167780778578667])
     # sesans (no background or scale)
-    assert near(Gxi('sphere', [100], **pars), [-0.19146959126623486])
+    assert_near(Gxi('sphere', [100], **pars), [-0.19146959126623486])
     # Check that single point sesans matches value in an array
     xi = np.logspace(1, 3, 100)
     y = Gxi('sphere', xi, **pars)
@@ -581,16 +585,16 @@ def test_simple_interface():
         assert abs((ysingle-y[k])/y[k]) < 0.1, "SESANS point value not matching vector value within 10%"
     # magnetic 2D
     pars = dict(radius=200, sld_M0=3, sld_mtheta=30)
-    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.5577852226925908])
+    assert_near(Iqxy('sphere', [0.1], [0.1], **pars), [1.5577852226925908])
     # polydisperse 1D
     pars = dict(
         radius=200, radius_pd=0.1, radius_pd_n=15, radius_pd_nsigma=2.5,
         radius_pd_type="uniform")
-    assert near(Iq('sphere', [0.1], **pars), [2.703169824954617])
+    assert_near(Iq('sphere', [0.1], **pars), [2.703169824954617])
     # background and scale
     background, scale = 1e-4, 0.1
     pars = dict(radius=200, background=background, scale=scale)
-    assert near(Iq('sphere', [0.1], **pars), [perfect_target*scale + background])
+    assert_near(Iq('sphere', [0.1], **pars), [perfect_target*scale + background])
 
 
 if __name__ == "__main__":
