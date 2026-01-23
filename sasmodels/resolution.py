@@ -161,7 +161,7 @@ class Slit1D(Resolution):
 
         # Build weight matrix from calculated q values
         self.weight_matrix = (
-            slit_resolution(self.q_calc, self.q, q_length, q_width)
+            slit_resolution(self.q_calc, self.q, q_length=q_length, q_width=q_width)
         )
         self.q_calc = abs(self.q_calc)
 
@@ -220,15 +220,15 @@ def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
     return weights
 
 
-def slit_resolution(q_calc, q, length, width, n_length=30):
+def slit_resolution(q_calc, q, *, q_length=0., q_width=0., n_length=30):
     r"""
     Build a weight matrix to compute *I_s(q)* from *I(q_calc)*, given
-    $q_\perp$ = *width* (in the high-resolution axis) and $q_\parallel$
-    = *length* (in the low resolution axis).  *n_length* is the number
+    $q_\perp$ = *q_width* (in the high-resolution axis) and $q_\parallel$
+    = *q_length* (in the low resolution axis).  *n_length* is the number
     of steps to use in the integration over $q_\parallel$ when both
     $q_\perp$ and $q_\parallel$ are non-zero.
 
-    Each $q$ can have an independent width and length value even though
+    Each $q$ can have an independent width and length resolution even though
     current instruments use the same slit setting for all measured points.
 
     If slit length is large relative to width, use:
@@ -351,7 +351,7 @@ def slit_resolution(q_calc, q, length, width, n_length=30):
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
     #print(q_calc)
-    for i, (qi, wi, li) in enumerate(zip(q, width, length)):
+    for i, (qi, wi, li) in enumerate(zip(q, q_width, q_length)):
         if wi == 0. and li == 0.:
             # Perfect resolution, so return the theory value directly.
             # Note: assumes that q is a subset of q_calc.  If qi need not be
@@ -381,17 +381,14 @@ def slit_resolution(q_calc, q, length, width, n_length=30):
     return weights.T
 
 
-def _q_perp_weights(q_edges, qi, length):
+def _q_perp_weights(q_edges, qi, q_length):
     # TODO: likely need pixel fraction for the boundary pixels
     # Convert bin edges from q to u
-    u_limit = np.sqrt(qi**2 + length**2)
+    u_limit = np.sqrt(qi**2 + q_length**2)
     u_edges = q_edges**2 - qi**2
     u_edges[q_edges < abs(qi)] = 0.
     u_edges[q_edges > u_limit] = u_limit**2 - qi**2
-    weights = np.diff(np.sqrt(u_edges))/length
-    #print("i, qi",i,qi,qi+width)
-    #print(q_calc)
-    #print(weights)
+    weights = np.diff(np.sqrt(u_edges))/q_length
     return weights
 
 
@@ -411,7 +408,7 @@ def pinhole_extend_q(q, q_width, nsigma=PINHOLE_N_SIGMA):
 
 def slit_extend_q(q, *, q_length=0, q_width=0):
     """
-    Given *q*, *width* and *length*, find a set of sampling points *q_calc* so
+    Given *q*, *q_width* and *q_length*, find a set of sampling points *q_calc* so
     that each point I(q) has sufficient support from the underlying
     function.
     """
@@ -688,7 +685,7 @@ class ResolutionTest(unittest.TestCase):
     @unittest.skip("not yet supported")
     def test_slit_long(self):
         """
-        Slit smearing with length 0.005
+        Slit smearing with q_length=0.005
         """
         resolution = Slit1D(self.x, q_width=0, q_length=0.005, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
@@ -703,7 +700,7 @@ class ResolutionTest(unittest.TestCase):
     @unittest.skip("not yet supported")
     def test_slit_both_high(self):
         """
-        Slit smearing with width < 100*length.
+        Slit smearing with q_width < 100*q_length.
         """
         q = np.logspace(-4, -1, 10)
         q_width = 0.2*q  # 20% ΔQ radial
@@ -722,7 +719,7 @@ class ResolutionTest(unittest.TestCase):
     @unittest.skip("not yet supported")
     def test_slit_wide(self):
         """
-        Slit smearing with width 0.0002
+        Slit smearing with q_width 0.0002
         """
         resolution = Slit1D(self.x, q_width=0.000002, q_length=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
@@ -738,7 +735,7 @@ class ResolutionTest(unittest.TestCase):
     @unittest.skip("not yet supported")
     def test_slit_both_wide(self):
         """
-        Slit smearing with width > 100*length.
+        Slit smearing with q_width > 100*q_length.
         """
         resolution = Slit1D(self.x, q_width=0.0002, q_length=0.000001,
                             q_calc=self.x)
@@ -912,9 +909,9 @@ class IgorComparisonTest(unittest.TestCase):
             }
         form = load_model('ellipsoid', dtype='double')
         q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
-        width, length = 0.,0.117
-        resolution = Slit1D(q, q_length=length, q_width=width)
-        answer = _quad_slit_1d(form, pars, q, q_length=length, q_width=width)
+        q_width, q_length = 0.,0.117
+        resolution = Slit1D(q, q_length=q_length, q_width=q_width)
+        answer = _quad_slit_1d(form, pars, q, q_length=q_length, q_width=q_width)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
         #print(np.max(abs(answer-output)/answer))
@@ -1174,10 +1171,10 @@ def _eval_demo_1d(resolution, title):
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):
-        q, width, length = resolution.q, resolution.q_width, resolution.q_length
+        q, q_width, q_length = resolution.q, resolution.q_width, resolution.q_length
         index = slice(None, None, len(q)//25)
         q_target = q[index]
-        Iq_target = _quad_slit_1d(model, pars, q_target, q_width=width[index], q_length=length)
+        Iq_target = _quad_slit_1d(model, pars, q_target, q_width=q_width[index], q_length=q_length)
     else:
         q, dq = resolution.q, resolution.q_width
         index = slice(None, None, len(q)//25)
@@ -1219,7 +1216,7 @@ def demo():
     demo_pinhole_1d(dQoQ=0.05)
     #plt.yscale('linear')
     plt.subplot(222)
-    demo_slit_1d(q_length=0.03) # length
+    demo_slit_1d(q_length=0.03)
     plt.subplot(223)
     demo_slit_1d(dQoQ=0.05)
     plt.subplot(224)
