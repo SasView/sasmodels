@@ -153,12 +153,13 @@ import numpy as np
 from numpy import inf
 
 from sasmodels.quadratures.fibonacci import fibonacci_sphere
+from sasmodels.special import sas_sinx_x
 
 name = "nanoprisms"
 title = "nanoprisms of different cross-sections"
 description = """
         Model for nanoprisms of different cross-sections with orientation averaging using the Fibonacci quadrature"""
-category = "plugin"
+category = "shape:polyhedron"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "nanoprism scattering length density"],
@@ -190,8 +191,12 @@ def form_volume(nsides, Rave, L):
         Volume of the nanoprism.
     """
     nsides = int(nsides)
+
     edge = edge_from_gyration_radius(nsides,Rave)
-    return volume_nanoprism(nsides,edge,L)
+    radius = radius_from_edge(nsides, edge)
+    surface = surface_from_radius(nsides, radius)
+    return surface * L
+
 
 def edge_from_gyration_radius(nsides:int, gyr):
     """
@@ -210,25 +215,6 @@ def edge_from_gyration_radius(nsides:int, gyr):
     nsides = int(nsides)
     return (gyr * 2 * np.sin(np.pi/nsides)) / np.sqrt(np.sinc(2/nsides))
 
-def volume_nanoprism(nsides:int, edge, L):
-    """ Computes the volume of a nanoprism with a cross-section
-    in the shape of an n-sided regular polygon of edge length "edge", and length of the nanoprism "L".
-    Parameters
-    ----------
-    nsides : int
-        Number of sides of the regular polygon cross-section.
-    edge : float
-        Edge length of the regular polygon cross-section.
-    L : float
-        Length of the nanoprism.
-    Returns
-    -------
-    volume : float
-        Volume of the nanoprism.
-    """
-    radius = radius_from_edge(nsides, edge)
-    surface = surface_from_radius(nsides, radius)
-    return surface * L
 
 def surface_from_radius(nsides:int, radius):
     """
@@ -329,22 +315,8 @@ def halfedges_generator(vertices:list):
         halfedge.append(coordinates)
     return halfedge
 
-# useful function sinc(x) = sin(x)/x
-def sinc(x):
-    """
-    Computes the cardinal sinus of x since in numpy sinc is defined with pi*x for the argument.
-    Parameters
-    ----------
-    x : float or array
-        Input value(s).
-    Returns
-    -------
-    sinc_x : float or array
-        Cardinal sinus of x.
-    """
-    return np.sinc(x/np.pi)
 
-# useful functions for scalar product
+# Useful functions for scalar product
 def scalar_product(u,v):
     """
     Computes the scalar product of two vectors u and v since numpy.dot does not work with different shapes of arrays.
@@ -362,9 +334,10 @@ def scalar_product(u,v):
         somme += u[i]*v[i]
     return somme
 
-# Form factor and intensity calculation
+# Form factor and intensity calculations
 # Reminder: the form factor is defined as: parallel factor (= complex function) * perpendicular factor (= sinc function)
 # see documentation and Reference [1] (Jules Marcone et al. "Form factor of prismatic particles for small-angle scattering analysis")
+
 def parallel_factor(vertices:list, q, c): # gives the area of the polygon at q==[0,0]
     """
     Computes the parallel form factor of a 2D shape defined by its vertices at a specific in-plane scattering vector q.
@@ -386,12 +359,12 @@ def parallel_factor(vertices:list, q, c): # gives the area of the polygon at q==
     a loop, all in the plane
     """
     qmodulus2 = q[0]**2+q[1]**2
-    qmodulus2 = np.asanyarray(qmodulus2) #conversion to array
+    qmodulus2 = np.asanyarray(qmodulus2) # conversion to array
     cutoff = 10**-30
     qmodulus2_cutoff = np.where(qmodulus2==0, cutoff, qmodulus2) # replace by cutoff if equal to 0
-    #This case starts occuring for computations of the prism formfactor, where during the
-    #calculation of the orientational average, q// may be equal to 0.
-    #if qmodulus2==0:
+    # This case starts occuring for computations of the prism formfactor, where during the
+    # calculation of the orientational average, q// may be equal to 0.
+    # if qmodulus2==0:
     #    return 0
     edgecenters = edgecenters_generator(vertices)
     halfedges = halfedges_generator(vertices)
@@ -401,35 +374,36 @@ def parallel_factor(vertices:list, q, c): # gives the area of the polygon at q==
         triple_product = q[0]*halfedges[i][1]-q[1]*halfedges[i][0]
         #The exp(iqRj) is rewritten as a sum of cos+isin because of the way math.exp() works (not allowing complex as input)
         qRj = scalar_product(q, edgecenters[i])
-        sum += triple_product * (sinc(qEj)*(np.cos(qRj)+np.sin(qRj)*1J)-c)
+        sum += triple_product * (sas_sinx_x(qEj)*(np.cos(qRj)+np.sin(qRj)*1J)-c)
     return (2/(1J*qmodulus2_cutoff)*sum)
 
-def Amp_nanoprism(q,nsides,edge,L): # From factor in 3D of the nanoprism q with three components
+def Fqabc(qa, qb, qc,nsides, Rave,L): # From factor in 3D of the nanoprism q with three components
     """
     Computes the form factor amplitude of a prism with a n-sided regular polygon cross-section and length L for a specific three dimensional q.
     Takes in account the parallel factor (complex function) and the perpendicular factor (sinc function).
     Parameters
     ----------
-    q : list
-        listed as a list of three components [qa,qb,qc]
+    qa, qb, qc : float
+        compenents of the scattering vector q
     nsides : int
         Number of sides of the regular polygon cross-section.
-    edge : float
-        Edge length of the regular polygon cross-section.
+    Rave : float
+        Average radius.
     L : float
         Length of the nanoprism.
     Returns
     -------
-    Amp_nanoprism : complex
+    Fqabc : complex
         Form factor amplitude of the nanoprism at the specific three dimensional q.
     """
-    qa, qb, qc = q[0], q[1], q[2]
+
     qab = [qa,qb]
+    edge = edge_from_gyration_radius(nsides, Rave)
     radius = radius_from_edge(nsides,edge)
     vertices = shape_generator(nsides,radius)
-#   A=parallel_factor(vertices,qab,0.)*sinc(qc*L/2)/surface_from_radius(nsides,radius)
-    perpendicular_factor = sinc(qc*L/2)
-    A = parallel_factor(vertices,qab,0.)*perpendicular_factor # parallel form factor * perpendicular form factor
+    perpendicular_factor_value = sas_sinx_x(qc*L/2) * L
+    parallel_factor_value = parallel_factor(vertices,qab,0.)
+    A = parallel_factor_value * perpendicular_factor_value
     return A
 
 def Iqabc(qa,qb,qc,nsides,Rave,L): # proportionnal to the volume**2
@@ -451,11 +425,8 @@ def Iqabc(qa,qb,qc,nsides,Rave,L): # proportionnal to the volume**2
         Scattered intensity of the nanoprism at the specific three dimensional q components.
     """
     nsides=int(nsides)
-    edge = edge_from_gyration_radius(nsides, Rave)
-    # intensity = I_nanoprism([qa,qb,qc], nsides, edge, L)
-    A = Amp_nanoprism([qa,qb,qc], nsides, edge, L)
-    intensity = (np.abs(A))**2
-    intensity = intensity * (L)**2  # multiplication by the volume at the power 2 (? volume or L only ?)
+    A = Fqabc(qa, qb, qc, nsides, Rave, L)
+    intensity = (np.abs(A))**2  # intensity is proportional to volume
     return intensity
 
 def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
@@ -490,7 +461,7 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
     # Uniform average over the sphere
     integral = np.sum(w[np.newaxis, :] * intensity, axis=1)
     integral = np.mean(intensity, axis=1)
-    return integral * (sld - sld_solvent)**2  * 1e4 # Convert to [cm-1]
+    return (integral) * (sld - sld_solvent)**2 * 10**-4
 
 Iq.vectorized = True
 
