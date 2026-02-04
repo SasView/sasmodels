@@ -490,7 +490,7 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
     # Uniform average over the sphere
     integral = np.sum(w[np.newaxis, :] * intensity, axis=1)
     integral = np.mean(intensity, axis=1)
-    return integral * (sld - sld_solvent)**2 * 10**-4   # Convert from [1e-12 A-1] to [cm-1]
+    return integral * (sld - sld_solvent)**2  * 1e4 # Convert to [cm-1]
 
 Iq.vectorized = True
 
