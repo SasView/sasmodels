@@ -55,7 +55,7 @@ The perpendicular factor is:
 .. math::
 
    f_{\perp}(\mathbf{q}_{\perp}, L)
-   = \mathrm{sinc}(
+   = L \mathrm{sinc}(
      \frac{(\mathbf{q}_{\perp} \cdot \hat{\mathbf{n}})\, L}{2}
      )
 
@@ -78,7 +78,7 @@ of circumradius :math:`R` can be expressed as
    \exp(
      i \mathbf{q}_{\|} \cdot \mathbf{M}_{j})
 
-In the sum over all edges, :math:`\mathbf{M}_{j}` is the vector joining the center of the polygon to the middle of the jth edge andand
+In the sum over all edges, :math:`\mathbf{M}_{j}` is the vector joining the center of the polygon to the middle of the jth edge and
 :math:`\mathbf{E}_{j}` is the half-edge vector.
 
 The scattered intensity for one prism is given by:
@@ -94,22 +94,22 @@ The scattered intensity for one prism is given by:
      f_{\|}(\mathbf{q}_{\|}, n, R)
    \right|^{2}
 
-Orientation averaging: The 1D form factor corresponds to the orientation average with all the possible orientations having the same probability.
-Instead of rotating the shape through all the possible orientations in the integral,
+Orientation average: The 1D form factor corresponds to the orientation average with all the possible orientations having the same probability.
+Instead of rotating the shape through all the possible orientations,
 it is equivalent to integrate the 3D scattering vector over a sphere of radius q with the shape in its reference orientation.
+
+The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform distribution of points on the unit sphere.
+The repartition of the N points is computed using the golden ratio (see fibonacci.py). 
+Each point of the quadrature on the unit sphere correspond to a vector :math:`\mathbf{u}_{j}`.
+In the sum, all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
 .. math::
 
-    P(q) =  \frac{2}{\pi} \int_0^{\frac{\pi}{2}} \,
-    \int_0^{\frac{\pi}{2}} A_P^2(q) \, \sin\theta \, d\theta \, d\phi
-
-The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform distribution of points on the unit sphere.
-The repartition of the points is computed using the golden ratio (see fibonacci.py).
-
+    P(q) =  \sum_{j=1}^{N} w_j I(q\mathbf{u}_{j}, n, R, L)
 
 .. figure:: img/fibonacci_sphere.png
 
-    Fibonacci sphere using 5810 points.
+    Fibonacci sphere using N=5810 points.
 
 Validation
 ----------
@@ -141,7 +141,7 @@ Authorship and Verification
 ----------------------------
 
 * **Authors:** Marianne Imperor-Clerc (marianne.imperor@cnrs.fr)
-             Jules Marcone (jules.marcone@universite-paris-saclay.fr)
+             Jules Marcone (julesmarcone@gmail.com)
              Sara Mokhtari (smokhtari@insa-toulouse.fr)
 
 * **Last Modified by:** MIC **Date:** 11 December 2025
@@ -158,7 +158,7 @@ from sasmodels.special import sas_sinx_x
 name = "nanoprisms"
 title = "nanoprisms of different cross-sections"
 description = """
-        Model for nanoprisms of different cross-sections with orientation averaging using the Fibonacci quadrature"""
+        Model for nanoprisms of different cross-sections with orientation average using the Fibonacci quadrature"""
 category = "shape:polyhedron"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
@@ -200,13 +200,13 @@ def form_volume(nsides, Rave, L):
 
 def edge_from_gyration_radius(nsides:int, gyr):
     """
-    Computes the edge length of an n-sided regular polygon of gyration ratio gyr.
+    Computes the edge length of an n-sided regular polygon of average radius Rave=gyr.
     Parameters
     ----------
     nsides : int
         Number of sides of the regular polygon.
     gyr : float
-        Gyration radius of the regular polygon.
+        average radius of the regular polygon.
     Returns
     -------
     edge : float
@@ -377,14 +377,14 @@ def parallel_factor(vertices:list, q, c): # gives the area of the polygon at q==
         sum += triple_product * (sas_sinx_x(qEj)*(np.cos(qRj)+np.sin(qRj)*1J)-c)
     return (2/(1J*qmodulus2_cutoff)*sum)
 
-def Fqabc(qa, qb, qc,nsides, Rave,L): # From factor in 3D of the nanoprism q with three components
+def Fqabc(qa, qb, qc,nsides, Rave,L): # Form factor in 3D of the nanoprism for (qa, qb, qc) scattering vector
     """
-    Computes the form factor amplitude of a prism with a n-sided regular polygon cross-section and length L for a specific three dimensional q.
+    Computes the form factor amplitude of a prism with a n-sided regular polygon cross-section and length L for (qa, qb, qc) scattering vector.
     Takes in account the parallel factor (complex function) and the perpendicular factor (sinc function).
     Parameters
     ----------
     qa, qb, qc : float
-        compenents of the scattering vector q
+        components of the scattering vector q
     nsides : int
         Number of sides of the regular polygon cross-section.
     Rave : float
