@@ -84,7 +84,7 @@ single = False
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
-    ["radius_effective", "Ang", 50.0, [0, inf], "volume",
+    ["radius_effective", "Ang", 50.0, [0, inf], "",
      "effective radius of hard sphere"],
     ["volfraction", "", 0.04, [0, 0.08], "",
      "volume fraction of spheres"],
@@ -116,7 +116,7 @@ def random():
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,
-      'volfraction': 0.04, 'welldepth': 1.5, 'wellwidth': 1.2,
-      'radius_effective_pd': 0}, [0.001], [0.97665742]],
+      'volfraction': 0.04, 'welldepth': 1.5, 'wellwidth': 1.2},
+      [0.001], [0.97665742]],
     ]
 # ADDED by: converting from sasview RKH  ON: 16Mar2016
