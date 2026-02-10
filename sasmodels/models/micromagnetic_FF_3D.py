@@ -153,12 +153,103 @@ parameters = [["radius", "Ang", 50., [0, inf], "volume", "Structural radius of t
 
 
 source = ["lib/sas_3j1x_x.c", "lib/core_shell.c", "lib/gauss76.c", "lib/magnetic_functions.c", "micromagnetic_FF_3D.c"]
-has_shape_visualization = False
+has_shape_visualization = True
 structure_factor = False
 have_Fq = False
 single=False
 opencl = False
 
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for core-shell sphere visualization."""
+    import numpy as np
+    radius = params.get('radius', 50)
+    thickness = params.get('thickness', 40)
+    outer_radius = radius + thickness
+
+    phi = np.linspace(0, np.pi, resolution//2)
+    theta = np.linspace(0, 2*np.pi, resolution)
+    phi_mesh, theta_mesh = np.meshgrid(phi, theta)
+
+    # Core sphere
+    x_core = radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_core = radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_core = radius * np.cos(phi_mesh)
+
+    # Shell (outer) sphere
+    x_shell = outer_radius * np.sin(phi_mesh) * np.cos(theta_mesh)
+    y_shell = outer_radius * np.sin(phi_mesh) * np.sin(theta_mesh)
+    z_shell = outer_radius * np.cos(phi_mesh)
+
+    return {
+        'core': (x_core, y_core, z_core),
+        'shell': (x_shell, y_shell, z_shell),
+    }
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the core-shell sphere."""
+    import numpy as np
+    radius = params.get('radius', 50)
+    thickness = params.get('thickness', 40)
+    outer_radius = radius + thickness
+
+    theta = np.linspace(0, 2*np.pi, 100)
+    core_x = radius * np.cos(theta)
+    core_y = radius * np.sin(theta)
+    shell_x = outer_radius * np.cos(theta)
+    shell_y = outer_radius * np.sin(theta)
+
+    # XY plane
+    ax_xy.plot(shell_x, shell_y, 'r-', linewidth=2, label='Shell')
+    ax_xy.fill(shell_x, shell_y, 'lightcoral', alpha=0.3)
+    ax_xy.plot(core_x, core_y, 'b-', linewidth=2, label='Core')
+    ax_xy.fill(core_x, core_y, 'lightblue', alpha=0.5)
+    ax_xy.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xy.set_xlabel('X (Å)')
+    ax_xy.set_ylabel('Y (Å)')
+    ax_xy.set_title('XY Cross-section (Top View)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+    ax_xy.legend()
+
+    # XZ plane
+    ax_xz.plot(shell_x, shell_y, 'r-', linewidth=2, label='Shell')
+    ax_xz.fill(shell_x, shell_y, 'lightcoral', alpha=0.3)
+    ax_xz.plot(core_x, core_y, 'b-', linewidth=2, label='Core')
+    ax_xz.fill(core_x, core_y, 'lightblue', alpha=0.5)
+    ax_xz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_xz.set_xlabel('X (Å)')
+    ax_xz.set_ylabel('Z (Å)')
+    ax_xz.set_title('XZ Cross-section (Side View)')
+    ax_xz.set_aspect('equal')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.legend()
+
+    # YZ plane
+    ax_yz.plot(shell_x, shell_y, 'g-', linewidth=2, label='Shell')
+    ax_yz.fill(shell_x, shell_y, 'lightgreen', alpha=0.3)
+    ax_yz.plot(core_x, core_y, 'orange', linewidth=2, label='Core')
+    ax_yz.fill(core_x, core_y, 'moccasin', alpha=0.5)
+    ax_yz.set_xlim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_ylim(-outer_radius*1.2, outer_radius*1.2)
+    ax_yz.set_xlabel('Y (Å)')
+    ax_yz.set_ylabel('Z (Å)')
+    ax_yz.set_title('YZ Cross-section (Front View)')
+    ax_yz.set_aspect('equal')
+    ax_yz.grid(True, alpha=0.3)
+    ax_yz.legend()
+
+    # Dimension annotations
+    ax_xz.annotate('', xy=(-radius, 0), xytext=(radius, 0),
+                   arrowprops=dict(arrowstyle='<->', color='blue'))
+    ax_xz.text(0, -radius*0.3, f'R = {radius:.0f} Å',
+               ha='center', fontsize=10, color='blue')
+    ax_xz.annotate('', xy=(-outer_radius, -radius*0.7),
+                   xytext=(outer_radius, -radius*0.7),
+                   arrowprops=dict(arrowstyle='<->', color='red'))
+    ax_xz.text(0, -radius*0.9, f'R+t = {outer_radius:.0f} Å',
+               ha='center', fontsize=10, color='red')
 
 def random():
     """Return a random parameter set for the model."""

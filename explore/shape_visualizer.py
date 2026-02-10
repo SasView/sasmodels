@@ -18,11 +18,19 @@ Features:
 import argparse
 import importlib
 import os
+import sys
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+# Ensure sasmodels package is importable when running from explore/ directory
+# Add parent directory to path so sasmodels can be imported
+_explore_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_explore_dir)
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
 
 
 class ShapeVisualizer(ABC):
@@ -1598,6 +1606,20 @@ class SASModelsShapeDetector:
         if shape_type in cls.SHAPE_MAPPINGS:
             visualizer_class = cls.SHAPE_MAPPINGS[shape_type]
             return visualizer_class(model_info)
+
+        # Fallback: If model has has_shape_visualization=True, use GenericModelVisualizer
+        # which will use the model's own create_shape_mesh() and plot_shape_cross_sections()
+        if model_info.get('has_shape_visualization', False):
+            # Verify the model module has the required functions
+            model_name = model_info.get('name', '')
+            try:
+                module_path = f'sasmodels.models.{model_name}'
+                model_module = importlib.import_module(module_path)
+                if (hasattr(model_module, 'create_shape_mesh') and
+                    hasattr(model_module, 'plot_shape_cross_sections')):
+                    return GenericModelVisualizer(model_info)
+            except ImportError:
+                pass  # Will fall through to warning below
 
         print(f"Warning: No visualizer available for shape type '{shape_type}'")
         return None

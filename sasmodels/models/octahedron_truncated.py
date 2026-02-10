@@ -259,6 +259,116 @@ source = ["lib/gauss20.c", "octahedron_truncated.c"]
 
 # Fq() function is used in the .c code
 have_Fq = True
+has_shape_visualization = True
+
+def create_shape_mesh(params, resolution=50):
+    """Create 3D mesh for truncated octahedron visualization."""
+    import numpy as np
+    length_a = params.get('length_a', 400)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+    t = params.get('t', 0.89)
+
+    a = length_a
+    b = length_a * b2a_ratio
+    c = length_a * c2a_ratio
+
+    # Spherical parametrization: for each direction find distance to surface
+    theta = np.linspace(0.001, np.pi - 0.001, resolution)
+    phi = np.linspace(0, 2*np.pi, resolution)
+    theta_mesh, phi_mesh = np.meshgrid(theta, phi)
+
+    # Absolute direction cosines
+    sx = np.abs(np.sin(theta_mesh) * np.cos(phi_mesh))
+    sy = np.abs(np.sin(theta_mesh) * np.sin(phi_mesh))
+    sz = np.abs(np.cos(theta_mesh))
+
+    # Octahedron constraint: |x/a| + |y/b| + |z/c| <= 1
+    r_oct = 1.0 / (sx/a + sy/b + sz/c + 1e-30)
+
+    # Truncation constraints: |x| <= t*a, |y| <= t*b, |z| <= t*c
+    r_tx = t * a / (sx + 1e-30)
+    r_ty = t * b / (sy + 1e-30)
+    r_tz = t * c / (sz + 1e-30)
+
+    # Surface is the minimum (most restrictive) distance
+    r_surface = np.minimum(np.minimum(np.minimum(r_oct, r_tx), r_ty), r_tz)
+
+    x = r_surface * np.sin(theta_mesh) * np.cos(phi_mesh)
+    y = r_surface * np.sin(theta_mesh) * np.sin(phi_mesh)
+    z = r_surface * np.cos(theta_mesh)
+
+    return {'octahedron': (x, y, z)}
+
+def plot_shape_cross_sections(ax_xy, ax_xz, ax_yz, params):
+    """Plot 2D cross-sections of the truncated octahedron."""
+    import numpy as np
+    length_a = params.get('length_a', 400)
+    b2a_ratio = params.get('b2a_ratio', 1)
+    c2a_ratio = params.get('c2a_ratio', 1)
+    t = params.get('t', 0.89)
+
+    a = length_a
+    b = length_a * b2a_ratio
+    c = length_a * c2a_ratio
+
+    def _truncated_diamond_vertices(d1, d2, t_val):
+        """Compute vertices of the truncated diamond cross-section.
+
+        The cross-section through a principal plane of the truncated
+        octahedron is the intersection of a diamond |x/d1|+|y/d2|<=1
+        with the rectangle |x|<=t*d1, |y|<=t*d2.  The result is an
+        octagon (or a diamond/rectangle at the limits t=1 / t=0.5).
+        """
+        td1 = t_val * d1
+        td2 = t_val * d2
+        d2_cut = d2 * (1 - t_val)
+        d1_cut = d1 * (1 - t_val)
+        # 8 vertices counterclockwise, closing the polygon
+        xs = [td1, d1_cut, -d1_cut, -td1,
+              -td1, -d1_cut, d1_cut, td1, td1]
+        ys = [d2_cut, td2, td2, d2_cut,
+              -d2_cut, -td2, -td2, -d2_cut, d2_cut]
+        return xs, ys
+
+    # XY cross-section (z=0 plane)
+    xy_x, xy_y = _truncated_diamond_vertices(a, b, t)
+    ax_xy.plot(xy_x, xy_y, 'b-', linewidth=2)
+    ax_xy.fill(xy_x, xy_y, 'lightblue', alpha=0.3)
+    max_dim = max(a, b) * 1.2
+    ax_xy.set_xlim(-max_dim, max_dim)
+    ax_xy.set_ylim(-max_dim, max_dim)
+    ax_xy.set_xlabel('X (Å) - a axis')
+    ax_xy.set_ylabel('Y (Å) - b axis')
+    ax_xy.set_title('XY Cross-section (z=0)')
+    ax_xy.set_aspect('equal')
+    ax_xy.grid(True, alpha=0.3)
+
+    # XZ cross-section (y=0 plane)
+    xz_x, xz_z = _truncated_diamond_vertices(a, c, t)
+    ax_xz.plot(xz_x, xz_z, 'r-', linewidth=2)
+    ax_xz.fill(xz_x, xz_z, 'lightcoral', alpha=0.3)
+    max_dim = max(a, c) * 1.2
+    ax_xz.set_xlim(-max_dim, max_dim)
+    ax_xz.set_ylim(-max_dim, max_dim)
+    ax_xz.set_xlabel('X (Å) - a axis')
+    ax_xz.set_ylabel('Z (Å) - c axis')
+    ax_xz.set_title('XZ Cross-section (y=0)')
+    ax_xz.grid(True, alpha=0.3)
+    ax_xz.set_aspect('equal')
+
+    # YZ cross-section (x=0 plane)
+    yz_y, yz_z = _truncated_diamond_vertices(b, c, t)
+    ax_yz.plot(yz_y, yz_z, 'g-', linewidth=2)
+    ax_yz.fill(yz_y, yz_z, 'lightgreen', alpha=0.3)
+    max_dim = max(b, c) * 1.2
+    ax_yz.set_xlim(-max_dim, max_dim)
+    ax_yz.set_ylim(-max_dim, max_dim)
+    ax_yz.set_xlabel('Y (Å) - b axis')
+    ax_yz.set_ylabel('Z (Å) - c axis')
+    ax_yz.set_title('YZ Cross-section (x=0)')
+    ax_yz.grid(True, alpha=0.3)
+    ax_yz.set_aspect('equal')
 
 tests = [
     [{"background": 0, "scale": 1, "length_a": 100, "t": 1, "sld": 1., "sld_solvent": 0.},

@@ -14,6 +14,15 @@ Note on macOS:
   NSException / Cocoa threading issues.
 """
 
+import os
+import sys
+
+# Ensure sasmodels package is importable when running from explore/ directory
+_explore_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_explore_dir)
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
+
 import tkinter as tk
 from tkinter import messagebox, ttk
 
