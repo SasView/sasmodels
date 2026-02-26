@@ -25,7 +25,6 @@ and tell you which string to use for the SAS_OPENCL variable.
 On Windows you will need to remove the quotes.
 """
 
-
 import datetime
 import math
 import os
@@ -33,9 +32,7 @@ import re
 import sys
 import traceback
 from dataclasses import dataclass
-
-# pylint: disable=unused-import
-from typing import Callable
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np  # type: ignore
 
@@ -45,16 +42,13 @@ from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
 from .modelinfo import ModelInfo, ParameterSet
 
-try:
-    # With python 3.8+ we can indicate that calculator takes floats.
-    from typing import Protocol
-    class Calculator(Protocol):
-        """Kernel calculator takes *par=value* keyword arguments."""
-        def __call__(self, **par: float) -> np.ndarray: ...
-except ImportError:
-    #: Kernel calculator takes *par=value* keyword arguments.
-    Calculator = Callable[..., np.ndarray]
-# pylint: enable=unused-import
+# Only use optional bumps dependency for type checking
+if TYPE_CHECKING:
+    from bumps.names import Parameter
+
+class Calculator(Protocol):
+    """Kernel calculator takes *par=value* keyword arguments."""
+    def __call__(self, **par: float) -> np.ndarray: ...
 
 USAGE = """
 usage: sascomp model [options...] [key=val]
@@ -1040,7 +1034,7 @@ OPTIONS = [
     'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
 
     # Output options
-    'help', 'html', 'edit',
+    'help', 'html', 'edit', 'wxedit',
 
     # Help options
     'h', '?', 'models', 'models='
@@ -1195,7 +1189,7 @@ def parse_opts(argv):
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
-        'explore'   : False,
+        'explore'   : None,
         'zero'      : False,
         'html'      : False,
         'title'     : None,
@@ -1264,7 +1258,8 @@ def parse_opts(argv):
         elif arg == '-single!':     opts['engine'] = 'single!'
         elif arg == '-double!':     opts['engine'] = 'double!'
         elif arg == '-quad!':       opts['engine'] = 'quad!'
-        elif arg == '-edit':        opts['explore'] = True
+        elif arg == '-edit':        opts['explore'] = 'web'
+        elif arg == '-wxedit':      opts['explore'] = 'wx'
         elif arg == '-weights':     opts['show_weights'] = True
         elif arg == '-profile':     opts['show_profile'] = True
         elif arg == '-html':        opts['html'] = True
@@ -1576,11 +1571,10 @@ def explore(opts):
     name = ":".join(opts['name']) if opts['name'][0] == opts['name'][1] else opts['name'][0]
     problem.name = name
 
-    try:
+    if opts['explore'] == 'wx':
         wx_explore(problem)
-    except ImportError:
+    else:
         webview_explore(problem)
-        # print("The explore option requires wxPython.  Try 'pip install wxPython'.")
 
 def webview_explore(problem):
     import logging
@@ -1594,7 +1588,11 @@ def webview_explore(problem):
 
     server.init_web_app()
     server.app.on_startup.append(lambda App: api.set_problem(problem))
-    sock = server.setup_app(options=BumpsOptions())
+    options = BumpsOptions()
+    # CRUFT: options.threads does not have a default value
+    if not hasattr(options, 'threads'):
+        options.threads = False
+    sock = server.setup_app(options=options)
     web.run_app(server.app, sock=sock)
 
 def wx_explore(problem):
@@ -1631,7 +1629,7 @@ class Explore:
     The resulting object can be used as a Bumps fit problem so that
     parameters can be adjusted in the GUI, with plots updated on the fly.
     """
-    pars: dict[str, Parameter]
+    pars: dict[str, "Parameter"]
     name = "sasmodels"
 
     def __init__(self, opts):
