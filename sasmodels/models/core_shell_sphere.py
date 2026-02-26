@@ -59,7 +59,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf
+from numpy import inf, pi
 
 name = "core_shell_sphere"
 title = "Form factor for a monodisperse spherical particle with particle with a core-shell structure."

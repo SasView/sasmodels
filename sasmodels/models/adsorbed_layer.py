@@ -57,7 +57,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, pi, exp, errstate
+from numpy import errstate, exp, inf, pi
 
 name = "adsorbed_layer"
 title = "Scattering from an adsorbed layer on particles"

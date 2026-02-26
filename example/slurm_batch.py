@@ -5,7 +5,7 @@ Submit a batch fit job to the slurm cluster.
 Given a model.py file defining a Bumps problem defined on a single data
 file, with the data file specified as a command line argument, run the
 bumps fit as a batch over a set of different datafiles independently.
-An example model is given in model_ellipsoid_hayter_msa.py, which fits 
+An example model is given in model_ellipsoid_hayter_msa.py, which fits
 the data in 09319*.dat.
 
 To run the fit, use::
@@ -16,18 +16,18 @@ For example::
 
     slurm_batch.py model_ellipsoid_hayter_msa.py 09319*.dat --store=T1
 
-You may need to run in a particular python environment on the 
+You may need to run in a particular python environment on the
 compute nodes::
 
     slurm_batch.py --python=path/to/env/bin/python ...
 
-This creates the T1 subdirectory to hold the fit results and 
+This creates the T1 subdirectory to hold the fit results and
 prints the real command that is submitted, as well as the job id.
 
-The store directory T1 contains a copy of the model file and 
-all the data files.  The fit results for each file will be 
-in T1/##/*.  The file T1/files.dat contains the list 
-of "subdirectory filename" pairs indicating which ## directory 
+The store directory T1 contains a copy of the model file and
+all the data files.  The fit results for each file will be
+in T1/##/*.  The file T1/files.dat contains the list
+of "subdirectory filename" pairs indicating which ## directory
 contains the resuls for which file.  Check for errors using::
 
     cat T1/slurm*_1.out
@@ -69,7 +69,7 @@ or cancel the job using::
 
     scancel jobid
 
-The slurm_batch program runs directly from the source tree for sasmodels, 
+The slurm_batch program runs directly from the source tree for sasmodels,
 and requires sasview, bumps and periodictable as sister directories
 accessible on the worker nodes.  You can link it into your bin directory
 using::
@@ -85,13 +85,13 @@ or if you are a cluster administrator, into /usr/local/bin.
 # SLURM_ARRAY_TASK_ID to the current task so we can tell that we are running
 # as a worker and which file we should be working on.
 
-## SBATCH options as comments do not seem to work.  Maybe they neeed to be before 
+## SBATCH options as comments do not seem to work.  Maybe they neeed to be before
 ## the doc string?  For now they are hardcoded in the sbatch call in submit_job.
 
-import sys
 import os
-import tempfile
 import shutil
+import sys
+import tempfile
 
 DEFAULT_TIME_LIMIT = 2
 
@@ -132,10 +132,10 @@ def split_args():
 
     return {
         'python': interpreter,
-        'slurm': slurm_opts, 
-        'model_file': model_file, 
-        'data_files': data_files, 
-        'store': store, 
+        'slurm': slurm_opts,
+        'model_file': model_file,
+        'data_files': data_files,
+        'store': store,
         'resume': resume,
         'bumps': bumps_opts,
     }
@@ -177,7 +177,7 @@ def submit_job():
         for f in data_files:
             f_copy = os.path.basename(f)
             shutil.copy(f, os.path.join(store, f_copy))
-            data_copy.append(f_copy) 
+            data_copy.append(f_copy)
 
         model_file = model_copy
         data_files = data_copy

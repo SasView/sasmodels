@@ -40,7 +40,7 @@ Authorship and Verification
 * **Last Reviewed by:**
 """
 
-from numpy import inf, errstate
+from numpy import errstate, inf
 
 name = "correlation_length"
 title = """Calculates an empirical functional form for SAS data characterized

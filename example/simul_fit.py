@@ -1,7 +1,9 @@
-from bumps.names import *
+import numpy as np
+from bumps.names import FitProblem, FreeVariables
+
+from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
-from sasmodels.data import load_data, plot_data
+from sasmodels.data import load_data
 
 # latex data, same sample usans and sans
 # particles radius ~2300, uniform dispersity
@@ -18,14 +20,14 @@ pars = dict(scale=0.01, background=0.0, sld=5.0, sld_solvent=0.0, radius=1500.,
 model = Model(kernel, **pars)
 
 # radius and polydispersity (if any) are shared
-model.radius.range(0, inf)
+model.radius.range(0, np.inf)
 #model.radius_pd.range(0, 1)
 
 # Contrast and dilution are the same for both measurements, but are not
 # separable with a single measurement (i.e., I(q) ~ F(q) contrast^2 Vf),
 # so fit one of scale, sld or solvent sld.  With absolute scaling from
 # data reduction, can use the same parameter for both datasets.
-model.scale.range(0, inf)
+model.scale.range(0, np.inf)
 #model.sld.range(-inf, inf)
 #model.sld_solvent.range(-inf, inf)
 
@@ -35,7 +37,7 @@ free = FreeVariables(
     names=[data.run[0] for data in datasets],
     background=model.background,
     )
-free.background.range(-inf, inf)
+free.background.range(-np.inf, np.inf)
 
 # Note: can access the parameters for the individual models using
 # free.background[0] and free.background[1], setting constraints or

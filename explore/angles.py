@@ -19,14 +19,11 @@ Set *OUTPUT* to the type of code you want to see: ccode, python, math
 or any combination.
 """
 
-from __future__ import print_function
 
-import codecs
-import sys
 import re
 
 import sympy as sp
-from sympy import pi, sqrt, sin, cos, Matrix, Eq
+from sympy import Eq, Matrix, cos, pi, sin, sqrt
 
 # Select output
 OUTPUT = ""
@@ -37,8 +34,6 @@ REUSE_SINCOS = True
 QC_ONLY = True # show only what is needed for dqc in the symmetric case
 
 # include unicode symbols in output, even if piping to a pager
-if sys.version_info[0] < 3:
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 sp.init_printing(use_unicode=True)
 
 def subs(s):
@@ -104,7 +99,8 @@ def vprint(var, vec, comment=None, post=None):
 
     if OUTPUT == 'math ':
         print("\n// " + comment if comment else "")
-        if post: print("// " + post)
+        if post:
+            print("// " + post)
         print(desc)
 
 def mprint(var, mat, comment=None, post=None):
@@ -227,8 +223,8 @@ if 1:
     )
 
     comment("\n**** qab from qc ****")
-    # The indirect calculation of qab is better than directly c
-    # alculating qab^2 = qa^2 + qb^2 since qc can be computed
+    # The indirect calculation of qab is better than directly
+    # calculating qab^2 = qa^2 + qb^2 since qc can be computed
     # as qc = M31*qx + M32*qy, thus requiring only two elements
     # of the rotation matrix.
     #vprint(qab, sqrt(qa**2 + qb**2), "Direct calculation of qab")

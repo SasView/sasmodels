@@ -1,19 +1,19 @@
-from __future__ import print_function
 
 import sys
+
 # make sure sasmodels is on the path
 sys.path.append('..')
 
 from os import mkdir
-from os.path import basename, exists, join as joinpath
+from os.path import basename, exists
+from os.path import join as joinpath
+
 from sasmodels.core import load_model_info
 
 try:
-    from typing import Optional, BinaryIO, List, Dict
+    from typing import BinaryIO, Optional
 except ImportError:
     pass
-else:
-    from sasmodels.modelinfo import ModelInfo
 
 TEMPLATE = """\
 ..
@@ -48,19 +48,19 @@ def _add_model(file, model_name):
     file.write("    ../../model/%s.rst\n"%model_name)
 
 def _maybe_make_category(category, models, cat_files, model_toc):
-    # type: (str, List[str], Dict[str, BinaryIO], BinaryIO) -> None
+    # type: (str, list[str], dict[str, BinaryIO], BinaryIO) -> None
     if category not in cat_files:
         print("Unexpected category %s containing"%category, models, file=sys.stderr)
         title = category.capitalize()+" Functions"
         cat_files[category] = _make_category(category, category, title, model_toc)
 
 def generate_toc(model_files):
-    # type: (List[str]) -> None
+    # type: (list[str]) -> None
     if not model_files:
         print("gentoc needs a list of model files", file=sys.stderr)
 
     # find all categories
-    category = {} # type: Dict[str, List[str]]
+    category = {} # type: dict[str, list[str]]
     for item in model_files:
         # assume model is in sasmodels/models/name.py, and ignore the full path
         model_name = basename(item)[:-3]

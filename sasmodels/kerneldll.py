@@ -66,18 +66,18 @@ The global attribute *ALLOW_SINGLE_PRECISION_DLLS* should be set to *False* if
 you wish to prevent single precision floating point evaluation for the compiled
 models, otherwise set it defaults to *True*.
 """
-from __future__ import print_function
 
-import sys
-import os
-from os.path import join as joinpath, splitext
-import subprocess
-import shlex
-import tempfile
-import ctypes as ct  # type: ignore
 import _ctypes as _ct
+import ctypes as ct  # type: ignore
 import logging
+import os
 import platform
+import shlex
+import subprocess
+import sys
+import tempfile
+from os.path import join as joinpath
+from os.path import splitext
 
 import numpy as np  # type: ignore
 
@@ -87,16 +87,17 @@ except ImportError:
     tccbox = None
 
 from . import generate
-from .kernel import KernelModel, Kernel
-from .kernelpy import PyInput
 from .exception import annotate_exception
 from .generate import F16, F32, F64
+from .kernel import Kernel, KernelModel
+from .kernelpy import PyInput
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any, List
-    from .modelinfo import ModelInfo
+    from typing import Callable
+
     from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -349,7 +350,7 @@ class DllModel(KernelModel):
         self.info = model_info
         self.dllpath = dllpath
         self._dll = None  # type: ct.CDLL
-        self._kernels = None  # type: List[Callable, Callable]
+        self._kernels = None  # type: list[Callable, Callable]
         self.dtype = np.dtype(dtype)
 
     def _load_dll(self):
@@ -373,16 +374,16 @@ class DllModel(KernelModel):
             k.argtypes = argtypes
 
     def __getstate__(self):
-        # type: () -> Tuple[ModelInfo, str]
+        # type: () -> tuple[ModelInfo, str]
         return self.info, self.dllpath
 
     def __setstate__(self, state):
-        # type: (Tuple[ModelInfo, str]) -> None
+        # type: (tuple[ModelInfo, str]) -> None
         self.info, self.dllpath = state
         self._dll = None
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> DllKernel
+        # type: (list[np.ndarray]) -> DllKernel
         q_input = PyInput(q_vectors, self.dtype)
         # Note: DLL is lazy loaded.
         if self._dll is None:
@@ -447,7 +448,7 @@ class DllKernel(Kernel):
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
                      radius_effective_mode):
-        # type: (CallDetails, np.ndarray, float, bool, int)
+        # type: (CallDetails, np.ndarray, float, bool, int) -> None
 
         # Setup kernel function and arguments.
         kernel = self.kernel[1 if magnetic else 0]

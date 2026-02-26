@@ -2,10 +2,10 @@
 """
 Generate the Gauss-Legendre integration points and save them as a C file.
 """
-from __future__ import division, print_function
 
 import numpy as np
 from numpy.polynomial.legendre import leggauss
+
 
 def gengauss(n, path):
     """

@@ -2,22 +2,19 @@
 Explore integration of rotationally symmetric shapes
 """
 
-from __future__ import print_function, division
 
-import os, sys
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import numpy as np
-from numpy import pi, sin, cos, sqrt, exp, expm1, degrees, log10
-from numpy.polynomial.legendre import leggauss
-from scipy.integrate import dblquad, simps, romb, romberg
 import pylab
+from numpy import cos, degrees, pi, sin, sqrt
+from numpy.polynomial.legendre import leggauss
+from scipy.integrate import romb, romberg, simps
 
-from sasmodels.special import square
-from sasmodels.special import Gauss20Wt, Gauss20Z
-from sasmodels.special import Gauss76Wt, Gauss76Z
-from sasmodels.special import Gauss150Wt, Gauss150Z
-from sasmodels.special import sas_2J1x_x, sas_sinx_x, sas_3j1x_x
+from sasmodels.special import sas_2J1x_x, sas_3j1x_x, sas_sinx_x
 
 SLD = 3.0
 SLD_SOLVENT = 6

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Periodic Table documentation build configuration file, created by
 # sphinx-quickstart on Tue Jun  2 11:16:08 2009.
@@ -11,7 +10,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import os
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -23,7 +23,6 @@ sys.path.insert(0, os.path.abspath('_extensions'))
 sys.path.insert(0, os.path.abspath('.')) # needed for extension tests
 print("\n".join(sys.path))
 import sasmodels
-
 
 nitpick_ignore = [
     ('py:class', 'argparse.Namespace'),

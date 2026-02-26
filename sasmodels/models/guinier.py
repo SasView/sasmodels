@@ -73,7 +73,7 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["rg", "Ang", 60.0, [-inf, inf], "", "Radius of Gyration"]]
 
-source = ["guinier.c"] 
+source = ["guinier.c"]
 
 
 def random():

@@ -57,7 +57,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, errstate
+from numpy import errstate, inf
 
 name = "spinodal"
 title = "Spinodal decomposition model"

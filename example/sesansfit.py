@@ -1,8 +1,12 @@
 import logging
 
-from bumps.names import *
-from sasmodels import core, bumps_model, sesans
+import numpy as np
+from bumps.names import FitProblem
+
 from sasdata.dataloader.loader import Loader
+
+from sasmodels import bumps_model, core
+
 
 def get_bumps_model(model_name):
     kernel = core.load_model(model_name)
@@ -28,7 +32,7 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[],
         loader = Loader()
         data = loader.load(file)[0]
         if data is None:
-            raise IOError("Could not load file %r"%(file))
+            raise OSError("Could not load file %r"%(file))
 
     except Exception:
         raise

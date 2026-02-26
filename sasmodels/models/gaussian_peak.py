@@ -51,7 +51,7 @@ parameters = [["peak_pos", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
                "Peak width (standard deviation)"],
              ]
 
-source = ["gaussian_peak.c"]  
+source = ["gaussian_peak.c"]
 
 def random():
     """Return a random parameter set for the model."""

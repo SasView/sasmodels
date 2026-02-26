@@ -154,7 +154,7 @@ def Iq(q,
                                             ionization_degree * concentration_pol)
 
     r0_square = 1.0/ionization_degree/sqrt(concentration_pol) * \
-                (monomer_length/sqrt((48.0*pi*bjerrum_length)))
+                (monomer_length/sqrt(48.0*pi*bjerrum_length))
 
     term1 = contrast_factor/(4.0 * pi * bjerrum_length *
                              ionization_degree**2) * (q**2 + k_square)
