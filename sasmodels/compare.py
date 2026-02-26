@@ -30,9 +30,9 @@ import datetime
 import math
 import os
 import re
-from dataclasses import dataclass
 import sys
 import traceback
+from dataclasses import dataclass
 
 # pylint: disable=unused-import
 from typing import Callable
@@ -1584,10 +1584,11 @@ def explore(opts):
 
 def webview_explore(problem):
     import logging
-    from aiohttp import web
-    from bumps.webview.server.cli import BumpsOptions
-    from bumps.webview.server import api
+
     import bumps.webview.server.webserver as server
+    from aiohttp import web
+    from bumps.webview.server import api
+    from bumps.webview.server.cli import BumpsOptions
 
     logging.getLogger("webview").setLevel(logging.WARNING)
 
@@ -1600,7 +1601,6 @@ def wx_explore(problem):
     import wx  # type: ignore
     from bumps.gui import signal
     from bumps.gui.app_frame import AppFrame  # type: ignore
-    from bumps.names import FitProblem  # type: ignore
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
