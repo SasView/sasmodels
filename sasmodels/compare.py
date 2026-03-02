@@ -971,7 +971,7 @@ def plot_models(opts, result, limits=None, setnum=0):
     if have_base:
         if have_comp:
             plt.subplot(221)
-        plot_theory(base_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits)
+        plot_theory(base_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits, backend='matplotlib')
         if setnum > 0:
             plt.legend([f"Set {k+1}" for k in range(setnum+1)], loc='best')
         plt.title("%s t=%.2f ms"%(base.model.info.name, base_time))
@@ -985,8 +985,8 @@ def plot_models(opts, result, limits=None, setnum=0):
         if have_base:
             plt.subplot(223)
         if not opts['is2d'] and have_base:
-            plot_theory(comp_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits)
-        plot_theory(comp_data, comp_value, label=comp_name, view=view, use_data=use_data, limits=limits)
+            plot_theory(comp_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits, backend='matplotlib')
+        plot_theory(comp_data, comp_value, label=comp_name, view=view, use_data=use_data, limits=limits, backend='matplotlib')
         plt.title("%s t=%.2f ms"%(comp.model.info.name, comp_time))
         #plt.gca().tick_params(labelbottom=False, labelleft=False)
         #plt.gca().set_yticks([])
@@ -1008,7 +1008,7 @@ def plot_models(opts, result, limits=None, setnum=0):
         # Note: base_data only since base and comp have same q values (though
         # perhaps different resolution), and we are plotting the difference
         # at each q
-        plot_theory(base_data, err, view=errview, label=errstr, use_data=use_data)
+        plot_theory(base_data, err, view=errview, label=errstr, use_data=use_data, backend='matplotlib')
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         if opts['is2d']:
@@ -1017,14 +1017,6 @@ def plot_models(opts, result, limits=None, setnum=0):
             plt.ylabel('')
         else:
             plt.ylabel(errstr)
-
-        #cbar_title = errstr if errview=="linear" else "log "+errstr
-    # if is2D:
-    #     h = plt.colorbar()
-    #     h.ax.set_title(cbar_title)
-    # fig = plt.gcf()
-    # extra_title = ' '+opts['title'] if opts['title'] else ''
-    # fig.suptitle(":".join(opts['name']) + extra_title)
 
     if have_base and have_comp and opts['show_hist']:
         plt.figure()

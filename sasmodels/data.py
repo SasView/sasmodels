@@ -1004,7 +1004,10 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
 
+        plot_number = 0
         def add_trace(trace, row, col, label):
+            nonlocal plot_number
+            plot_number += 1
             colorbar = dict(
                 title=dict(text=label, side='right'),
                 yanchor="bottom",
@@ -1013,15 +1016,32 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None, label='theo
             if num_plots == 1:
                 trace.update(colorbar=colorbar)
                 fig.add_trace(trace)
-                fig.update_xaxes(scaleanchor=f"y{row}", scaleratio=1)
-                fig.update_yaxes(scaleanchor=f"x{col}", scaleratio=1)
+                # Use square pixels
+                fig.update_xaxes(scaleanchor="y", scaleratio=1)
             else:
-                trace.update(colorbar=dict(x=col/2-0.05, y=1-(row/2-0.05), len=0.45, **colorbar))
+                if col==1: # data colorbar is full height; x position is tied to column width
+                    cbarpos = dict(x=0.6, y=0.05, len=0.95)
+                else: # theory and residual colorbars are half height
+                    cbarpos = dict(x=1.0, y=1-(row/2-0.05), len=0.45)
+                trace.update(colorbar={**cbarpos, **colorbar})
                 fig.add_trace(trace, row=row, col=col)
-                fig.update_xaxes(row=row, col=col, scaleanchor=f"y{row}", scaleratio=1)
-                fig.update_yaxes(row=row, col=col, scaleanchor=f"x{col}", scaleratio=1)
+                # Use square pixels
+                # scaleanchor y{n} refers to the nth axes (1-origin) on the list of axes.
+                fig.update_xaxes(row=row, col=col, scaleanchor=f"y{plot_number}", scaleratio=1)
 
-        fig = make_subplots(rows=2, cols=2) if num_plots > 1 else go.Figure()
+        if num_plots > 1:
+            # Layout with data on left and theory + residuals stacked on the right.
+            # Data gets most of the width.
+            fig = make_subplots(
+                rows=2, cols=2,
+                column_widths=[0.7, 0.3],
+                horizontal_spacing=0.15,
+                row_heights=[0.5, 0.5],
+                specs=[[{'rowspan': 2}, {}], [None, {}]],
+                )
+        else:
+            # Single plot takes up the whole space
+            fig = go.Figure()
         if use_data:
             trace = _plot_2d_signal(data, active_data, view=view, limits=limits, backend=backend)
             add_trace(trace, 1, 1, data_label)
@@ -1120,29 +1140,21 @@ def _plot_2d_signal(data, signal, limits=None, view=None, label=None, backend='m
         plt.imshow(masked_z,
                 interpolation='nearest', aspect='equal', origin='lower',
                 extent=[xmin, xmax, ymin, ymax],
-                vmin=limits[0], vmax=limits[1])
+                vmin=limits[0], vmax=limits[1], label=label)
         plt.xlabel("q_x/Å")
         plt.ylabel("q_y/Å")
 
-        # When plotting in bumps webview with mpld3 the chisq value is printed
-        # above the right hand corner of the data graph. Move the labels for the
-        # graphs to the left hand side to avoid collision. Unfortunately, mpld3
-        # doesn't understand title with loc="left", so do the label as a text string
-        # on the axes.
-        if 0:
-            #plt.title(label, loc="left")
-            plt.title(label)
-        else:
-            ax = plt.gca()
-            transform = ax.transAxes
-            h_ex = 30  # assume we are 50 lines tall, so that 2/30 ~ 0.08
-            text_offset = 0.5 / h_ex  # 1/2 ex above and below the text
-            x, y = text_offset, 1 + text_offset
-            ha, va = "left", "bottom"
-            ax.text(x, y, label, transform=transform, va=va, ha=ha)
+        # Put the label on the top left of the plot.
+        _mpl_2d_label(plt.gca(), label)
 
-        #h = plt.colorbar(location='right')
-        #h.set_label(label)
+def _mpl_2d_label(ax, title):
+    transform = ax.transAxes
+    h_ex = 30  # assume we are 50 lines tall, so that 2/30 ~ 0.08
+    text_offset = 0.5 / h_ex  # 1/2 ex above and below the text
+    x, y = text_offset, 1- text_offset
+    ha, va = "left", "top"
+    t = ax.text(x, y, title, transform=transform, va=va, ha=ha)
+    t.set_bbox(dict(facecolor='white', edgecolor='white', alpha=0.7))
 
 
 # === The following is modified from sas.sasgui.plottools.PlotPanel
