@@ -277,9 +277,8 @@ class Experiment(DataMixin):
     def plot(self, view=None):
         return self._plot(view=view, backend='matplotlib')
 
-    # # Bumps doesn't yet support 2D plots with plotly.
-    # def plotly(self, view=None):
-    #     return self._plot(view=view, backend='plotly')
+    def plotly(self, view=None):
+        return self._plot(view=view, backend='plotly')
 
     def simulate_data(self, noise=None):
         # type: (float) -> None
