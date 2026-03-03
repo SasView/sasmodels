@@ -1,4 +1,3 @@
-import numpy as np
 from bumps.names import FitProblem, FreeVariables
 
 from sasdata import data_path
@@ -22,14 +21,14 @@ pars = dict(scale=0.01, background=0.0, sld=5.0, sld_solvent=0.0, radius=1500.,
 model = Model(kernel, **pars)
 
 # radius and polydispersity (if any) are shared
-model.radius.range(0, np.inf)
+model.radius.range(0, 3000.)
 #model.radius_pd.range(0, 1)
 
 # Contrast and dilution are the same for both measurements, but are not
 # separable with a single measurement (i.e., I(q) ~ F(q) contrast^2 Vf),
 # so fit one of scale, sld or solvent sld.  With absolute scaling from
 # data reduction, can use the same parameter for both datasets.
-model.scale.range(0, np.inf)
+model.scale.range(0, 1.0)
 #model.sld.range(-inf, inf)
 #model.sld_solvent.range(-inf, inf)
 
@@ -39,7 +38,7 @@ free = FreeVariables(
     names=[data.run[0] for data in datasets],
     background=model.background,
     )
-free.background.range(-np.inf, np.inf)
+free.background.range(-1, 1)
 
 # Note: can access the parameters for the individual models using
 # free.background[0] and free.background[1], setting constraints or
