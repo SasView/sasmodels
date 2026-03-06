@@ -373,6 +373,9 @@ def slit_resolution(q_calc, q, *, q_length=0., q_width=0., n_length=30):
             # to ever increasing weights. We can't see this in SasView since
             # it explicitly excludes q_length < 10 q_width.
             weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*wi)
+
+            # Make sure we don't accidentally use this code.
+            raise NotImplementedError("We do not yet handle the q_length=0.0 case for all q_width.")
         else:
             for k in range(-n_length, n_length+1):
                 weights[i, :] += _q_perp_weights(q_edges, qi+k*wi/n_length, li)
@@ -682,7 +685,7 @@ class ResolutionTest(unittest.TestCase):
         output = resolution.apply(theory)
         np.testing.assert_equal(output, self.y)
 
-    @unittest.skip("not yet supported")
+    @unittest.skip("target values not verified")
     def test_slit_long(self):
         """
         Slit smearing with q_length=0.005
@@ -697,7 +700,7 @@ class ResolutionTest(unittest.TestCase):
             ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
-    @unittest.skip("not yet supported")
+    @unittest.skip("target values not verified")
     def test_slit_both_high(self):
         """
         Slit smearing with q_width < 100*q_length.
@@ -715,8 +718,7 @@ class ResolutionTest(unittest.TestCase):
         ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
-    # Broken code. See sasmodels #697
-    @unittest.skip("not yet supported")
+    @unittest.skip("Code is broken. See sasmodels #697")
     def test_slit_wide(self):
         """
         Slit smearing with q_width 0.0002
@@ -732,7 +734,7 @@ class ResolutionTest(unittest.TestCase):
         ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
-    @unittest.skip("not yet supported")
+    @unittest.skip("Target values have not been verified.")
     def test_slit_both_wide(self):
         """
         Slit smearing with q_width > 100*q_length.
