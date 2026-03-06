@@ -47,11 +47,11 @@ To show the orientation explorer::
     (sasmodels) $ python -m sasmodels.jitter
 
 Documentation is available online as part of the SasView
-`fitting perspective <http://www.sasview.org/docs/index.html>`_
+`fitting perspective <https://www.sasview.org/docs/index.html>`_
 as well as separate pages for
-`individual models <http://www.sasview.org/docs/user/sasgui/perspectives/fitting/models/index.html>`_.
+`individual models <https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/models/index.html>`_.
 Programming details for sasmodels are available in the
-`developer documentation <http://www.sasview.org/docs/dev/dev.html>`_.
+`developer documentation <https://www.sasview.org/docs/dev/dev.html>`_.
 
 
 Fitting Example

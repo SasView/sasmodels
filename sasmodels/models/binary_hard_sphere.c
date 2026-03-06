@@ -58,8 +58,8 @@ double Iq(double q,
 
     sc1 = sas_3j1x_x(qr1);
     sc2 = sas_3j1x_x(qr2);
-    b1 = r1*r1*r1*(rho1-rhos)*M_4PI_3*sc1;
-    b2 = r2*r2*r2*(rho2-rhos)*M_4PI_3*sc2;
+    b1 = (rho1-rhos)*sc1*v1;
+    b2 = (rho2-rhos)*sc2*v2;
     inten = n1*b1*b1*psf11;
     inten += sqrt(n1*n2)*2.0*b1*b2*psf12;
     inten += n2*b2*b2*psf22;
@@ -70,7 +70,10 @@ double Iq(double q,
     return(inten);
 }
 
-
+// r1 is small radius
+// r2 is large radius
+// aa is r1/r2
+// phi is volume fraction
 void calculate_psfs(double qval,
     double r2, double nf2,
     double aa, double phi,
@@ -84,6 +87,9 @@ void calculate_psfs(double qval,
     double yy,ay,ay2,ay3,t1,t2,t3,f11,y2,y3,tt1,tt2,tt3;
     double c11,c22,c12,f12,f22,ttt1,ttt2,ttt3,ttt4,yl,y13;
     double t21,t22,t23,t31,t32,t33,t41,t42,yl3,wma3,y1;
+
+    // TODO: still numerically unstable with this cutoff
+    const double cutoff = 0.04;
 
     s2 = 2.0*r2;
 //    s1 = aa*s2;  why is this never used?  check original paper?
@@ -116,18 +122,26 @@ void calculate_psfs(double qval,
     ay=aa*yy;
     ay2 = ay*ay;
     ay3 = ay*ay*ay;
+    // [PAK] lim ay=>0 t1/ay3 = a1/3
+    // [PAK] lim ay=>0 t2/ay3 = b1/4
+    // [PAK] lim ay=>0 t3/ay3 = gm1/6
+    // [PAK] lim ay=>0 f11 = 24*v1*(a1/3 + b1/4 + gm1/6)
     t1=a1*(sin(ay)-ay*cos(ay));
     t2=b1*(2.*ay*sin(ay)-(ay2-2.)*cos(ay)-2.)/ay;
     t3=gm1*((4.*ay*ay2-24.*ay)*sin(ay)-(ay2*ay2-12.*ay2+24.)*cos(ay)+24.)/ay3;
-    f11=24.*v1*(t1+t2+t3)/ay3;
+    f11=24.*v1*((ay>cutoff) ? (t1+t2+t3)/ay3 : (a1/3 + b1/4 + gm1/6));
 
     //c ------c22
+    // [PAK] lim yy=>0 tt1/y3 = a2/3
+    // [PAK] lim yy=>0 tt2/y3 = b2/4
+    // [PAK] lim yy=>0 tt3/y3 = gm1/(6aa^3)
+    // [PAK] lim yy=>0 f22 = 24*v2*(a2/3 + b2/4 + gm1/(6aa^3))
     y2=yy*yy;
     y3=yy*y2;
     tt1=a2*(sin(yy)-yy*cos(yy));
     tt2=b2*(2.*yy*sin(yy)-(y2-2.)*cos(yy)-2.)/yy;
     tt3=gm1*((4.*y3-24.*yy)*sin(yy)-(y2*y2-12.*y2+24.)*cos(yy)+24.)/ay3;
-    f22=24.*v2*(tt1+tt2+tt3)/y3;
+    f22=24.*v2*((yy>cutoff) ? (tt1+tt2+tt3)/y3 : (a2/3. + b2/4. + gm1/(a3*6.)));
 
     //c   -----c12
     yl=.5*yy*(1.-aa);
@@ -135,18 +149,38 @@ void calculate_psfs(double qval,
     wma3 = (1.-aa)*(1.-aa)*(1.-aa);
     y1=aa*yy;
     y13 = y1*y1*y1;
-    ttt1=3.*wma3*v*sqrt(nf2)*sqrt(1.-nf2)*a1*(sin(yl)-yl*cos(yl))/((nf2+(1.-nf2)*a3)*yl3);
-    t21=b12*(2.*y1*cos(y1)+(y1*y1-2.)*sin(y1));
-    t22=gm12*((3.*y1*y1-6.)*cos(y1)+(y1*y1*y1-6.*y1)*sin(y1)+6.)/y1;
-    t23=gm1*((4.*y13-24.*y1)*cos(y1)+(y13*y1-12.*y1*y1+24.)*sin(y1))/(y1*y1);
-    t31=b12*(2.*y1*sin(y1)-(y1*y1-2.)*cos(y1)-2.);
-    t32=gm12*((3.*y1*y1-6.)*sin(y1)-(y1*y1*y1-6.*y1)*cos(y1))/y1;
-    t33=gm1*((4.*y13-24.*y1)*sin(y1)-(y13*y1-12.*y1*y1+24.)*cos(y1)+24.)/(y1*y1);
-    t41=cos(yl)*((sin(y1)-y1*cos(y1))/(y1*y1) + (1.-aa)/(2.*aa)*(1.-cos(y1))/y1);
-    t42=sin(yl)*((cos(y1)+y1*sin(y1)-1.)/(y1*y1) + (1.-aa)/(2.*aa)*sin(y1)/y1);
-    ttt2=sin(yl)*(t21+t22+t23)/(y13*y1);
-    ttt3=cos(yl)*(t31+t32+t33)/(y13*y1);
-    ttt4=a1*(t41+t42)/y1;
+    if (yl > cutoff) {
+        ttt1=3.*wma3*v*sqrt(nf2)*sqrt(1.-nf2)*a1*(sin(yl)-yl*cos(yl))/((nf2+(1.-nf2)*a3)*yl3);
+    } else {
+        // [PAK] ttt1 can be rewritten as follows, with 3 J1(yl)/yl -> 1
+        //    wma3*v*sqrt(nf2)*sqrt(1.-nf2)*a1/(nf2+(1.-nf2)*a3) * 3 J1(yl)/yl;
+        ttt1 = wma3*v*sqrt(nf2)*sqrt(1.-nf2)*a1/(nf2+(1.-nf2)*a3);
+    }
+    if (yy > cutoff) {
+        t21=b12*(2.*y1*cos(y1)+(y1*y1-2.)*sin(y1));
+        t22=gm12*((3.*y1*y1-6.)*cos(y1)+(y1*y1*y1-6.*y1)*sin(y1)+6.)/y1;
+        t23=gm1*((4.*y13-24.*y1)*cos(y1)+(y13*y1-12.*y1*y1+24.)*sin(y1))/(y1*y1);
+        t31=b12*(2.*y1*sin(y1)-(y1*y1-2.)*cos(y1)-2.);
+        t32=gm12*((3.*y1*y1-6.)*sin(y1)-(y1*y1*y1-6.*y1)*cos(y1))/y1;
+        t33=gm1*((4.*y13-24.*y1)*sin(y1)-(y13*y1-12.*y1*y1+24.)*cos(y1)+24.)/(y1*y1);
+        t41=cos(yl)*((sin(y1)-y1*cos(y1))/(y1*y1) + (1.-aa)/(2.*aa)*(1.-cos(y1))/y1);
+        t42=sin(yl)*((cos(y1)+y1*sin(y1)-1.)/(y1*y1) + (1.-aa)/(2.*aa)*sin(y1)/y1);
+        ttt2=sin(yl)*(t21+t22+t23)/(y13*y1);
+        ttt3=cos(yl)*(t31+t32+t33)/(y13*y1);
+        ttt4=a1*(t41+t42)/y1;
+    } else {
+        // [PAK] lim y1=>0 t21 / y1^3 = b12/3
+        // [PAK] lim y1=>0 t22 / y1^3 = gm12/4
+        // [PAK] lim y1=>0 t23 / y1^3 = gm1/5
+        // [PAK] lim y1=>0 t31 / y1^4 = b12/4
+        // [PAK] lim y1=>0 t32 / y1^4 = gm12/5
+        // [PAK] lim y1=>0 t33 / y1^4 = gm1/6
+        // [PAK] lim y=>0 (t41 + t42)/y1 = 1/12 + 1/(4a^2)
+        // [PAK] lim y=>0 sin(yl)/y1 = sin(y(1-a)/2)/(ya) = (1/a - 1)/2
+        ttt2 = (1./aa - 1.)/2. * (b12/3. + gm12/4. + gm1/5.);
+        ttt3 = b12/4. + gm12/5. + gm1/6.;
+        ttt4 = a1 * (1./12. + 1./(4.*aa*aa));
+    }
     f12=ttt1+24.*v*sqrt(nf2)*sqrt(1.-nf2)*a3*(ttt2+ttt3+ttt4)/(nf2+(1.-nf2)*a3);
 
     c11=f11;
@@ -155,6 +189,8 @@ void calculate_psfs(double qval,
     *s11=1./(1.+c11-(c12)*c12/(1.+c22));
     *s22=1./(1.+c22-(c12)*c12/(1.+c11));
     *s12=-c12/((1.+c11)*(1.+c22)-(c12)*(c12));
-
+    //printf("r2=%g nf2=%g aa=%g phi=%g yy=%g ay=%g\n", r2, nf2, aa, phi, yy, ay);
+    //printf("ttt* %g %g %g %g f* %g %g %g\n", ttt1,ttt2,ttt3,ttt4,f11,f22,f12);
+    //printf("return %g %g %g\n", *s11, *s22, *s12);
     return;
 }

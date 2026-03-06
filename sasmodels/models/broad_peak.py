@@ -43,7 +43,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, errstate
+from numpy import errstate, inf
 
 name = "broad_peak"
 title = "Broad peak on top of a power law decay"
@@ -70,7 +70,7 @@ parameters = [["porod_scale",    "",  1.0e-05, [-inf, inf], "", "Power law scale
               ["correlation_length", "Ang",  50.0, [-inf, inf], "", "screening length"],
               ["peak_pos",       "1/Ang", 0.1, [-inf, inf], "", "Peak position in q"],
               ["width_exp",    "",      2.0, [-inf, inf], "", "Exponent of peak width"],
-              ["shape_exp",    "",      1.0, [-inf, inf], "", "Exponent of peak shape"],              
+              ["shape_exp",    "",      1.0, [-inf, inf], "", "Exponent of peak shape"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -90,7 +90,7 @@ def Iq(q,
     :param correlation_length:   Correlation length
     :param peak_pos:             Peak position in q
     :param width_exp:            Exponent of peak width
-    :param shape_exp:            Exponent of peak shape    
+    :param shape_exp:            Exponent of peak shape
     :return:                     Calculated intensity
     """
     z = abs(q - peak_pos) * correlation_length
@@ -110,7 +110,7 @@ def random():
         correlation_length=10**np.random.uniform(0, 2),
         peak_pos=10**np.random.uniform(-3, -1),
         width_exp=np.random.uniform(1, 4),
-        shape_exp=np.random.uniform(1, 2),      
+        shape_exp=np.random.uniform(1, 2),
     )
     pars['correlation_length'] /= pars['peak_pos']
     pars['peak_scale'] *= pars['porod_scale'] / pars['peak_pos']**pars['porod_exp']

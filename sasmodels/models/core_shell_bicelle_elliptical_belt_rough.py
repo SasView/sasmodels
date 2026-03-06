@@ -121,7 +121,7 @@ Authorship and Verification
 * **Last Reviewed by:**  Richard Heenan 2d calc seems agree with 1d **Date:** Nov 2, 2017
 """
 
-from numpy import inf, sin, cos, pi
+from numpy import cos, inf, pi, sin
 
 name = "core_shell_bicelle_elliptical_belt_rough"
 title = "Elliptical cylinder with a core-shell scattering length density profile.."

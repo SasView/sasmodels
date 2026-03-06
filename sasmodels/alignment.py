@@ -19,6 +19,7 @@ to decide whether it is really required.
 """
 import numpy as np  # type: ignore
 
+
 def align_empty(shape, dtype, alignment=128):
     """
     Return an empty array aligned on the alignment boundary.

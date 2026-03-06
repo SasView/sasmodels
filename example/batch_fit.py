@@ -46,13 +46,12 @@ Note:
     If sasmodels, sasview or bumps are not in the path, use the PYTHONPATH
     environment variable to set them.
 """
-from __future__ import print_function
 
-import sys
 import os
+import sys
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from bumps.dream.views import tile_axes  # make a grid of plots
 
 # GET INPUT AND ENSURE MODEL AND DATA FILES ARE DEFINED
@@ -109,7 +108,7 @@ for data_file in data_files:
 results = {}
 par_file = os.path.splitext(model_file)[0] + '.par'
 for data_file in data_files:
-    with open(os.path.join(fit_dir(data_file), par_file), 'r') as fid:
+    with open(os.path.join(fit_dir(data_file), par_file)) as fid:
         for line in fid:
             parameter, value = line.split()
             results.setdefault(parameter, []).append(float(value))

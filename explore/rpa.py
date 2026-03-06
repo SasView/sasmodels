@@ -1,6 +1,7 @@
 from collections import namedtuple
+
 import numpy as np
-from numpy import sqrt, exp, expm1
+from numpy import exp, expm1, sqrt
 
 AVOGADRO = 6.022e23
 
@@ -130,17 +131,21 @@ def build_pars(case_num, polys, **interactions):
     pars = interactions.copy()
     pars["case_num"] = case_num
     polys = list(reversed(polys))
-    if len(polys) >= 4: set_poly("a",polys[3])
-    if len(polys) >= 3: set_poly("b",polys[2])
-    if len(polys) >= 2: set_poly("c",polys[1])
-    if len(polys) >= 1: set_poly("d",polys[0])
+    if len(polys) >= 4:
+        set_poly("a",polys[3])
+    if len(polys) >= 3:
+        set_poly("b",polys[2])
+    if len(polys) >= 2:
+        set_poly("c",polys[1])
+    if len(polys) >= 1:
+        set_poly("d",polys[0])
     return pars
 
 def sasmodels_rpa(q, pars):
-    from sasmodels.models import rpa
     from sasmodels.core import load_model
-    from sasmodels.direct_model import DirectModel
     from sasmodels.data import empty_data1D
+    from sasmodels.direct_model import DirectModel
+    from sasmodels.models import rpa
     data = empty_data1D(q, resolution=0.0)
     model = load_model(rpa, dtype="double", platform="dll")
     #model = load_model(rpa, dtype="single", platform="ocl")
@@ -148,9 +153,9 @@ def sasmodels_rpa(q, pars):
     return M(**pars)
 
 def sasview_rpa(q, pars):
-    from sasmodels.models import rpa
     from sasmodels.compare import eval_sasview
     from sasmodels.data import empty_data1D
+    from sasmodels.models import rpa
     data = empty_data1D(q, resolution=0.0)
     M = eval_sasview(rpa, data)
     return M(**pars)
@@ -179,11 +184,11 @@ def demo():
         raise ValueError("Case %d not implmented"%case_num)
 
     pars = build_pars(case_num, [B, C, D], **K)
-    print "eval sasmodels"
+    print("eval sasmodels")
     Iq_sasmodels = sasmodels_rpa(q, pars)
-    print "eval sasview"
+    print("eval sasview")
     Iq_sasview = sasview_rpa(q, pars)
-    print 1./Iq[0], 1./Iq_sasmodels[0], 1./Iq_sasview[0]
+    print(1./Iq[0], 1./Iq_sasmodels[0], 1./Iq_sasview[0])
 
     #return
     import pylab

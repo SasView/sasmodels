@@ -1,19 +1,18 @@
-from __future__ import division, print_function
 # Make sasmodels available on the path
-import sys, os
+import os
+import sys
+from collections import namedtuple
+
+import numpy as np
+from matplotlib import pyplot as plt
+from numpy import cos, fabs, inf, pi, sin, sqrt
+from numpy.polynomial.legendre import leggauss
+from scipy.special import gammaln  # type: ignore
+from scipy.special import j1 as J1
+
 BETA_DIR = os.path.dirname(os.path.realpath(__file__))
 SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
 sys.path.insert(0, SASMODELS_DIR)
-
-from collections import namedtuple
-
-from matplotlib import pyplot as plt
-import numpy as np
-from numpy import pi, sin, cos, sqrt, fabs
-from numpy.polynomial.legendre import leggauss
-from scipy.special import j1 as J1
-from numpy import inf
-from scipy.special import gammaln  # type: ignore
 
 Theory = namedtuple('Theory', 'Q F1 F2 P S I Seff Ibeta')
 Theory.__new__.__defaults__ = (None,) * len(Theory._fields)
@@ -52,7 +51,8 @@ def sas_3j1x_x(x):
 
 #Used to cross check my models with sasview models
 def build_model(model_name, q, **pars):
-    from sasmodels.core import load_model_info, build_model as build_sasmodel
+    from sasmodels.core import build_model as build_sasmodel
+    from sasmodels.core import load_model_info
     from sasmodels.data import empty_data1D
     from sasmodels.direct_model import DirectModel
     model_info = load_model_info(model_name)
@@ -373,7 +373,7 @@ def data_file(name):
 
 def load_sasfit(path):
     data = np.loadtxt(path, dtype=str, delimiter=';').T
-    data = np.vstack((map(float, v) for v in data[0:2]))
+    data = np.vstack([map(float, v) for v in data[0:2]])
     return data
 
 COMPARISON = {}  # Type: Dict[(str,str,str)] -> Callable[(), None]
@@ -548,44 +548,51 @@ def compare_sasfit_ellipsoid_gaussian():
     pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0, radius_effective=None)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, P=PQ0)
-    compare("sasfit ellipsoid no poly", target, actual); plt.show()
+    compare("sasfit ellipsoid no poly", target, actual)
+    plt.show()
 
     #N=1,s=2,X0=20,distr 10% polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
     Q, PQ_Rp10 = load_sasfit(data_file('sasfit_ellipsoid_IQD.txt'))
     pars.update(volfraction=0, radius_polar_pd=0.1, radius_equatorial_pd=0.0, radius_effective=None)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, P=PQ_Rp10)
-    compare("sasfit ellipsoid P(Q) 10% Rp", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 10% Rp", target, actual)
+    plt.show()
     #N=1,s=1,X0=10,distr 10% equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
     Q, PQ_Re10 = load_sasfit(data_file('sasfit_ellipsoid_IQD2.txt'))
     pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0.1, radius_effective=None)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, P=PQ_Re10)
-    compare("sasfit ellipsoid P(Q) 10% Re", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 10% Re", target, actual)
+    plt.show()
     #N=1,s=6,X0=20,distr 30% polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
     Q, PQ_Rp30 = load_sasfit(data_file('sasfit_ellipsoid_IQD3.txt'))
     pars.update(volfraction=0, radius_polar_pd=0.3, radius_equatorial_pd=0.0, radius_effective=None)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, P=PQ_Rp30)
-    compare("sasfit ellipsoid P(Q) 30% Rp", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 30% Rp", target, actual)
+    plt.show()
     #N=1,s=3,X0=10,distr 30% equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
     Q, PQ_Re30 = load_sasfit(data_file('sasfit_ellipsoid_IQD4.txt'))
     pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0.3, radius_effective=None)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, P=PQ_Re30)
-    compare("sasfit ellipsoid P(Q) 30% Re", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 30% Re", target, actual)
+    plt.show()
     #N=1,s=12,X0=20,distr 60% polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
     Q, PQ_Rp60 = load_sasfit(data_file('sasfit_ellipsoid_IQD5.txt'))
     pars.update(volfraction=0, radius_polar_pd=0.6, radius_equatorial_pd=0.0, radius_effective=None)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, P=PQ_Rp60)
-    compare("sasfit ellipsoid P(Q) 60% Rp", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 60% Rp", target, actual)
+    plt.show()
     #N=1,s=6,X0=10,distr 60% equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
     Q, PQ_Re60 = load_sasfit(data_file('sasfit_ellipsoid_IQD6.txt'))
     pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0.6, radius_effective=None)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, P=PQ_Re60)
-    compare("sasfit ellipsoid P(Q) 60% Re", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 60% Re", target, actual)
+    plt.show()
 
     #N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.15
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq.txt'))
@@ -593,21 +600,24 @@ def compare_sasfit_ellipsoid_gaussian():
     pars.update(volfraction=0.15, radius_polar_pd=0.1, radius_equatorial_pd=0, radius_effective=13.1354236254)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 10% Rp 15% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 10% Rp 15% Vf", target, actual)
+    plt.show()
     #N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.15
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq2.txt'))
     Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff2.txt'))
     pars.update(volfraction=0.15, radius_polar_pd=0.3, radius_equatorial_pd=0, radius_effective=13.0901197149)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 30% Rp 15% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 30% Rp 15% Vf", target, actual)
+    plt.show()
     #N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.15
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq3.txt'))
     Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff3.txt'))
     pars.update(volfraction=0.15, radius_polar_pd=0.6, radius_equatorial_pd=0, radius_effective=13.336060917)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 60% Rp 15% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 60% Rp 15% Vf", target, actual)
+    plt.show()
 
     #N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.3
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq4.txt'))
@@ -615,21 +625,24 @@ def compare_sasfit_ellipsoid_gaussian():
     pars.update(volfraction=0.3, radius_polar_pd=0.1, radius_equatorial_pd=0, radius_effective=13.1354236254)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 10% Rp 30% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 10% Rp 30% Vf", target, actual)
+    plt.show()
     #N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.3
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq5.txt'))
     Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff5.txt'))
     pars.update(volfraction=0.3, radius_polar_pd=0.3, radius_equatorial_pd=0, radius_effective=13.0901197149)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 30% Rp 30% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 30% Rp 30% Vf", target, actual)
+    plt.show()
     #N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.3
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq6.txt'))
     Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff6.txt'))
     pars.update(volfraction=0.3, radius_polar_pd=0.6, radius_equatorial_pd=0, radius_effective=13.336060917)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 60% Rp 30% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 60% Rp 30% Vf", target, actual)
+    plt.show()
 
     #N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.6
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq7.txt'))
@@ -637,21 +650,24 @@ def compare_sasfit_ellipsoid_gaussian():
     pars.update(volfraction=0.6, radius_polar_pd=0.1, radius_equatorial_pd=0, radius_effective=13.1354236254)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 10% Rp 60% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 10% Rp 60% Vf", target, actual)
+    plt.show()
     #N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.6
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq8.txt'))
     Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff8.txt'))
     pars.update(volfraction=0.6, radius_polar_pd=0.3, radius_equatorial_pd=0, radius_effective=13.0901197149)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 30% Rp 60% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 30% Rp 60% Vf", target, actual)
+    plt.show()
     #N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.6
     Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq9.txt'))
     Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff9.txt'))
     pars.update(volfraction=0.6, radius_polar_pd=0.6, radius_equatorial_pd=0, radius_effective=13.336060917)
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
-    compare("sasfit ellipsoid P(Q) 60% Rp 60% Vf", target, actual); plt.show()
+    compare("sasfit ellipsoid P(Q) 60% Rp 60% Vf", target, actual)
+    plt.show()
 COMPARISON[('sasfit', 'ellipsoid', 'gaussian')] = compare_sasfit_ellipsoid_gaussian
 
 def main():

@@ -11,12 +11,11 @@ this data.  Use :func:`make_details` to build a *details* object which
 can be passed to one of the computational kernels.
 """
 
-from __future__ import print_function
 
 import numpy as np  # type: ignore
-from numpy import cos, sin, radians
+from numpy import cos, radians, sin
 
-from .modelinfo import NUM_MAGNETIC_PARS, NUM_COMMON_PARS
+from .modelinfo import NUM_COMMON_PARS, NUM_MAGNETIC_PARS
 
 try:
     np.meshgrid([])
@@ -32,15 +31,16 @@ except Exception:
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Tuple, Sequence
-    from .modelinfo import ModelInfo, ParameterTable
+    from collections.abc import Sequence
+
     from .kernel import Kernel
+    from .modelinfo import ModelInfo, ParameterTable
 except ImportError:
     pass
 # pylint: enable=unused-import
 
 
-class CallDetails(object):
+class CallDetails:
     """
     Manage the polydispersity information for the kernel call.
 
@@ -64,7 +64,7 @@ class CallDetails(object):
     parameter in the model.  In practice, the normalization term cancels
     if the latitude is not a polydisperse parameter.
     """
-    parts = None  # type: List["CallDetails"]
+    parts = None  # type: list["CallDetails"]
     def __init__(self, model_info):
         # type: (ModelInfo) -> None
         parameters = model_info.parameters
@@ -223,7 +223,7 @@ def make_details(model_info, length, offset, num_weights):
 
 ZEROS = tuple([0.]*31)
 def make_kernel_args(kernel, mesh):
-    # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
+    # type: (Kernel, tuple[list[np.ndarray], list[np.ndarray]]) -> tuple[CallDetails, np.ndarray, bool]
     """
     Converts (value, dispersity, weight) for each parameter into kernel pars.
 
@@ -307,7 +307,7 @@ def convert_magnetism(parameters, values):
 
 
 def dispersion_mesh(model_info, mesh):
-    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> Tuple[List[np.ndarray], List[np.ndarray]]
+    # type: (ModelInfo, list[tuple[float, np.ndarray, np.ndarray]]) -> tuple[list[np.ndarray], list[np.ndarray]]
     """
     Create a mesh grid of dispersion parameters and weights.
 

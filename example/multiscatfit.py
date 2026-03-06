@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Fit model using multiple scattering.
 
@@ -27,12 +26,11 @@ same directory).  You probably need a command such as::
     sasview.exe bumps.cli multiscatfit.py --store=t1
 """
 
-import sys
-from bumps.names import *
-from sasmodels.core import load_model
-from sasmodels.bumps_model import Model, Experiment
-from sasmodels.data import load_data, set_beam_stop, set_top
+from bumps.names import FitProblem
 
+from sasmodels.bumps_model import Experiment, Model
+from sasmodels.core import load_model
+from sasmodels.data import load_data
 from sasmodels.multiscat import MultipleScattering
 
 ## Load the data
@@ -80,4 +78,5 @@ problem = FitProblem(M)
 if __name__ == "__main__":
     #M.theory()
     M.plot()
-    import pylab; pylab.show()
+    import pylab
+    pylab.show()

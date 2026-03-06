@@ -13,7 +13,12 @@ Models can be written in python or in C.  C models can run on the GPU if
 OpenCL drivers are available.  See :mod:`.generate` for details on
 defining new models.
 """
-__version__ = "1.0.8"
+
+try:
+    from ._version import __version__
+except ImportError:
+    __version__ = "0.0.0.dev"
+
 
 def data_files():
     """
@@ -22,10 +27,10 @@ def data_files():
     The format is a list of (directory, [files...]) pairs which can be
     used directly in setup(...,data_files=...) for setup.py.
     """
-    from os.path import join as joinpath
     import glob
+    from os.path import join as joinpath
 
-    from .generate import EXTERNAL_DIR, DATA_PATH
+    from .generate import DATA_PATH, EXTERNAL_DIR
 
     def _expand_patterns(path, patterns):
         target_path = joinpath(EXTERNAL_DIR, *path)

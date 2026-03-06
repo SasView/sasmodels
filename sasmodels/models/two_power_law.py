@@ -45,7 +45,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, power, empty, errstate
+from numpy import empty, errstate, inf, power
 
 name = "two_power_law"
 title = "This model calculates an empirical functional form for SAS data \

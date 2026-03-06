@@ -1,0 +1,3 @@
+docutils
+pytest
+unittest-xml-reporting

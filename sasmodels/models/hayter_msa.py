@@ -108,7 +108,7 @@ description = """\
 #       in function random() below.
 #
 parameters = [
-    ["radius_effective", "Ang", 20.75,   [0, inf],    "volume", "effective radius of charged sphere"],
+    ["radius_effective", "Ang", 20.75,   [0, inf],    "", "effective radius of charged sphere"],
     ["volfraction",   "None",     0.0192, [0, 0.74],   "", "volume fraction of spheres"],
     ["charge",        "e",   19.0,    [0.000001, 200],    "", "charge on sphere (in electrons)"],
     ["temperature",   "K",  318.16,   [0, 450],    "", "temperature, in Kelvin, for Debye length calculation"],
@@ -127,18 +127,18 @@ form_volume = """
 
 def random():
     """Return a random parameter set for the model."""
-    # TODO: too many failures for random hayter_msa parameters
+    # TODO: 40% failures for random hayter_msa parameters
     pars = dict(
         scale=1, background=0,
-        radius_effective=10**np.random.uniform(1, 4.7),
-        volfraction=10**np.random.uniform(-2, 0),  # high volume fraction
-        charge=min(int(10**np.random.uniform(0, 1.3)+0.5), 200),
-        temperature=10**np.random.uniform(0, np.log10(450)), # max T = 450
-        #concentration_salt=10**np.random.uniform(-3, 1),
-        dialectconst=10**np.random.uniform(0, 6),
+        radius_effective=10**np.random.uniform(0, 4.7), # [1, 50000]
+        volfraction=10**np.random.uniform(-3, -0.3),  # [0.001, 0.5]
+        charge=10**np.random.uniform(-2, 2.3), # [0.01, 200]
+        temperature=np.random.uniform(270, 450), # [270, 450]
+        concentration_salt=10**np.random.uniform(-3, 2), # [0.001, 100]
+        dielectconst=10**np.random.uniform(0, 2.3), # [1, 200]
         #charge=10,
         #temperature=318.16,
-        concentration_salt=0.0,
+        #concentration_salt=0.0,
         #dielectconst=71.08,
     )
     return pars
@@ -161,19 +161,7 @@ tests = [
       'volfraction': 0.0192,
       'temperature': 298.0,
       'concentration_salt': 0,
-      'dielectconst': 78.0,
-      'radius_effective_pd': 0},
+      'dielectconst': 78.0},
      [0.00001, 0.0010, 0.01, 0.075], [0.0711646, 0.0712928, 0.0847006, 1.07150]],
-    [{'scale': 1.0,
-      'background': 0.0,
-      'radius_effective': 20.75,
-      'charge': 19.0,
-      'volfraction': 0.0192,
-      'temperature': 298.0,
-      'concentration_salt': 0.05,
-      'dielectconst': 78.0,
-      'radius_effective_pd': 0.1,
-      'radius_effective_pd_n': 40},
-     [0.00001, 0.0010, 0.01, 0.075], [0.450272, 0.450420, 0.465116, 1.039625]]
     ]
 # ADDED by:  RKH  ON: 16Mar2016 converted from sasview, new Taylor expansion at smallest rescaled Q

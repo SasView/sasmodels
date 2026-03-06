@@ -278,9 +278,8 @@ Authorship and Verification
 #   lim_(q->0) h(r) = (140D r^3 + 180C r^4 + 144B r^5 + 120A r^6)/720
 #
 
-from __future__ import division
 
-from math import fabs, exp, expm1
+from math import exp, expm1, fabs
 
 import numpy as np
 from numpy import inf, nan

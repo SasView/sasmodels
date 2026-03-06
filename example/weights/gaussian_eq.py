@@ -3,6 +3,7 @@ import scipy.stats
 
 from sasmodels.weights import Dispersion as BaseDispersion
 
+
 class Dispersion(BaseDispersion):
     r"""
     Gaussian dispersion, with 1-$\sigma$ width.

@@ -9,14 +9,16 @@ the evaluation is restricted to a single radial line for performance reasons,
 with angle set by -angle=alpha in the qx-qy plane.
 """
 
-from __future__ import print_function, division
 
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import numpy as np
 
 from sasmodels import compare, data
+
 
 def main(angle=0, steps=76):
     # Parse the options using the parser in sasmodels.compare.  -angle

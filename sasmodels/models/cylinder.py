@@ -109,7 +109,7 @@ Authorship and Verification
 """
 
 import numpy as np  # type: ignore
-from numpy import pi, inf  # type: ignore
+from numpy import inf, pi  # type: ignore
 
 name = "cylinder"
 title = "Right circular cylinder with uniform scattering length density."

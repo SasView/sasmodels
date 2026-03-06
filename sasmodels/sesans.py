@@ -9,14 +9,13 @@ Everything is in conventional units (nm for spin echo length)
 Wim Bouwman (w.g.bouwman@tudelft.nl), June 2013
 """
 
-from __future__ import division
 
 import numpy as np  # type: ignore
 from numpy import pi  # type: ignore
 from scipy.special import j0
 
 
-class SesansTransform(object):
+class SesansTransform:
     """
     Spin-Echo SANS transform calculator.  Similar to a resolution function,
     the SesansTransform object takes I(q) for the set of *q_calc* values and

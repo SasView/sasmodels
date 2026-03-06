@@ -112,26 +112,23 @@ The special parameters are:
     be any magnetic S parameters.
 
 """
-from __future__ import print_function, division
 
 from collections import OrderedDict
-
 from copy import copy
+
 import numpy as np  # type: ignore
 
-from .modelinfo import ParameterTable, ModelInfo, parse_parameter
-from .modelinfo import NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, NUM_COMMON_PARS
-from .kernel import KernelModel, Kernel
 from .details import make_details
+from .kernel import Kernel, KernelModel
+from .modelinfo import NUM_COMMON_PARS, NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, ModelInfo, ParameterTable, parse_parameter
 
 # pylint: disable=unused-import
 try:
-    from typing import OrderedDict as OrderedDictType
-    import typing
-    from typing import Tuple, Callable, Union, List, Optional, Dict
-    from .modelinfo import ParameterSet, Parameter
+    from typing import Callable, Union
+
     from .details import CallDetails
-    Parts = Dict[str, Union[float, np.ndarray, Tuple[np.ndarray, np.ndarray]]]
+    from .modelinfo import Parameter
+    Parts = dict[str, Union[float, np.ndarray, tuple[np.ndarray, np.ndarray]]]
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -147,7 +144,7 @@ RADIUS_MODE_ID = "radius_effective_mode"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
-    # type: (ModelInfo) -> List[Parameter]
+    # type: (ModelInfo) -> list[Parameter]
     """
     Create parameters for structure factor and effective radius modes.
     """
@@ -182,15 +179,15 @@ def make_product_info(p_info, s_info):
     # structure factor calculator.  Structure factors should not
     # have any magnetic parameters
     if not len(s_info.parameters.kernel_parameters) >= 2:
-        raise TypeError("S needs {} and {} as its first parameters".format(RADIUS_ID, VOLFRAC_ID))
+        raise TypeError(f"S needs {RADIUS_ID} and {VOLFRAC_ID} as its first parameters")
     if not s_info.parameters.kernel_parameters[0].id == RADIUS_ID:
-        raise TypeError("S needs {} as first parameter".format(RADIUS_ID))
+        raise TypeError(f"S needs {RADIUS_ID} as first parameter")
     if not s_info.parameters.kernel_parameters[1].id == VOLFRAC_ID:
-        raise TypeError("S needs {} as second parameter".format(VOLFRAC_ID))
+        raise TypeError(f"S needs {VOLFRAC_ID} as second parameter")
     if not s_info.parameters.magnetism_index == []:
         raise TypeError("S should not have SLD parameters")
     if RADIUS_ID in p_info.parameters:
-        raise TypeError("P should not have {}".format(RADIUS_ID))
+        raise TypeError(f"P should not have {RADIUS_ID}")
     p_id, p_name, p_pars = p_info.id, p_info.name, p_info.parameters
     s_id, s_name, s_pars = s_info.id, s_info.name, s_info.parameters
     p_has_volfrac = VOLFRAC_ID in p_info.parameters
@@ -220,15 +217,6 @@ def make_product_info(p_info, s_info):
     #s_list[0] = copy(s_list[0])
     #s_list[0].polydisperse = False
 
-    s_translate = {old.id: new.id for old, new in s_pairs}
-    def random():
-        """Random set of model parameters for product model"""
-        combined_pars = p_info.random()
-        combined_pars.update((s_translate[k], v)
-                             for k, v in s_info.random().items()
-                             if k in s_translate)
-        return combined_pars
-
     model_info = ModelInfo()
     model_info.id = '@'.join((p_id, s_id))
     model_info.name = '@'.join((p_name, s_name))
@@ -238,7 +226,7 @@ def make_product_info(p_info, s_info):
     model_info.docs = model_info.title
     model_info.category = "custom"
     model_info.parameters = parameters
-    model_info.random = random
+    model_info.random = _ProductRandom(p_info, s_info, s_pairs)
     #model_info.single = p_info.single and s_info.single
     model_info.structure_factor = False
     #model_info.tests = []
@@ -268,6 +256,19 @@ def make_product_info(p_info, s_info):
     #print(parlist(model_info, values, is2d=True))
     return model_info
 
+class _ProductRandom:
+    """Random set of model parameters for product model"""
+    def __init__(self, p_info, s_info, s_pairs):
+        self.p_info = p_info
+        self.s_info = s_info
+        self.s_translate = {old.id: new.id for old, new in s_pairs}
+    def __call__(self):
+        combined_pars = self.p_info.random()
+        combined_pars.update((self.s_translate[k], v)
+                             for k, v in self.s_info.random().items()
+                             if k in self.s_translate)
+        return combined_pars
+
 def _tag_parameter(par):
     """
     Tag the parameter name with _S to indicate that the parameter comes from
@@ -284,26 +285,30 @@ def _tag_parameter(par):
     par.name = par.id + vector_length
     return par
 
-def _intermediates(Q, F, Fsq, S, scale, volume, volume_ratio, radius_effective,
-                   beta_mode, P_intermediate):
-    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, float, float, bool, Optiona[Callable[[], Parts]]) -> Parts
+class _Intermediates:
     """
     Returns intermediate results for beta approximation-enabled product.
     The result may be an array or a float.
     """
-    parts = OrderedDict()  # type: Parts
-    parts["P(Q)"] = (Q, scale*Fsq)
-    if P_intermediate is not None:
-        parts["P(Q) parts"] = P_intermediate()
-    parts["volume"] = volume
-    parts["volume_ratio"] = volume_ratio
-    parts["radius_effective"] = radius_effective
-    parts["S(Q)"] = (Q, S)
-    if beta_mode:
-        parts["beta(Q)"] = (Q, F**2 / Fsq)
-        parts["S_eff(Q)"] = (Q, 1 + (F**2 / Fsq)*(S-1))
-        #parts["I(Q)", scale*(Fsq + (F**2)*(S-1)) + bg
-    return parts
+    def __init__(self, *args):
+        # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, float, float, bool, Optiona[Callable[[], Parts]]) -> Parts
+        self.args = args
+    def __call__(self):
+        Q, F, Fsq, S, scale, volume, volume_ratio, radius_effective, \
+        beta_mode, P_intermediate = self.args
+        parts = OrderedDict()  # type: Parts
+        parts["P(Q)"] = (Q, scale*Fsq)
+        if P_intermediate is not None:
+            parts["P(Q) parts"] = P_intermediate()
+        parts["volume"] = volume
+        parts["volume_ratio"] = volume_ratio
+        parts["radius_effective"] = radius_effective
+        parts["S(Q)"] = (Q, S)
+        if beta_mode:
+            parts["beta(Q)"] = (Q, F**2 / Fsq)
+            parts["S_eff(Q)"] = (Q, 1 + (F**2 / Fsq)*(S-1))
+            #parts["I(Q)", scale*(Fsq + (F**2)*(S-1)) + bg
+        return parts
 
 class ProductModel(KernelModel):
     """
@@ -332,7 +337,7 @@ class ProductModel(KernelModel):
         self.dtype = P.dtype  # type: np.dtype
 
     def make_kernel(self, q_vectors):
-        # type: (List[np.ndarray]) -> Kernel
+        # type: (list[np.ndarray]) -> Kernel
         # Note: may be sending the q_vectors to the GPU twice even though they
         # are only needed once.  It would mess up modularity quite a bit to
         # handle this optimally, especially since there are many cases where
@@ -359,7 +364,7 @@ class ProductKernel(Kernel):
     Instantiated kernel for product model.
     """
     def __init__(self, model_info, p_kernel, s_kernel, q):
-        # type: (ModelInfo, Kernel, Kernel, Tuple[np.ndarray]) -> None
+        # type: (ModelInfo, Kernel, Kernel, tuple[np.ndarray]) -> None
         self.info = model_info
         self.q = q
         self.p_kernel = p_kernel
@@ -535,7 +540,9 @@ class ProductKernel(Kernel):
         # kernel calling interface.  Could do this as an "optional"
         # return value in the caller, though in that case we could return
         # the results directly rather than through a lazy evaluator.
-        self.results = lambda: _intermediates(
+        # TODO: why is pickle seeing self.results?
+        # Note: turned into a callable class because pickle didn't like it.
+        self.results = _Intermediates(
             self.q, F, Fsq, S, combined_scale, shell_volume, volume_ratio,
             radius_effective, beta_mode, p_intermediate)
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Jitter Explorer
 ===============
@@ -45,12 +44,12 @@ From a jupyter cell::
     #filename = projection+('_theta' if dview[0] == 180 else '_phi' if dview[1] == 180 else '')
     #ipv.savefig(filename+'.png')
 """
-from __future__ import division, print_function
 
 import argparse
+import warnings
 
 import numpy as np
-from numpy import pi, cos, sin, sqrt, exp, log, degrees, radians, arccos, arctan2
+from numpy import arccos, arctan2, cos, degrees, exp, log, pi, radians, sin, sqrt
 
 # Too many complaints about variable names from pylint:
 #    a, b, c, u, v, x, y, z, dx, dy, dz, px, py, pz, R, Rx, Ry, Rz, ...
@@ -571,8 +570,7 @@ def draw_labels(axes, view, jitter, text):
 
     # TODO: zdir for labels is broken, and labels aren't appearing.
     for label, p, zdir in zip(labels, zip(px, py, pz), zip(dx, dy, dz)):
-        zdir = np.asarray(zdir).flatten()
-        axes.text(p[0], p[1], p[2], label, zdir=zdir)
+        axes.text(p[0], p[1], p[2], label, zdir=tuple(zdir))
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
@@ -617,15 +615,17 @@ def apply_jitter(jitter, points):
     Apply the jitter transform to a set of points.
 
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
+
+    Jitter is (dtheta, dphi, dpsi, convention) where convention is "zyz" or "xyz".
+    If convention is missing it defaults to "xyz".
     """
     if jitter is None:
         return points
-    # Hack to deal with the fact that azimuthal_equidistance uses euler angles
-    if len(jitter) == 4:
-        dtheta, dphi, dpsi, _ = jitter
+    convention = jitter[3] if len(jitter) == 4 else "xyz"
+    dtheta, dphi, dpsi = jitter[:3]
+    if convention == "zyz":
         points = Rz(dphi)@Ry(dtheta)@Rz(dpsi)@points
     else:
-        dtheta, dphi, dpsi = jitter
         points = Rx(dphi)@Ry(dtheta)@Rz(dpsi)@points
     return points
 
@@ -680,7 +680,7 @@ def orient_relative_to_beam_quaternion(view, points):
 # representation problem.  Leave it here in case we want to revisit this later.
 
 #import numpy as np
-class Quaternion(object):
+class Quaternion:
     r"""
     Quaternion(w, r) = w + ir[0] + jr[1] + kr[2]
 
@@ -810,12 +810,15 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     ## increase pd_n for testing jitter integration rather than simple viz
     #theta_pd_n, phi_pd_n, psi_pd_n = [5*v for v in (theta_pd_n, phi_pd_n, psi_pd_n)]
 
-    pars = dict(
-        theta=theta, theta_pd=theta_pd, theta_pd_type=dist, theta_pd_n=theta_pd_n,
-        phi=phi, phi_pd=phi_pd, phi_pd_type=dist, phi_pd_n=phi_pd_n,
-        psi=psi, psi_pd=psi_pd, psi_pd_type=dist, psi_pd_n=psi_pd_n,
-    )
-    pars.update(calculator.pars)
+    # Some models do not accept theta, phi or psi
+    pars = calculator.pars.copy()
+    if 'theta' in pars:
+        pars.update(theta=theta, theta_pd=theta_pd, theta_pd_type=dist, theta_pd_n=theta_pd_n)
+    if 'phi' in pars:
+        pars.update(phi=phi, phi_pd=phi_pd, phi_pd_type=dist, phi_pd_n=phi_pd_n)
+    if 'psi' in pars:
+        pars.update(psi=psi, psi_pd=psi_pd, psi_pd_type=dist, psi_pd_n=psi_pd_n)
+
 
     # compute the pattern
     qx, qy = calculator.qxqy
@@ -851,7 +854,7 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     else:
         axes.pcolormesh(qx, qy, Iqxy)
 
-def build_model(model_name, n=150, qmax=0.5, **pars):
+def build_model(model_name, n=150, num_angles=3, qmax=0.5, **pars):
     """
     Build a calculator for the given shape.
 
@@ -866,7 +869,8 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     for plotting.  See the :class:`.direct_model.DirectModel` class
     for details.
     """
-    from sasmodels.core import load_model_info, build_model as build_sasmodel
+    from sasmodels.core import build_model as build_sasmodel
+    from sasmodels.core import load_model_info
     from sasmodels.data import empty_data2D
     from sasmodels.direct_model import DirectModel
 
@@ -882,10 +886,15 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     # stuff the values for non-orientation parameters into the calculator
     calculator.pars = pars.copy()
     calculator.pars.setdefault('background', 1e-3)
+    if num_angles > 0:
+        calculator.pars.update(theta=0, phi=0)
+    if num_angles == 3:
+        calculator.pars.update(psi=0)
+
 
     # fix the data limits so that we can see if the pattern fades
     # under rotation or angular dispersion
-    Iqxy = calculator(theta=0, phi=0, psi=0, **calculator.pars)
+    Iqxy = calculator(**calculator.pars)
     Iqxy = log(Iqxy)
     vmin, vmax = clipped_range(Iqxy, 0.95, mode='top')
     calculator.limits = vmin, vmax+1
@@ -909,52 +918,54 @@ def select_calculator(model_name, n=150, size=(10, 40, 100)):
     d_factor = 0.06  # for paracrystal models
     if model_name == 'sphere':
         calculator = build_model(
-            'sphere', n=n, radius=c)
+            'sphere', n=n, num_angles=0, radius=c)
         a = b = c
     elif model_name == 'sc_paracrystal':
         a = b = c
         dnn = c
         radius = 0.5*c
         calculator = build_model(
-            'sc_paracrystal', n=n,
+            'sc_paracrystal', n=n, num_angles=0,
             dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
             background=0)
     elif model_name == 'fcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
         # model uses lattice spacing rather than dnn in its calculations
+        warnings.warn("nearest neighbour distance may be wrong here")
         dnn = 0.5*c
         radius = sqrt(2)/4 * c
         calculator = build_model(
-            'fcc_paracrystal', n=n,
+            'fcc_paracrystal', n=n, num_angles=0,
             dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
             background=0)
     elif model_name == 'bcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
         # model uses lattice spacing rather than dnn in its calculations
+        warnings.warn("nearest neighbour distance may be wrong here")
         dnn = 0.5*c
         radius = sqrt(3)/2 * c
         calculator = build_model(
-            'bcc_paracrystal', n=n,
+            'bcc_paracrystal', n=n, num_angles=0,
             dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
             background=0)
     elif model_name == 'cylinder':
         calculator = build_model(
-            'cylinder', n=n, qmax=0.3, radius=b, length=c)
+            'cylinder', n=n, num_angles=2, qmax=0.3, radius=b, length=c)
         a = b
     elif model_name == 'ellipsoid':
         calculator = build_model(
-            'ellipsoid', n=n, qmax=1.0,
+            'ellipsoid', n=n, num_angles=2, qmax=1.0,
             radius_polar=c, radius_equatorial=b)
         a = b
     elif model_name == 'triaxial_ellipsoid':
         calculator = build_model(
-            'triaxial_ellipsoid', n=n, qmax=0.5,
+            'triaxial_ellipsoid', n=n, num_angles=3, qmax=0.5,
             radius_equat_minor=a, radius_equat_major=b, radius_polar=c)
     elif model_name == 'parallelepiped':
         calculator = build_model(
-            'parallelepiped', n=n, length_a=a, length_b=b, length_c=c)
+            'parallelepiped', n=n, num_angles=3, length_a=a, length_b=b, length_c=c)
     else:
         raise ValueError("unknown model %s"%model_name)
 
@@ -1030,9 +1041,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
     # an issue since we are lazy-loading the package on a path that isn't tested.
     # Importing mplot3d adds projection='3d' option to subplot
-    import mpl_toolkits.mplot3d  # pylint: disable=unused-import
     import matplotlib as mpl
     import matplotlib.pyplot as plt
+    import mpl_toolkits.mplot3d  # noqa: F401
     from matplotlib.widgets import Slider
 
     ## create the plot window
@@ -1057,9 +1068,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     axes_theta = plt.axes([0.05, 0.15, 0.50, 0.04], **props)
     axes_phi = plt.axes([0.05, 0.10, 0.50, 0.04], **props)
     axes_psi = plt.axes([0.05, 0.05, 0.50, 0.04], **props)
-    stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
-    sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
-    spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
+    stheta = Slider(axes_theta, 'θ', -90, 90, valinit=0)
+    sphi = Slider(axes_phi, 'φ', -180, 180, valinit=0)
+    spsi = Slider(axes_psi, 'ψ', -180, 180, valinit=0)
 
     axes_dtheta = plt.axes([0.70, 0.15, 0.20, 0.04], **props)
     axes_dphi = plt.axes([0.70, 0.1, 0.20, 0.04], **props)
@@ -1069,9 +1080,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
     dlimit = DIST_LIMITS[dist]
-    sdtheta = Slider(axes_dtheta, u'Δθ', 0, 2*dlimit, valinit=0)
-    sdphi = Slider(axes_dphi, u'Δφ', 0, 2*dlimit, valinit=0)
-    sdpsi = Slider(axes_dpsi, u'Δψ', 0, 2*dlimit, valinit=0)
+    sdtheta = Slider(axes_dtheta, 'Δθ', 0, 2*dlimit, valinit=0)
+    sdphi = Slider(axes_dphi, 'Δφ', 0, 2*dlimit, valinit=0)
+    sdpsi = Slider(axes_dpsi, 'Δψ', 0, 2*dlimit, valinit=0)
 
     ## initial view and jitter
     theta, phi, psi = view
@@ -1093,6 +1104,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
         limit = [0, 0.5, 5, 5][dims]
         jitter = [0 if v < limit else v for v in jitter]
         axes.cla()
+        axes.set_xlabel('x axis')
+        axes.set_ylabel('y axis')
+        axes.set_zlabel('z axis')
 
         ## Visualize as person on globe
         #draw_sphere(axes, radius=0.5)
@@ -1221,7 +1235,7 @@ def ipv_axes():
     """
     import ipyvolume as ipv
 
-    class Axes(object):
+    class Axes:
         """
         Matplotlib Axes3D style interface to ipyvolume renderer.
         """
@@ -1314,9 +1328,9 @@ def ipv_axes():
     return Axes()
 
 def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
-    from IPython.display import display
-    import ipywidgets as widgets
     import ipyvolume as ipv
+    import ipywidgets as widgets
+    from IPython.display import display
 
     axes = ipv_axes()
 
@@ -1385,12 +1399,12 @@ def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
             readout=True,
             readout_format='.1f',
             )
-    theta = _slider(u'θ', trange, view[0])
-    phi = _slider(u'φ', prange, view[1])
-    psi = _slider(u'ψ', prange, view[2])
-    dtheta = _slider(u'Δθ', dtrange, jitter[0])
-    dphi = _slider(u'Δφ', dprange, jitter[1])
-    dpsi = _slider(u'Δψ', dprange, jitter[2])
+    theta = _slider('θ', trange, view[0])
+    phi = _slider('φ', prange, view[1])
+    psi = _slider('ψ', prange, view[2])
+    dtheta = _slider('Δθ', dtrange, jitter[0])
+    dphi = _slider('Δφ', dprange, jitter[1])
+    dpsi = _slider('Δψ', dprange, jitter[2])
     fields = {
         'theta': theta, 'phi': phi, 'psi': psi,
         'dtheta': dtheta, 'dphi': dphi, 'dpsi': dpsi,

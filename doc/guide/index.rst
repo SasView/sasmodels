@@ -17,6 +17,7 @@ Sasmodels Guide
    orientation/orientation.rst
    magnetism/magnetism.rst
    plugin.rst
+   special.rst
    sesans/sans_to_sesans.rst
    sesans/sesans_fitting.rst
    refs.rst
