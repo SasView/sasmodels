@@ -1,3 +1,21 @@
+"""
+Monte Carlo simulation of various shape models.
+
+Some examples::
+
+    # unoriented cylinder
+    python explore/realspace.py -p -s 50000 -m 500  -q 0.5 cyl radius=20 length=120
+
+    # cylinder oriented with its axis along (θ,φ,ψ) = (20, 30, 40)
+    python explore/realspace.py -p -s 50000 -m 500  -q 0.5 -v 20,30,40 -d 2 cyl radius=20 length=120
+
+    # polycrystalline fcc model
+    python explore/realspace.py -w 0.06 -t fcc -n 20,20,20  -s 100000 -m 500 -z 500,500,500 -p sphere radius=10
+
+    # polycrystalline fcc model oriented along (20, 30, 40)
+    python explore/realspace.py -d 2 -w 0.06 -t fcc -n 10,10,10  -s 100000 -m 500 -z 250,250,250 -q 0.2 -v 20,30,40 sphere radius=10
+
+"""
 
 import argparse
 import cmath
@@ -1670,11 +1688,10 @@ def main():
             "phi": view[1],
             "psi": view[2],
         }
-        #print(f"lattice {model_name} with {model_pars}")
+        # print(f"lattice {model_name} with {model_pars}")
         fn, fn_xy = wrap_sasmodel(model_name, **model_pars)
     if nx*ny*nz > 1:
         if rotation != 0:
-            print("building %s lattice"%opts.type)
             build_lattice = LATTICE_FUNCTIONS[opts.type]
             shape = build_lattice(shape, nx, ny, nz, dx, dy, dz,
                                   distortion, rotation)
