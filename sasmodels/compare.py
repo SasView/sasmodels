@@ -103,7 +103,8 @@ Options (* for default):
     -profile shows the sld profile if the model has a plottable sld profile
 
     === output options ===
-    -edit starts the parameter explorer
+    -edit starts the parameter explorer (bumps webview)
+    -wxedit starts the parameter explore (bumps wxgui)
     -help/-html shows the model docs instead of running the model
 
     === help ===
