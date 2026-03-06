@@ -75,20 +75,25 @@ Fq(double q,
     const double shell_r = (radius + thickness);
     const double shell_h = (0.5*length + thickness);
     const double shell_vd = form_volume(radius,thickness,length) * (shell_sld-solvent_sld);
+
+    const double qr_max = q*fmax(shell_r, shell_h);
+    constant double *z, *w;
+    int n = gauss_weights(qr_max, &w, &z);
+
     double total_F1 = 0.0;
     double total_F2 = 0.0;
-    for (int i=0; i<GAUSS_N ;i++) {
+    for (int i=0; i<n ;i++) {
         // translate a point in [-1,1] to a point in [0, pi/2]
-        //const double theta = ( GAUSS_Z[i]*(upper-lower) + upper + lower )/2.0;
+        //const double theta = ( z[i]*(upper-lower) + upper + lower )/2.0;
         double sin_theta, cos_theta;
-        const double theta = GAUSS_Z[i]*M_PI_4 + M_PI_4;
+        const double theta = z[i]*M_PI_4 + M_PI_4;
         SINCOS(theta, sin_theta,  cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
         const double fq = _cyl(core_vd, core_r*qab, core_h*qc)
             + _cyl(shell_vd, shell_r*qab, shell_h*qc);
-        total_F1 += GAUSS_W[i] * fq * sin_theta;
-        total_F2 += GAUSS_W[i] * fq * fq * sin_theta;
+        total_F1 += w[i] * fq * sin_theta;
+        total_F2 += w[i] * fq * fq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     //const double form = (upper-lower)/2.0*total;
