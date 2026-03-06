@@ -25,16 +25,14 @@ and tell you which string to use for the SAS_OPENCL variable.
 On Windows you will need to remove the quotes.
 """
 
-
 import datetime
 import math
 import os
 import re
 import sys
 import traceback
-
-# pylint: disable=unused-import
-from typing import Callable
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np  # type: ignore
 
@@ -44,16 +42,13 @@ from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
 from .modelinfo import ModelInfo, ParameterSet
 
-try:
-    # With python 3.8+ we can indicate that calculator takes floats.
-    from typing import Protocol
-    class Calculator(Protocol):
-        """Kernel calculator takes *par=value* keyword arguments."""
-        def __call__(self, **par: float) -> np.ndarray: ...
-except ImportError:
-    #: Kernel calculator takes *par=value* keyword arguments.
-    Calculator = Callable[..., np.ndarray]
-# pylint: enable=unused-import
+# Only use optional bumps dependency for type checking
+if TYPE_CHECKING:
+    from bumps.names import Parameter
+
+class Calculator(Protocol):
+    """Kernel calculator takes *par=value* keyword arguments."""
+    def __call__(self, **par: float) -> np.ndarray: ...
 
 USAGE = """
 usage: sascomp model [options...] [key=val]
@@ -108,7 +103,8 @@ Options (* for default):
     -profile shows the sld profile if the model has a plottable sld profile
 
     === output options ===
-    -edit starts the parameter explorer
+    -edit starts the parameter explorer (bumps webview)
+    -wxedit starts the parameter explore (bumps wxgui)
     -help/-html shows the model docs instead of running the model
 
     === help ===
@@ -1039,7 +1035,7 @@ OPTIONS = [
     'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
 
     # Output options
-    'help', 'html', 'edit',
+    'help', 'html', 'edit', 'wxedit',
 
     # Help options
     'h', '?', 'models', 'models='
@@ -1194,7 +1190,7 @@ def parse_opts(argv):
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
-        'explore'   : False,
+        'explore'   : None,
         'zero'      : False,
         'html'      : False,
         'title'     : None,
@@ -1263,7 +1259,8 @@ def parse_opts(argv):
         elif arg == '-single!':     opts['engine'] = 'single!'
         elif arg == '-double!':     opts['engine'] = 'double!'
         elif arg == '-quad!':       opts['engine'] = 'quad!'
-        elif arg == '-edit':        opts['explore'] = True
+        elif arg == '-edit':        opts['explore'] = 'web'
+        elif arg == '-wxedit':      opts['explore'] = 'wx'
         elif arg == '-weights':     opts['show_weights'] = True
         elif arg == '-profile':     opts['show_profile'] = True
         elif arg == '-html':        opts['html'] = True
@@ -1568,23 +1565,54 @@ def explore(opts):
     """
     explore the model using the bumps gui.
     """
+    from bumps.names import FitProblem  # type: ignore
+
+    model = Explore(opts)
+    problem = FitProblem(model)
+    name = ":".join(opts['name']) if opts['name'][0] == opts['name'][1] else opts['name'][0]
+    problem.name = name
+
+    if opts['explore'] == 'wx':
+        wx_explore(problem)
+    else:
+        webview_explore(problem)
+
+def webview_explore(problem):
+    import logging
+
+    import bumps.webview.server.webserver as server
+    from aiohttp import web
+    from bumps.webview.server import api
+    from bumps.webview.server.cli import BumpsOptions
+
+    logging.getLogger("webview").setLevel(logging.WARNING)
+
+    server.init_web_app()
+    server.app.on_startup.append(lambda App: api.set_problem(problem))
+    options = BumpsOptions()
+    # CRUFT: options.threads does not have a default value
+    if not hasattr(options, 'threads'):
+        options.threads = False
+    sock = server.setup_app(options=options)
+    web.run_app(server.app, sock=sock)
+
+def wx_explore(problem):
     import wx  # type: ignore
     from bumps.gui import signal
     from bumps.gui.app_frame import AppFrame  # type: ignore
-    from bumps.names import FitProblem  # type: ignore
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
     app = wx.App() if wx.GetApp() is None else None
-    model = Explore(opts)
-    problem = FitProblem(model)
     frame = AppFrame(parent=None, title="explore", size=(1000, 700))
     if not is_mac:
         frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
+    # Hack to revert parameters to initial values: override the reload model tool
     def _reset_parameters(event):
+        model = next(problem.models)
         model.revert_values()
         signal.update_parameters(problem)
     frame.Bind(wx.EVT_TOOL, _reset_parameters, frame.ToolBar.GetToolByPos(1))
@@ -1594,6 +1622,7 @@ def explore(opts):
     if app:
         app.MainLoop()
 
+@dataclass
 class Explore:
     """
     Bumps wrapper for a SAS model comparison.
@@ -1601,11 +1630,15 @@ class Explore:
     The resulting object can be used as a Bumps fit problem so that
     parameters can be adjusted in the GUI, with plots updated on the fly.
     """
+    pars: dict[str, "Parameter"]
+    name = "sasmodels"
+
     def __init__(self, opts):
         # type: (Dict[str, Any]) -> None
         from bumps.cli import config_matplotlib  # type: ignore
 
         from . import bumps_model
+
         config_matplotlib()
         self.opts = opts
         opts['pars'] = list(opts['pars'])
@@ -1673,19 +1706,36 @@ class Explore:
         """
         Plot the data and residuals.
         """
+        import matplotlib.pyplot as plt
+
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'][0] = pars
         if not self.fix_p2:
             self.opts['pars'][1] = pars
-        result = run_models(self.opts)
+        try:
+            result = run_models(self.opts)
+        except Exception as exc:
+            print("Exception %s while evaluating"%(exc.__class__.__name__))
+            import traceback
+            traceback.print_exc()
+            plt.clf()
+            return
         limits = plot_models(self.opts, result, limits=self.limits)
-        if self.limits is None:
-            vmin, vmax = limits
-            self.limits = vmax*1e-7, 1.3*vmax
-            import pylab
-            pylab.clf()
+
+        is_sf = self.opts['info'][0].structure_factor
+        if 0 and self.limits is None:
+            # Set limits based on first plot
+            if is_sf:
+                self.limits = 0.01, 4
+            else:
+                vmin, vmax = limits
+                self.limits = vmax*1e-7, 1.3*vmax
+            plt.clf()
             plot_models(self.opts, result, limits=self.limits)
+        if is_sf:
+            plt.xscale('linear')
+            plt.yscale('linear')
 
 
 def main(*argv):
