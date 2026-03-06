@@ -137,7 +137,7 @@ parameters = [
     ["sld_face",       "1e-6/Ang^2", 7, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 6, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",       "degrees",    90.0, [-360, 360], "orientation", "Cylinder axis to beam angle"],
+    ["theta",       "degrees",    90.0, [-180, 180], "orientation", "Cylinder axis to beam angle"],
     ["phi",         "degrees",    0,    [-360, 360], "orientation", "Rotation about beam"],
     ["psi",         "degrees",    0,    [-360, 360], "orientation", "Rotation about cylinder axis"]
     ]
