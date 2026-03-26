@@ -460,7 +460,7 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
     intensity = Iqabc(qa, qb, qc, nsides, Rave, L)  # shape (nq, npoints)
     # Uniform average over the sphere
     integral = np.sum(w[np.newaxis, :] * intensity, axis=1)
-    integral = np.mean(intensity, axis=1)
+    # integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4
 
 Iq.vectorized = True
