@@ -146,14 +146,14 @@ Authorship and Verification
 
 * **Last Modified by:** MIC **Date:** 11 December 2025
 
-* **Last Reviewed by:** SM **Date:** 16 January 2026
+* **Last Reviewed by:** SM **Date:** 03 April 2026
 
 """
 import numpy as np
 from numpy import inf
 
-from sasmodels.quadratures.fibonacci import fibonacci_sphere
 from sasmodels.special import sas_sinx_x
+from sasmodels.special.fibonacci import fibonacci_sphere
 
 name = "nanoprisms"
 title = "nanoprisms of different cross-sections"
@@ -191,12 +191,10 @@ def form_volume(nsides, Rave, L):
         Volume of the nanoprism.
     """
     nsides = int(nsides)
-
     edge = edge_from_gyration_radius(nsides,Rave)
     radius = radius_from_edge(nsides, edge)
     surface = surface_from_radius(nsides, radius)
     return surface * L
-
 
 def edge_from_gyration_radius(nsides:int, gyr):
     """
@@ -214,7 +212,6 @@ def edge_from_gyration_radius(nsides:int, gyr):
     """
     nsides = int(nsides)
     return (gyr * 2 * np.sin(np.pi/nsides)) / np.sqrt(np.sinc(2/nsides))
-
 
 def surface_from_radius(nsides:int, radius):
     """
@@ -259,107 +256,71 @@ def shape_generator(number_of_sides, radius):
         Circumradius of the regular polygon.
     Returns
     -------
-    vertices : list
+    vertices : np.ndarray shape (2, n)
         List of the vertices of the regular polygon.
     """
-    vertices = [[radius*np.cos(2*step*np.pi/number_of_sides), radius*np.sin(2*step*np.pi/number_of_sides)] for step in range(0,number_of_sides)]
-    return vertices
+    theta = np.linspace(0, 2 * np.pi, number_of_sides, endpoint=False)
+    return radius*np.vstack((np.cos(theta), np.sin(theta)))  # (2 x n)
 
-def edgecenters_generator(vertices:list):
+def edgecenters_generator(vertices:np.ndarray):
     """
     Computes the list of edge centers of a 2D shape defined by its vertices.
     Parameters
     ----------
-    vertices : list
+    vertices : np.ndarray shape (2, n)
         list of the vertices of the 2D-shape each listed as a list of the 2D coordinates of the shape in the plane
     Returns
     -------
-    edgecenter : list
+    edgecenter : np.ndarray shape (2, n)
         List of the edge centers of the 2D shape.
     Preconditions
     -------------
     a loop, all in the plane
     """
-    extended_vertices = [] + vertices
-    extended_vertices.append(vertices[0])
-    edgecenter = []
-    for i in range(len(vertices)):
-        coordinates=[]
-        for j in range(2):
-            coordinates.append((extended_vertices[i+1][j]+extended_vertices[i][j])/2)
-        edgecenter.append(coordinates)
-    return edgecenter
+    return (vertices + np.roll(vertices, -1, axis=1))/2
 
-def halfedges_generator(vertices:list):
+def halfedges_generator(vertices:np.ndarray):
     """
     Computes the list of half-edges of a 2D shape defined by its vertices.
     Parameters
     ----------
-    vertices : list
+    vertices : np.ndarray shape (2, n)
         list of the vertices of the 2D-shape each listed as a list of the 2D coordinates of the shape in the plane
     Returns
     -------
-    halfedge : list
+    halfedge : np.ndarray shape (2, n)
         List of the half-edges of the 2D shape.
     Preconditions
     -------------
     a loop, all in the plane
     """
-    extended_vertices = [] + vertices
-    extended_vertices.append(vertices[0])
-    halfedge = []
-    for i in range(len(vertices)):
-        coordinates=[]
-        for j in range(2):
-            coordinates.append((extended_vertices[i+1][j]-extended_vertices[i][j])/2)
-        halfedge.append(coordinates)
-    return halfedge
-
-
-# Useful functions for scalar product
-def scalar_product(u,v):
-    """
-    Computes the scalar product of two vectors u and v since numpy.dot does not work with different shapes of arrays.
-    Parameters
-    ----------
-    u and v : list
-        lists of the coordinates of the vectors.
-    Returns
-    -------
-    scalar_product : float
-        Scalar product of the two vectors.
-    """
-    somme = 0
-    for i in range(len(u)):
-        somme += u[i]*v[i]
-    return somme
+    return (np.roll(vertices, -1, axis=1) - vertices)/2
 
 # Form factor and intensity calculations
 # Reminder: the form factor is defined as: parallel factor (= complex function) * perpendicular factor (= sinc function)
 # see documentation and Reference [1] (Jules Marcone et al. "Form factor of prismatic particles for small-angle scattering analysis")
 
-def parallel_factor(vertices:list, q, c): # gives the area of the polygon at q==[0,0]
+def parallel_factor(vertices:np.ndarray, q:np.ndarray, c:float): # gives the area of the polygon at q==[0,0]
     """
     Computes the parallel form factor of a 2D shape defined by its vertices at a specific in-plane scattering vector q.
     Parameters
     ----------
-    vertices : list
+    vertices : np.ndarray shape (2, n) 
         list of the vertices of the 2D-shape each listed as a list of the
         2D coordinates of the shape in the plane
-    q : list
+    q : np.ndarray shape (N, 2)
         listed as a list of coordinates in the plane (q is q//)
     c : float
         an arbitrary constant
     Returns
     -------
-    parallel_factor : complex
+    parallel_factor : np.ndarray of complex, shape (N,)
         Parallel form factor of the 2D shape at the specific in-plane scattering vector q.
     Preconditions
     -------------
     a loop, all in the plane
     """
-    qmodulus2 = q[0]**2+q[1]**2
-    qmodulus2 = np.asanyarray(qmodulus2) # conversion to array
+    qmodulus2 = q[:, 0]**2 + q[:, 1]**2
     cutoff = 10**-30
     qmodulus2_cutoff = np.where(qmodulus2==0, cutoff, qmodulus2) # replace by cutoff if equal to 0
     # This case starts occuring for computations of the prism formfactor, where during the
@@ -369,11 +330,13 @@ def parallel_factor(vertices:list, q, c): # gives the area of the polygon at q==
     edgecenters = edgecenters_generator(vertices)
     halfedges = halfedges_generator(vertices)
     sum = 0
-    for i in range(len(vertices)):
-        qEj = scalar_product(q, halfedges[i]) # scalar_product(q, halfedges[i])
-        triple_product = q[0]*halfedges[i][1]-q[1]*halfedges[i][0]
+    # for i in range(len(vertices)):
+    for i in range(vertices.shape[1]):
+        qEj = np.dot(q, halfedges[:,i]) # scalar_product(q, halfedges[i])
+        # triple_product = q[0]*halfedges[i][1]-q[1]*halfedges[i][0]
+        triple_product = q[:, 0]*halfedges[1, i]  - q[:, 1]*halfedges[0, i]
         #The exp(iqRj) is rewritten as a sum of cos+isin because of the way math.exp() works (not allowing complex as input)
-        qRj = scalar_product(q, edgecenters[i])
+        qRj = np.dot(q, edgecenters[:,i])
         sum += triple_product * (sas_sinx_x(qEj)*(np.cos(qRj)+np.sin(qRj)*1J)-c)
     return (2/(1J*qmodulus2_cutoff)*sum)
 
@@ -383,7 +346,7 @@ def Fqabc(qa, qb, qc,nsides, Rave,L): # Form factor in 3D of the nanoprism for (
     Takes in account the parallel factor (complex function) and the perpendicular factor (sinc function).
     Parameters
     ----------
-    qa, qb, qc : float
+    qa, qb, qc : np.ndarray shape (N,)
         components of the scattering vector q
     nsides : int
         Number of sides of the regular polygon cross-section.
@@ -393,11 +356,10 @@ def Fqabc(qa, qb, qc,nsides, Rave,L): # Form factor in 3D of the nanoprism for (
         Length of the nanoprism.
     Returns
     -------
-    Fqabc : complex
+    Fqabc : np.ndarray of complex, shape (N,)
         Form factor amplitude of the nanoprism at the specific three dimensional q.
     """
-
-    qab = [qa,qb]
+    qab = np.vstack((qa, qb)).T
     edge = edge_from_gyration_radius(nsides, Rave)
     radius = radius_from_edge(nsides,edge)
     vertices = shape_generator(nsides,radius)
@@ -411,7 +373,7 @@ def Iqabc(qa,qb,qc,nsides,Rave,L): # proportionnal to the volume**2
     Calls the function that computes the edge length and the scattered intensity.
     Parameters
     ----------
-    qa, qb, qc : float or array
+    qa, qb, qc :  np.ndarray shape (N,)
         components of the scattering vector q
     nsides : int
         Number of sides of the regular polygon cross-section.
@@ -421,7 +383,7 @@ def Iqabc(qa,qb,qc,nsides,Rave,L): # proportionnal to the volume**2
         Length of the nanoprism.
     Returns
     -------
-    Iqabc : float or array
+    Iqabc : np.ndarray of float, shape (N,)
         Scattered intensity of the nanoprism at the specific three dimensional q components.
     """
     nsides=int(nsides)
@@ -456,11 +418,10 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
     qa = q[:, np.newaxis] * q_unit[:, 0][np.newaxis, :]
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
-    # Compute intensity
-    intensity = Iqabc(qa, qb, qc, nsides, Rave, L)  # shape (nq, npoints)
+    # # Compute intensity
+    intensity = Iqabc(qa.ravel(), qb.ravel(), qc.ravel(), nsides, Rave, L).reshape(qa.shape)
     # Uniform average over the sphere
-    integral = np.sum(w[np.newaxis, :] * intensity, axis=1)
-    # integral = np.mean(intensity, axis=1)
+    integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4
 
 Iq.vectorized = True
