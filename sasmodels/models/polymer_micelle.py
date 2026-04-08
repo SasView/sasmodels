@@ -2,9 +2,9 @@ r"""
 
 This model provides the form factor, $P(q)$, for a micelle with a spherical
 core and Gaussian polymer chains attached to the surface, thus may be applied
-to block copolymer micelles. Take special care before use and read both of the 
-provided references carefully; this model typically only works well when the 
-Gaussian chains are much smaller than the core, which is often not the case. 
+to block copolymer micelles. Take special care before use and read both of the
+provided references carefully; this model typically only works well when the
+Gaussian chains are much smaller than the core, which is often not the case.
 
 Definition
 ----------
@@ -87,9 +87,9 @@ title = "Polymer micelle model"
 description = """
 This model provides the form factor, $P(q)$, for a micelle with a spherical
 core and Gaussian polymer chains attached to the surface, thus may be applied
-to block copolymer micelles. Take special care before use and read both of the 
-provided references carefully; this model typically only works well when the 
-Gaussian chains are much smaller than the core, which is often not the case. 
+to block copolymer micelles. Take special care before use and read both of the
+provided references carefully; this model typically only works well when the
+Gaussian chains are much smaller than the core, which is often not the case.
     """
 
 

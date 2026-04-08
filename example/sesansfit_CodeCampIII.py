@@ -1,6 +1,7 @@
-from bumps.names import *
+import numpy as np
+from bumps.names import FitProblem, Parameter
 
-from sasmodels import core, bumps_model
+from sasmodels import bumps_model, core
 
 if True: # fix when data loader exists
 #    from sas.dataloader.readers\
@@ -8,7 +9,8 @@ if True: # fix when data loader exists
     loader = Loader()
     filename = 'sphere.ses'
     data = loader.load(filename)
-    if data is None: raise IOError("Could not load file %r"%(filename,))
+    if data is None:
+        raise OSError("Could not load file %r"%(filename,))
     data.x /= 10
 #    print data
 #    data = load_sesans('mydatfile.pz')

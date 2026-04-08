@@ -34,7 +34,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, errstate
+from numpy import errstate, inf
 
 name = "power_law"
 title = "Simple power law with a flat background"

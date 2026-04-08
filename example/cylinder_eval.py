@@ -2,10 +2,11 @@
 Minimal example of calling a kernel for a specific set of q values.
 """
 
-from numpy import logspace
 from matplotlib import pyplot as plt
+from numpy import logspace
+
 from sasmodels.core import load_model
-from sasmodels.direct_model import call_kernel, call_Fq
+from sasmodels.direct_model import call_Fq, call_kernel
 
 model = load_model('cylinder')
 q = logspace(-3, -1, 200)

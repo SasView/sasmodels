@@ -2,6 +2,7 @@ from scipy.stats import laplace
 
 from sasmodels import weights
 
+
 class Dispersion(weights.Dispersion):
     r"""
     Laplace distribution

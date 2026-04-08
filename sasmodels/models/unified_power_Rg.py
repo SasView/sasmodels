@@ -75,10 +75,9 @@ Authorship and Verification
 * **Last Reviewed by:**
 """
 
-from __future__ import division
 
 import numpy as np
-from numpy import inf, exp, sqrt, errstate
+from numpy import errstate, exp, inf, sqrt
 from scipy.special import erf, gamma
 
 category = "shape-independent"

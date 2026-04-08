@@ -13,10 +13,8 @@ See section :ref:`Python_Functions` for differences from the C library.
 import numpy as np
 
 # Functions to add to our standard set
-
 # C99 standard math library functions
-from numpy import sin, cos
-from numpy import nan, inf
+from numpy import cos, inf, nan, sin
 from scipy.special import j1 as sas_J1
 
 # erf, erfc, tgamma, lgamma  **do not use**
@@ -102,7 +100,7 @@ def sas_2J1x_x(x):
 
 
 # Gaussians
-class Gauss(object):
+class Gauss:
     """Gauss-Legendre integration weights"""
     def __init__(self, w, z):
         self.n = len(w)

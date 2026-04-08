@@ -29,7 +29,7 @@ Models can be of three types:
 
 
 When using SasView, plugin models should be saved to the SasView
-*plugin_models* folder *C:\\Users\\{username}\\.sasview\\plugin_models*
+*plugin_models* folder *C:\\Users\\{username}\\AppData\\Local\\sasview\\SasView\\plugin_models*
 (on Windows) or */Users/{username}/.sasview\\plugin_models* (on Mac).
 The next time SasView is started it will compile the plugin and add
 it to the list of *Plugin Models* in a FitPage.  Scripts can load
@@ -1030,7 +1030,7 @@ you have added using the **test =** values.
 From SasView, switch to the *Shell* tab and type the following::
 
     from sasmodels.model_test import run_one
-    run_one("~/.sasview/plugin_models/model.py")
+    run_one("~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 This should print::
 
@@ -1039,15 +1039,15 @@ This should print::
 To check whether single precision is good enough, type the following::
 
     from sasmodels.compare import main as compare
-    compare("~/.sasview/plugin_models/model.py")
+    compare("~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 This will pop up a plot showing the difference between single precision
 and double precision on a range of $q$ values.
 
 These commands can also be run directly in the python interpreter:
 
-    $ python -m sasmodels.model_test -v ~/.sasview/plugin_models/model.py
-    $ python -m sasmodels.compare ~/.sasview/plugin_models/model.py
+    $ python -m sasmodels.model_test -v ~/AppData/Local/sasview/SasView/plugin_models/model.py
+    $ python -m sasmodels.compare ~/AppData/Local/sasview/SasView/plugin_models/model.py
 
 The options to compare are quite extensive; type the following for help::
 
@@ -1056,7 +1056,7 @@ The options to compare are quite extensive; type the following for help::
 Options will need to be passed as separate strings.
 For example to run your model with a random set of parameters::
 
-    compare("-random", "-pars", "~/.sasview/plugin_models/model.py")
+    compare("-random", "-pars", "~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 For the random models,
 
@@ -1075,7 +1075,7 @@ across multiple parameters can be very slow).
 If your model has 2D orientation calculation, then you should also
 test with::
 
-    compare("-2d", "~/.sasview/plugin_models/model.py")
+    compare("-2d", "~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 Check The Docs
 ^^^^^^^^^^^^^^
@@ -1083,7 +1083,7 @@ Check The Docs
 You can get a rough idea of how the documentation will look using the
 following::
 
-    compare("-help", "~/.sasview/plugin_models/model.py")
+    compare("-help", "~/AppData/Local/sasview/SasView/plugin_models/model.py")
 
 This does not use the same styling as the rest of the docs, but it will
 allow you to check that your ReStructuredText and LaTeX formatting.
@@ -1107,7 +1107,7 @@ you can ignore this section!**
 
 Run the lint check with::
 
-    python -m pylint --rcfile=extra/pylint.rc ~/.sasview/plugin_models/model.py
+    python -m pylint --rcfile=extra/pylint.rc ~/AppData/Local/sasview/SasView/plugin_models/model.py
 
 We are not aiming for zero lint just yet, only keeping it to a minimum.
 For now, don't worry too much about *invalid-name*. If you really want a

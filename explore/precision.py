@@ -28,18 +28,20 @@ expansions from sympy:
     # There are richardson and shanks series accelerators in both sympy
     # and mpmath that may be helpful.
 """
-from __future__ import division, print_function
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
+import scipy.special
+
 # Note: mpmath.pi and numpy.pi are not interchangeable; don't import pi from
 # numpy as we usually do, but instead be explicit about which one we want each
 # time it we use it.
 from numpy import inf
-import scipy.special
+
 try:
     from mpmath import mp
 except ImportError:
@@ -50,7 +52,8 @@ import pylab
 
 from sasmodels import core, data, direct_model, modelinfo
 
-class Comparator(object):
+
+class Comparator:
     def __init__(self, name, mp_function, np_function, ocl_function, xaxis, limits):
         self.name = name
         self.mp_function = mp_function
@@ -192,14 +195,14 @@ def plotdiff(x, target, actual, label, diff):
         #err = np.clip(err, 0, 1)
         pylab.loglog(x, err, '-', label=label, alpha=0.7)
     elif diff == "absolute":
-        err = np.array([abs((t-a)) for t, a in zip(target, actual)], 'd')
+        err = np.array([abs(t-a) for t, a in zip(target, actual)], 'd')
         pylab.loglog(x, err, '-', label=label, alpha=0.7)
     else:
         limits = np.min(target), np.max(target)
         pylab.semilogx(x, np.clip(actual, *limits), '-', label=label, alpha=0.7)
 
 def make_ocl(function, name, source=[]):
-    class Kernel(object):
+    class Kernel:
         pass
     Kernel.__file__ = name+".py"
     Kernel.name = name

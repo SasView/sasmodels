@@ -90,7 +90,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, errstate
+from numpy import errstate, inf
 
 name = "porod"
 title = "Porod function"

@@ -50,7 +50,7 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "Screening length"],]
 
-source = ["lorentz.c"] 
+source = ["lorentz.c"]
 
 def random():
     """Return a random parameter set for the model."""

@@ -69,10 +69,9 @@ Authorship and Verification
    (corrected VR calculation)
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
-from __future__ import division
 
 import numpy as np
-from numpy import pi, inf, sin, cos
+from numpy import cos, inf, pi, sin
 
 name = "hollow_cylinder"
 title = ""

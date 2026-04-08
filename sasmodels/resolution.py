@@ -3,13 +3,12 @@ Define the resolution functions for the data.
 
 This defines classes for 1D and 2D resolution calculations.
 """
-from __future__ import division
 
 import unittest
 
-from scipy.special import erf  # type: ignore
-from numpy import sqrt, log, log10, exp, pi  # type: ignore
 import numpy as np  # type: ignore
+from numpy import exp, log, log10, pi, sqrt  # type: ignore
+from scipy.special import erf  # type: ignore
 
 __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
@@ -24,7 +23,7 @@ MINIMUM_ABSOLUTE_Q = 0.02  # relative to the minimum q in the data
 # it is better to use asymmetric bounds (2.5, 3.0)
 PINHOLE_N_SIGMA = (2.5, 3.0)
 
-class Resolution(object):
+class Resolution:
     """
     Abstract base class defining a 1D resolution function.
 
@@ -35,7 +34,7 @@ class Resolution(object):
 
     *apply* is the method to call with I(q_calc) to compute the resolution
     smeared theory I(q).
-    
+
     """
 
     q = None  # type: np.ndarray
@@ -1103,6 +1102,7 @@ def main():
     Returns 0 if success or 1 if any tests fail.
     """
     import sys
+
     import xmlrunner  # type: ignore
 
     suite = unittest.TestSuite()
@@ -1119,8 +1119,8 @@ def main():
 
 def _eval_demo_1d(resolution, title):
     import sys
-    from sasmodels import core
-    from sasmodels import direct_model
+
+    from sasmodels import core, direct_model
     name = sys.argv[1] if len(sys.argv) > 1 else 'cylinder'
 
     if name == 'cylinder':

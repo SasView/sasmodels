@@ -3,10 +3,10 @@ Application to explore the difference between sasview 3.x orientation
 dispersity and possible replacement algorithms.
 """
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, CheckButtons
-
 import numpy as np
-from numpy import cos, sin, exp, radians
+from matplotlib.widgets import CheckButtons, Slider
+from numpy import cos, exp, radians, sin
+
 
 def draw_sphere(ax, radius=10., steps=100):
     u = np.linspace(0, 2 * np.pi, steps)

@@ -74,7 +74,6 @@ Authorship and Verification
 * **Last Modified by:**
 * **Last Reviewed by:**
 """
-from __future__ import division
 
 import numpy as np
 from numpy import inf, pi

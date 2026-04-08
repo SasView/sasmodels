@@ -47,7 +47,6 @@ Authorship and Verification
 * **Last Modified by:** Paul Kienzle **Date:** September 12, 2016
 * **Last Reviewed by:** Paul Kienzle **Date:** September 12, 2016
 """
-from __future__ import division
 
 import numpy as np
 from numpy import inf

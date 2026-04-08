@@ -120,7 +120,7 @@ parameters = [
      "stickiness, epsilon"],
     ]
 
-source = ["stickyhardsphere.c"]    
+source = ["stickyhardsphere.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?

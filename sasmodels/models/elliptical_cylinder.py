@@ -100,7 +100,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt, sin, cos
+from numpy import cos, inf, pi, sin, sqrt
 
 name = "elliptical_cylinder"
 title = "Form factor for an elliptical cylinder."

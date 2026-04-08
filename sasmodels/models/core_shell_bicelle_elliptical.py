@@ -110,7 +110,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, sin, cos, pi
+from numpy import cos, inf, pi, sin
 
 name = "core_shell_bicelle_elliptical"
 title = "Elliptical cylinder with a core-shell scattering length density profile.."

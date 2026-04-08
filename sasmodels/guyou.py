@@ -35,14 +35,14 @@
 Convert between latitude-longitude and Guyou map coordinates.
 """
 
-from __future__ import division, print_function
 
 import numpy as np
-from numpy import sqrt, pi, tan, cos, sin, sign, radians, degrees
-from numpy import sinh, arctan as atan
+from numpy import arctan as atan
+from numpy import cos, degrees, pi, radians, sign, sin, sinh, sqrt, tan
 
 # scipy version of special functions
-from scipy.special import ellipj as ellipticJ, ellipkinc as ellipticF
+from scipy.special import ellipj as ellipticJ
+from scipy.special import ellipkinc as ellipticF
 
 _ = """
 # mpmath version of special functions

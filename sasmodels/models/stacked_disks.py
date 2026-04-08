@@ -113,7 +113,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, sin, cos, pi
+from numpy import cos, inf, pi, sin
 
 name = "stacked_disks"
 title = "Form factor for a stacked set of non exfoliated core/shell disks"

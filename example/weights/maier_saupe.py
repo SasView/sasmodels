@@ -1,8 +1,8 @@
-from __future__ import print_function
 import numpy as np
-from numpy import exp, sin, degrees, radians, pi, sqrt
+from numpy import degrees, exp, pi, radians, sin, sqrt
 
 from sasmodels.weights import Dispersion as BaseDispersion
+
 
 class Dispersion(BaseDispersion):
     r"""
@@ -98,7 +98,7 @@ class Dispersion(BaseDispersion):
 
 
 def P_2(a):
-    from numpy import pi, sqrt, exp
+    from numpy import exp, pi, sqrt
     from scipy.special import erfi
 
     # Double precision e^x overflows so do a Taylor expansion around infinity
@@ -115,8 +115,8 @@ def P_2_inv(S):
     return fsolve(lambda x: P_2(x) - S, 1.0)[0]
 
 def P_2_numerical(a):
+    from numpy import cos, exp, pi, sin
     from scipy.integrate import romberg
-    from numpy import cos, sin, pi, exp
     def num(beta):
         return (1.5 * cos(beta)**2 - 0.5) * exp(a * cos(beta)**2) * sin(beta)
     def denom(beta):
