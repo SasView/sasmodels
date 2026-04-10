@@ -547,7 +547,7 @@ def main():
         q, = values
         dq = dqw = dql = None
         #dq = [q*0.05] # 5% pinhole resolution
-        #dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
+        dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
         print(Iq(model, [q], dq=dq, qw=dqw, ql=dql, ngauss=ngauss, **pars)[0])
         #print(Gxi(model, [q], **pars)[0])
     elif len(values) == 2:
