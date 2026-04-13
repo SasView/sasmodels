@@ -131,9 +131,9 @@ Fq(double q,
     const double drB = (brim_sld-solvent_sld);
     const double drC = (crim_sld-solvent_sld);
 
-    const double qr_max = q*0.5*tC;
+    const double qr_max_outer = q*fmax(sqrt(tA*tA + tB*tB), tC)/2;
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max_outer, &w, &z);
 
     // outer integral (with gauss points), integration limits = 0, 1
     // substitute d_cos_alpha for sin_alpha d_alpha
@@ -147,7 +147,7 @@ Fq(double q,
 
         const double qr_max_inner = mu*fmax(tA, tB);  // = qab*max(len)/2
         constant double *w_inner, *z_inner;
-        int n_inner = gauss_weights(qr_max, &w_inner, &z_inner);
+        int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
 
         // inner integral (with gauss points), integration limits = 0, 1
         // substitute beta = PI/2 u (so 2/PI * d_(PI/2 * beta) = d_beta)

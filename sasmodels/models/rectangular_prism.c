@@ -118,9 +118,9 @@ Fq(double q,
     const double b_half = 0.5 * length_b;
     const double c_half = 0.5 * length_c;
 
-    const double qr_max = q*c_half;
+    const double qr_max_outer = q*fmax(sqrt(length_a*length_a + length_b*length_b), length_c)/2;
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max_outer, &w, &z);
 
    //Integration limits to use in Gaussian quadrature
     const double v1a = 0.0;
@@ -139,7 +139,7 @@ Fq(double q,
 
         const double qr_max_inner = q*sin_theta*fmax(a_half, b_half);
         constant double *w_inner, *z_inner;
-        int n_inner = gauss_weights(qr_max, &w_inner, &z_inner);
+        int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
 
         double inner_sum_F1 = 0.0;
         double inner_sum_F2 = 0.0;
