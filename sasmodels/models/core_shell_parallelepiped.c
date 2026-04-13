@@ -132,15 +132,15 @@ Fq(double q,
     const double drC = (crim_sld-solvent_sld);
 
     const double qr_max_outer = q*fmax(sqrt(tA*tA + tB*tB), tC)/2;
-    constant double *w, *z;
-    int n = gauss_weights(qr_max_outer, &w, &z);
+    constant double *w_outer, *z_outer;
+    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
 
     // outer integral (with gauss points), integration limits = 0, 1
     // substitute d_cos_alpha for sin_alpha d_alpha
     double outer_sum_F1 = 0; //initialize integral
     double outer_sum_F2 = 0; //initialize integral
-    for( int i=0; i<n; i++) {
-        const double cos_alpha = 0.5 * ( z[i] + 1.0 );
+    for( int i=0; i<n_outer; i++) {
+        const double cos_alpha = 0.5 * ( z_outer[i] + 1.0 );
         const double mu = half_q * sqrt(1.0-cos_alpha*cos_alpha);
         const double siC = length_c * sas_sinx_x(length_c * cos_alpha * half_q);
         const double siCt = tC * sas_sinx_x(tC * cos_alpha * half_q);
@@ -179,8 +179,8 @@ Fq(double q,
         }
         // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
         // and sum up the outer integral
-        outer_sum_F1 += w[i] * inner_sum_F1 * 0.5;
-        outer_sum_F2 += w[i] * inner_sum_F2 * 0.5;
+        outer_sum_F1 += w_outer[i] * inner_sum_F1 * 0.5;
+        outer_sum_F2 += w_outer[i] * inner_sum_F2 * 0.5;
     }
     // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
     outer_sum_F1 *= 0.5;

@@ -76,14 +76,14 @@ Fq(double q,
     const double c_scaled = length_c / length_b;
 
     const double qr_max_outer = q*fmax(sqrt(length_a*length_a + length_b*length_b), length_c)/2;
-    constant double *w, *z;
-    int n = gauss_weights(qr_max_outer, &w, &z);
+    constant double *w_outer, *z_outer;
+    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
 
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_total_F1 = 0.0; //initialize integral
     double outer_total_F2 = 0.0; //initialize integral
-    for( int i=0; i<n; i++) {
-        const double sigma = 0.5 * ( z[i] + 1.0 );
+    for( int i=0; i<n_outer; i++) {
+        const double sigma = 0.5 * ( z_outer[i] + 1.0 );
         const double mu_proj = mu * sqrt(1.0-sigma*sigma);
 
         const double qr_max_inner = mu_proj*fmax(a_scaled, 1.0);  // = qab*max(len)/2
@@ -109,8 +109,8 @@ Fq(double q,
         inner_total_F2 *= 0.5;
 
         const double si = sas_sinx_x(mu * c_scaled * sigma);
-        outer_total_F1 += w[i] * inner_total_F1 * si;
-        outer_total_F2 += w[i] * inner_total_F2 * si * si;
+        outer_total_F1 += w_outer[i] * inner_total_F1 * si;
+        outer_total_F2 += w_outer[i] * inner_total_F2 * si * si;
     }
     // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
     outer_total_F1 *= 0.5;

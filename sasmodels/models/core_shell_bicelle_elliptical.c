@@ -83,16 +83,16 @@ Fq(double q,
     const double dr3 = vol3*(sld_face-sld_rim);
 
     const double qr_max = q*(halfheight+thick_face);
-    constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    constant double *w_outer, *z_outer;
+    int n_outer = gauss_weights(qr_max, &w_outer, &z_outer);
 
     //initialize integral
     double outer_total_F1 = 0.0;
     double outer_total_F2 = 0.0;
-    for(int i=0;i<n;i++) {
+    for(int i=0;i<n_outer;i++) {
         //setup inner integral over the ellipsoidal cross-section
-        //const double cos_theta = ( z[i]*(vb-va) + va + vb )/2.0;
-        const double cos_theta = ( z[i] + 1.0 )/2.0;
+        //const double cos_theta = ( z_outer[i]*(vb-va) + va + vb )/2.0;
+        const double cos_theta = ( z_outer[i] + 1.0 )/2.0;
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
@@ -118,8 +118,8 @@ Fq(double q,
             inner_total_F2 += w_inner[j] * f * f;
         }
         //now calculate outer integral
-        outer_total_F1 += w[i] * inner_total_F1;
-        outer_total_F2 += w[i] * inner_total_F2;
+        outer_total_F1 += w_outer[i] * inner_total_F1;
+        outer_total_F2 += w_outer[i] * inner_total_F2;
     }
     // now complete change of integration variables (1-0)/(1-(-1))= 0.5
     outer_total_F1 *= 0.25;

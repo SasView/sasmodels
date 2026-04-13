@@ -73,8 +73,8 @@ Fq(double q,
     const double vol_core = 8.0 * (a_half-thickness) * (b_half-thickness) * (c_half-thickness);
 
     const double qr_max_outer = q*fmax(sqrt(length_a*length_a + length_b*length_b), length_c)/2;
-    constant double *w, *z;
-    int n = gauss_weights(qr_max_outer, &w, &z);
+    constant double *w_outer, *z_outer;
+    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
 
     //Integration limits to use in Gaussian quadrature
     const double v1a = 0.0;
@@ -84,9 +84,9 @@ Fq(double q,
 
     double outer_sum_F1 = 0.0;
     double outer_sum_F2 = 0.0;
-    for(int i=0; i<n; i++) {
+    for(int i=0; i<n_outer; i++) {
 
-        const double theta = 0.5 * ( z[i]*(v1b-v1a) + v1a + v1b );
+        const double theta = 0.5 * ( z_outer[i]*(v1b-v1a) + v1a + v1b );
         double sin_theta, cos_theta;
         SINCOS(theta, sin_theta, cos_theta);
 
@@ -122,8 +122,8 @@ Fq(double q,
         inner_sum_F1 *= 0.5 * (v2b-v2a);
         inner_sum_F2 *= 0.5 * (v2b-v2a);
 
-        outer_sum_F1 += w[i] * inner_sum_F1 * sin(theta);
-        outer_sum_F2 += w[i] * inner_sum_F2 * sin(theta);
+        outer_sum_F1 += w_outer[i] * inner_sum_F1 * sin(theta);
+        outer_sum_F2 += w_outer[i] * inner_sum_F2 * sin(theta);
     }
     outer_sum_F1 *= 0.5*(v1b-v1a);
     outer_sum_F2 *= 0.5*(v1b-v1a);
