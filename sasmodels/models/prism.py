@@ -162,46 +162,46 @@ description = """
 category = "shape:polyhedron"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
-               "nanoprism scattering length density"],
+               "Nanoprism scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["nsides", "", 5, [3, 50], "volume",
-               "nsides"],
-              ["Rave", "Ang", 500, [0., inf], "volume",
+              ["n_sides", "", 5, [3, 50], "volume",
+               "Number of sides"],
+              ["radius_average", "Ang", 500, [0., inf], "volume",
                "Average radius"],
-              ["L", "Ang", 5000, [0., inf], "volume",
-               "length"]
+              ["length", "Ang", 5000, [0., inf], "volume",
+               "Length"]
                ]
 
 ### Functions for geometrical calculations: volume, surface of the cross section, average radius, edge length etc.
-def form_volume(nsides, Rave, L):
+def form_volume(n_sides, radius_average, length):
     """
     Computes the volume of a nanoprism given its number of sides, average radius and length.
     Parameters
     ----------
-    nsides : int
+    n_sides : int
         Number of sides of the regular polygon cross-section.
-    Rave : float
+    radius_average : float
         Average radius of the regular polygon cross-section.
-    L : float
+    length : float
         Length of the nanoprism.
     Returns
     -------
     volume : float
         Volume of the nanoprism.
     """
-    nsides = int(nsides)
-    edge = edge_from_gyration_radius(nsides,Rave)
-    radius = radius_from_edge(nsides, edge)
-    surface = surface_from_radius(nsides, radius)
-    return surface * L
+    n_sides = int(n_sides)
+    edge = edge_from_gyration_radius(n_sides, radius_average)
+    radius = radius_from_edge(n_sides, edge)
+    surface = surface_from_radius(n_sides, radius)
+    return surface * length
 
-def edge_from_gyration_radius(nsides:int, gyr):
+def edge_from_gyration_radius(n_sides:int, gyr):
     """
-    Computes the edge length of an n-sided regular polygon of average radius Rave=gyr.
+    Computes the edge length of an n-sided regular polygon of average radius radius_average = gyr.
     Parameters
     ----------
-    nsides : int
+    n_sides : int
         Number of sides of the regular polygon.
     gyr : float
         average radius of the regular polygon.
@@ -210,15 +210,15 @@ def edge_from_gyration_radius(nsides:int, gyr):
     edge : float
         Edge length of the regular polygon.
     """
-    nsides = int(nsides)
-    return (gyr * 2 * np.sin(np.pi/nsides)) / np.sqrt(np.sinc(2/nsides))
+    n_sides = int(n_sides)
+    return (gyr * 2 * np.sin(np.pi/n_sides)) / np.sqrt(np.sinc(2/n_sides))
 
-def surface_from_radius(nsides:int, radius):
+def surface_from_radius(n_sides:int, radius):
     """
     Computes the area of an n-sided regular polygon of circumradius radius.
     Parameters
     ----------
-    nsides : int
+    n_sides : int
         Number of sides of the regular polygon.
     radius : float
         Circumradius of the regular polygon.
@@ -227,14 +227,14 @@ def surface_from_radius(nsides:int, radius):
     area : float
         Area of the regular polygon.
     """
-    return nsides * (radius**2) * np.sin(np.pi/nsides) * np.cos(np.pi/nsides)
+    return n_sides * (radius**2) * np.sin(np.pi/n_sides) * np.cos(np.pi/n_sides)
 
-def radius_from_edge(nsides:int, edge):
+def radius_from_edge(n_sides:int, edge):
     """
     Computes the circumradius of an n-sided regular polygon of edge length edge.
     Parameters
     ----------
-    nsides : int
+    n_sides : int
         Number of sides of the regular polygon.
     edge : float
         Edge length of the regular polygon.
@@ -243,9 +243,9 @@ def radius_from_edge(nsides:int, edge):
     radius : float
         Circumradius of the regular polygon.
     """
-    return edge/(2*np.sin(np.pi/nsides))
+    return edge/(2*np.sin(np.pi/n_sides))
 
-def shape_generator(number_of_sides, radius):
+def shape_generator(n_sides, radius):
     """
     Computes the list of vertices of a n-sided regular polygon, of circumradius "radius".
     Parameters
@@ -259,7 +259,7 @@ def shape_generator(number_of_sides, radius):
     vertices : np.ndarray shape (2, n)
         List of the vertices of the regular polygon.
     """
-    theta = np.linspace(0, 2 * np.pi, number_of_sides, endpoint=False)
+    theta = np.linspace(0, 2 * np.pi, n_sides, endpoint=False)
     return radius*np.vstack((np.cos(theta), np.sin(theta)))  # (2 x n)
 
 def edgecenters_generator(vertices:np.ndarray):
@@ -340,19 +340,19 @@ def parallel_factor(vertices:np.ndarray, q:np.ndarray, c:float): # gives the are
         sum += triple_product * (sas_sinx_x(qEj)*(np.cos(qRj)+np.sin(qRj)*1J)-c)
     return (2/(1J*qmodulus2_cutoff)*sum)
 
-def Fqabc(qa, qb, qc,nsides, Rave,L): # Form factor in 3D of the nanoprism for (qa, qb, qc) scattering vector
+def Fqabc(qa, qb, qc, n_sides, radius_average, length): # Form factor in 3D of the nanoprism for (qa, qb, qc) scattering vector
     """
-    Computes the form factor amplitude of a prism with a n-sided regular polygon cross-section and length L for (qa, qb, qc) scattering vector.
+    Computes the form factor amplitude of a prism with a n-sided regular polygon cross-section and length for (qa, qb, qc) scattering vector.
     Takes in account the parallel factor (complex function) and the perpendicular factor (sinc function).
     Parameters
     ----------
     qa, qb, qc : np.ndarray shape (N,)
         components of the scattering vector q
-    nsides : int
+    n_sides : int
         Number of sides of the regular polygon cross-section.
-    Rave : float
+    radius_average : float
         Average radius.
-    L : float
+    length : float
         Length of the nanoprism.
     Returns
     -------
@@ -360,38 +360,38 @@ def Fqabc(qa, qb, qc,nsides, Rave,L): # Form factor in 3D of the nanoprism for (
         Form factor amplitude of the nanoprism at the specific three dimensional q.
     """
     qab = np.vstack((qa, qb)).T
-    edge = edge_from_gyration_radius(nsides, Rave)
-    radius = radius_from_edge(nsides,edge)
-    vertices = shape_generator(nsides,radius)
-    perpendicular_factor_value = sas_sinx_x(qc*L/2) * L
+    edge = edge_from_gyration_radius(n_sides, radius_average)
+    radius = radius_from_edge(n_sides,edge)
+    vertices = shape_generator(n_sides,radius)
+    perpendicular_factor_value = sas_sinx_x(qc*length/2) * length
     parallel_factor_value = parallel_factor(vertices,qab,0.)
     A = parallel_factor_value * perpendicular_factor_value
     return A
 
-def Iqabc(qa,qb,qc,nsides,Rave,L): # proportionnal to the volume**2
+def Iqabc(qa,qb,qc,n_sides,radius_average,length): # proportionnal to the volume**2
     """
     Calls the function that computes the edge length and the scattered intensity.
     Parameters
     ----------
     qa, qb, qc :  np.ndarray shape (N,)
         components of the scattering vector q
-    nsides : int
+    n_sides : int
         Number of sides of the regular polygon cross-section.
-    Rave : float
+    radius_average : float
         Average radius of the regular polygon cross-section.
-    L : float
+    length : float
         Length of the nanoprism.
     Returns
     -------
     Iqabc : np.ndarray of float, shape (N,)
         Scattered intensity of the nanoprism at the specific three dimensional q components.
     """
-    nsides=int(nsides)
-    A = Fqabc(qa, qb, qc, nsides, Rave, L)
+    n_sides = int(n_sides)
+    A = Fqabc(qa, qb, qc, n_sides, radius_average, length)
     intensity = (np.abs(A))**2  # intensity is proportional to volume
     return intensity
 
-def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
+def Iq(q, sld, sld_solvent, n_sides:int, radius_average:float, length:float, npoints_fibonacci:int= 500):
     """
     Computes the scattering intensity I(q) of nanoprisms averaged over all orientations using the Fibonacci quadrature.
     The number of points on the sphere is set by npoints_fibonacci. Each point has an equal weight = 1/npoints_fibonacci.
@@ -401,7 +401,7 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
         Norm of the scattering vector
     sld, sld_solvent :
         Contrast of scattering length density
-    nsides, Rave, L :
+    n_sides, radius_average, length :
         Geometrical parameters of the prism
     npoints_fibonacci : int
         Number of Fibonacci points on the sphere, set to 500 by default
@@ -411,7 +411,7 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
     Iq : ndarray
         Scattering intensity averaged over all orientations
     """
-    nsides = int(nsides)
+    n_sides = int(n_sides)
     q = np.atleast_1d(q)
     q_unit,w = fibonacci_sphere(npoints_fibonacci)   # shape (npoints, 3)
     # Projections
@@ -419,7 +419,7 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
     # # Compute intensity
-    intensity = Iqabc(qa.ravel(), qb.ravel(), qc.ravel(), nsides, Rave, L).reshape(qa.shape)
+    intensity = Iqabc(qa.ravel(), qb.ravel(), qc.ravel(), n_sides, radius_average, length).reshape(qa.shape)
     # Uniform average over the sphere
     integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4
@@ -427,8 +427,8 @@ def Iq(q, sld, sld_solvent, nsides:int, Rave, L, npoints_fibonacci:int= 500):
 Iq.vectorized = True
 
 tests = [
-    [{"background": 0, "scale": 1, "nsides": 4, "Rave": 10, "L":200,"sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "n_sides": 4, "radius_average": 10, "length": 200, "sld": 1., "sld_solvent": 0.},
      0.01, 5.62789],
-    [{"background": 0, "scale": 1, "nsides": 4, "Rave": 10, "L":200,"sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "n_sides": 4, "radius_average": 10, "length": 200, "sld": 1., "sld_solvent": 0.},
      [0.01, 0.1], [5.62789, 0.73696]],
 ]
