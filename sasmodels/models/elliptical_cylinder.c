@@ -82,21 +82,22 @@ Fq(double q, double *F1, double *F2, double radius_minor, double r_ratio, double
     const double rA = 0.5*(square(radius_major) + square(radius_minor));
     const double rB = 0.5*(square(radius_major) - square(radius_minor));
 
-    const double qr_max = q*0.5*length;
-    constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    constant double *w_outer, *z_outer;
+    const double qr_max_outer = q*fmax(0.5*length, fmax(radius_minor, radius_minor*r_ratio));
+    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
 
-    const double qr_max_inner = q*fmax(radius_minor, radius_major);
     constant double *w_inner, *z_inner;
-    int n_inner = gauss_weights(qr_max, &w_inner, &z_inner);
+    const double qr_max_inner = q*fmax(radius_minor, radius_major);
+    int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
 
     //initialize integral
     double outer_sum_F1 = 0.0;
     double outer_sum_F2 = 0.0;
-    for(int i=0;i<n;i++) {
+    for(int i=0;i<n_outer;i++) {
         //setup inner integral over the ellipsoidal cross-section
-        const double cos_val = ( z[i]*(vb-va) + va + vb )/2.0;
+        const double cos_val = ( z_outer[i]*(vb-va) + va + vb )/2.0;
         const double sin_val = sqrt(1.0 - cos_val*cos_val);
+
         //const double arg = radius_minor*sin_val;
         double inner_sum_F1 = 0.0;
         double inner_sum_F2 = 0.0;
@@ -113,8 +114,8 @@ Fq(double q, double *F1, double *F2, double radius_minor, double r_ratio, double
 
         //now calculate outer integral
         const double si = sas_sinx_x(q*0.5*length*cos_val);
-        outer_sum_F1 += w[i] * inner_sum_F1 * si;
-        outer_sum_F2 += w[i] * inner_sum_F2 * si * si;
+        outer_sum_F1 += w_outer[i] * inner_sum_F1 * si;
+        outer_sum_F2 += w_outer[i] * inner_sum_F2 * si * si;
     }
     // correct limits and divide integral by pi
     outer_sum_F1 *= 0.5*(vb-va)/M_PI;
