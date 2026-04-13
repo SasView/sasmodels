@@ -82,9 +82,9 @@ Fq(double q,
     const double dr2 = vol2*(sld_rim-sld_solvent);
     const double dr3 = vol3*(sld_face-sld_rim);
 
-    const double qr_max = q*(halfheight+thick_face);
+    const double qr_max_outer = q*fmax(halfheight+thick_face, fmax(r_minor, r_major)+thick_rim);
     constant double *w_outer, *z_outer;
-    int n_outer = gauss_weights(qr_max, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
 
     //initialize integral
     double outer_total_F1 = 0.0;
@@ -99,7 +99,7 @@ Fq(double q,
         const double si1 = sas_sinx_x(halfheight*qc);
         const double si2 = sas_sinx_x((halfheight+thick_face)*qc);
 
-        const double qr_max_inner = qab*fmax(r_minor, r_major);
+        const double qr_max_inner = qab*(fmax(r_minor, r_major)+thick_rim);
         constant double *w_inner, *z_inner;
         int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
 
