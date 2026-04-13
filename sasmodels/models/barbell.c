@@ -20,7 +20,7 @@ _bell_kernel(double qab, double qc, double h, double radius_bell,
     const double b = (half_length+h)*qc; // cos argument intercept
     const double qab_r = radius_bell*qab; // Q*R*sin(theta)
 
-    const double qr_max = fmax(qab_r, m);
+    const double qr_max = fmax(qab_r, m+b);
     constant double *w, *z;
     int n = gauss_weights(qr_max, &w, &z);
 
@@ -115,7 +115,12 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     const double h = sqrt(square(radius_bell) - square(radius));
     const double half_length = 0.5*length;
 
-    const double qr_max = q*fmax(radius, half_length);
+    // The term h comes from solving the right triangle with diagonal
+    // equal to the bell radius and horizontal equal to the bar radius.
+    // The result is the height of the equator above the end of the rod.
+    // To get the total length of bar+bell use bar length + 2*(bell radius + h).
+    // We want the radius, so divide that by two.
+    const double qr_max = q*(half_length + radius_bell + h);
     constant double *w, *z;
     int n = gauss_weights(qr_max, &w, &z);
 

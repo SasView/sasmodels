@@ -7,7 +7,7 @@
 //   length is the cylinder length, or the separation between the lens halves
 //   theta is the angle of the cylinder wrt q.
 static double
-_cap_kernel(double qab, double qc, double h, double radius_cap,
+_cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
     double half_length)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
@@ -27,7 +27,14 @@ _cap_kernel(double qab, double qc, double h, double radius_cap,
     const double b = (half_length+h)*qc; // cos argument intercept
     const double qab_r = radius_cap*qab; // Q*R*sin(theta)
 
-    const double qr_max = fmax(qab_r, m);
+    // m+b = qc*(half_length + radius_cap + h). With h in [-radius_cap, 0] depending
+    // on cylinder radius, that means m+b is in qc*[length/2, length_2 + radius_cap].
+    // The qab_r term will be very large for mostly flat caps. Since the bj term will
+    // oscillate at this frequency, it seems like we should increase the number of
+    // gauss points to accomodate. However, if we use the radius of the cylinder
+    // we seem to get good results, so use that to set the number of integration points.
+    //const double qr_max = fmax(qab_r, m+b);
+    const double qr_max = fmax(qab*radius, m+b);
     constant double *w, *z;
     int n = gauss_weights(qr_max, &w, &z);
 
@@ -48,7 +55,7 @@ _cap_kernel(double qab, double qc, double h, double radius_cap,
 static double
 _fq(double qab, double qc, double h, double radius_cap, double radius, double half_length)
 {
-    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, half_length);
+    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, radius, half_length);
     const double bj = sas_2J1x_x(radius*qab);
     const double si = sas_sinx_x(half_length*qc);
     const double cyl_Fq = 2.0*M_PI*radius*radius*half_length*bj*si;
@@ -119,7 +126,15 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     const double h = -sqrt(square(radius_cap) - square(radius));
     const double half_length = 0.5*length;
 
-    const double qr_max = q*fmax(radius_cap, half_length);
+    // The term h comes from solving the right triangle with diagonal
+    // equal to the cap radius and horizontal equal to the bar radius.
+    // The result is the (negative) height of the equator above the end of the rod.
+    // To get the total length of bar+cap use bar length + 2*(cap radius + h).
+    // We want the radius, so divide that by two.
+    // For a lentil with length=0, the radius will be the dominant term, hence
+    // the fmax in the calculation below. This isn't needed for the barbell shape
+    // since the bell length is always greater than the bar radius.
+    const double qr_max = q*fmax(half_length + radius_cap + h, radius);
     constant double *w, *z;
     int n = gauss_weights(qr_max, &w, &z);
 
