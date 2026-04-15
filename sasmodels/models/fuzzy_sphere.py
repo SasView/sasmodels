@@ -62,7 +62,7 @@ so-called polymer 'brushes' (where the SLD profile follows a parabolic decay) or
 spherical particles with terminally-attached polymer chains (where the SLD
 profile is expected to exhibit a maximum before the Gaussian decay).
 
-To model more complex SLD profiles, see the onion and spherical_sld models.
+To model more complex SLD profiles, see the :ref:`onion` and :ref:`spherical_sld` models.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
