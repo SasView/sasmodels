@@ -24,7 +24,7 @@ void _integrate_bessel(
     const double zm = 0.5*radius;
     const double zb = 0.5*radius;
 
-    const double qr_max = fmax(q_sin_psi*beta*radius*radius, q_cos_psi*radius);
+    const double qr_max = fmax(q_cos_psi*radius*radius*fmax(alpha, beta), q_sin_psi*radius);
     constant double *w, *z;
     int n_outer = gauss_weights(qr_max, &w, &z);
 
@@ -84,9 +84,11 @@ double _integrate_psi(
     double alpha,
     double beta)
 {
-    const double qr_max = q*0.5*thickness;
+    const double qhalf_thickness = q*0.5*thickness;
+    const double qr_max = fmax(qhalf_thickness, q*radius);
     constant double *w, *z;
     int n = gauss_weights(qr_max, &w, &z);
+    //printf("qr_max=%.1f n=%d\n", qr_max, n);
 
     // translate gauss point z in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
@@ -98,7 +100,7 @@ double _integrate_psi(
         double sin_psi, cos_psi;
         SINCOS(psi, sin_psi, cos_psi);
         double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi);
-        double sinc_term = square(sas_sinx_x(q * thickness * cos_psi / 2.0));
+        double sinc_term = square(sas_sinx_x(qhalf_thickness * cos_psi));
         double pringle_kernel = 4.0 * sin_psi * bessel_term * sinc_term;
         sum += w[i] * pringle_kernel;
     }
