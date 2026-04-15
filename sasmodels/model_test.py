@@ -111,10 +111,10 @@ def _add_model_to_suite(loaders, suite, model_info):
     #print('found tests in', model_name)
     #print('------')
 
-    # if ispy then use the dll loader to call pykernel
+    # if is python then use the dll loader to call pykernel
     # don't try to call cl kernel since it will not be
     # available in some environmentes.
-    is_py = callable(model_info.Iq)
+    is_py = not model_info.compiled
 
     # Some OpenCL drivers seem to be flaky, and are not producing the
     # expected result.  Since we don't have known test values yet for
