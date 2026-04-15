@@ -93,7 +93,7 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["rg", "Ang", 60.0, [0, inf], "", "Radius of gyration"],
-              ["s",  "",    1.0,  [0, inf], "", "Dimension variable"],
+              ["s",  "",    1.0,  [0, 3], "", "Dimension variable"],
               ["porod_exp",  "",    3.0,  [0, inf], "", "Porod exponent"]]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -105,15 +105,22 @@ def Iq(q, rg, s, porod_exp):
     n = 3.0 - s
     ms = 0.5*(porod_exp-s) # =(n-3+porod_exp)/2
 
-    # preallocate return value
-    iq = 0.0*q
-
     # Take care of the singular points
-    if rg <= 0.0 or ms <= 0.0:
-        return iq
+    if rg <= 0.0 or porod_exp <= s:
+        # For the Rg condition the Q_crossover is at infinity so take the Guinier branch with q^-s.
+        # For the porod_exp condition, the crossover is zero so take the Porod branch, but
+        # use m=s. The limit of e^-ms (C ms)^ms = 1 so this gives q^-s as well.
+        return q**-s
+    if n <= 0:
+        # For the 3-s condition, the crossover is zero so take the Porod branch.
+        # The multiplicative factor (3-s)^ms goes to zero from the left, so the limit is 0
+        # at all q. In practice s=0 for spheres, s=1 for rods and s=2 for plates, so we don't
+        # care about the s=3 condition.
+        return 0.0*q
 
     # Do the calculation and return the function value
     idx = q < sqrt(n*ms)/rg
+    iq = 0.0*q
     with errstate(divide='ignore'):
         iq[idx] = q[idx]**-s * exp(-(q[idx]*rg)**2/n)
         iq[~idx] = q[~idx]**-porod_exp * (exp(-ms) * (n*ms/rg**2)**ms)

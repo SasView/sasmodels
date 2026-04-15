@@ -1,12 +1,14 @@
 import numpy as np
 from bumps.names import FitProblem
 
+from sasdata import data_path
+
 from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
 from sasmodels.data import load_data
 
 # Spherical particle data, not ellipsoids
-sans, usans = load_data('latex_smeared.xml', index='all')
+sans, usans = load_data(str(data_path / '1d_data' / 'latex_smeared.xml'), index='all')
 usans.qmin, usans.qmax = np.min(usans.x), np.max(usans.x)
 usans.mask = (usans.x < 0.0)
 usans.oriented = True

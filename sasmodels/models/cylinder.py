@@ -137,7 +137,7 @@ parameters = [
     ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "sld",         "Solvent scattering length density"],
     ["radius",      "Ang",         20, [0, inf],    "volume",      "Cylinder radius"],
     ["length",      "Ang",        400, [0, inf],    "volume",      "Cylinder length"],
-    ["theta",       "degrees",     60, [-360, 360], "orientation", "cylinder axis to beam angle"],
+    ["theta",       "degrees",     60, [-180, 180], "orientation", "cylinder axis to beam angle"],
     ["phi",         "degrees",     60, [-360, 360], "orientation", "rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
