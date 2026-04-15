@@ -48,7 +48,7 @@ applyingnpolydispersity to one or both length scales.
 This model has been widely applied to the scattering from polymer microgel
 particles as illustrated below, where $R_\text{h}$ is the hydrodynamic radius.
 
-.. figure:: img/fuzzy_sphere_geometry.jpg
+.. figure:: img/fuzzy_sphere_geometry.png
 
     fuzzy_sphere model applied to a microgel particle (adapted [2], Fig 5).
 
