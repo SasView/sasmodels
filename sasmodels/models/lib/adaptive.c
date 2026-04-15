@@ -11219,6 +11219,14 @@ constant double Gauss5000Z[5000]={
 static int
 gauss_weights(double qr, constant double **w, constant double **z)
 {
+	// TODO: add more stages (150, 1500) so the n^2 model slowdown is a little less brutal
+	// TODO: adjust cutoff for n=500
+	//     For the pringle model I get npoints = 0.365 qr_max + 43
+	//     and empirical values 14 => 20, 120 => 76, 1200 => 500, 14500 => 5000
+	//     The error threshhold is abrupt: if n is too low the result is bad, but
+	//     there is little benefit for having too large an n.
+	//     These results are specific to the pringle inner integral and may not hold in general.
+	//     Check that all models have reasonable cutoff.
 	// *w = Gauss5000Wt; *z = Gauss5000Z; return 5000; // max precision
 	// *w = Gauss76Wt; *z = Gauss76Z; return 76; // default
 	if (qr < 10) {
