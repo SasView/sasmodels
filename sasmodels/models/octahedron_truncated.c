@@ -92,6 +92,7 @@ Fq(double q,
             // for q < 1e-8 the function begins to rise.
             // TODO: calculation is unstable for small q.
             // PAK: reordered the equations and moved factor of 1/2 to normalization.
+            // PAK: verified that t=1 matches Wei-Ren Chen et al. for a regular octahedron.
             const double qx2 = square(qx);
             const double qy2 = square(qy);
             const double AA =
@@ -106,9 +107,8 @@ Fq(double q,
                 ((qx-qz)*sin(qx*tinv-qz*t) + (qx+qz)*sin(qx*tinv+qz*t)) / ((qx2-qy2)*(qx2-qz2)) +
                 ((qy-qz)*sin(qy*tinv-qz*t) + (qy+qz)*sin(qy*tinv+qz*t)) / ((qy2-qz2)*(qy2-qx2));
 
-	        // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
+            // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
             const double AP = 3./(1. - 3.*cube(tinv)) * (AA+BB+CC);
-
 
             inner_sum_F1 += w_inner[j] * AP;
             inner_sum_F2 += w_inner[j] * AP * AP;
