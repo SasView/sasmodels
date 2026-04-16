@@ -253,7 +253,9 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "rotation about c axis"],
               ]
 
-source = ["lib/gauss20.c", "octahedron_truncated.c"]
+valid = "t >= 0.5 && t <= 1.0"
+single = False
+source = ["lib/adaptive.c", "octahedron_truncated.c"]
 # change to "lib/gauss76.c" or "lib/gauss150.c" to increase the number of integration points
 # for the orientational average. Note that it will increase calculation times.
 
