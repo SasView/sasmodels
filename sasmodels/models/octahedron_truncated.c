@@ -130,13 +130,9 @@ Fq(double q,
     outer_sum_F2 /= M_PI_2;
 
     // Multiply by contrast and volume
-    // contrast
     const double s = (sld-solvent_sld) * form_volume(length_a, b2a_ratio,c2a_ratio, t);
-    // volume
-    // s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
 
     // Convert from [1e-12 A-1] to [cm-1]
-    const double
     *F1 = 1e-2 * s * outer_sum_F1;
     *F2 = 1e-4 * square(s) * outer_sum_F2;
 
