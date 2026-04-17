@@ -146,7 +146,7 @@ Authorship and Verification
 
 * **Last Modified by:** MIC **Date:** 11 December 2025
 
-* **Last Reviewed by:** SM **Date:** 03 April 2026
+* **Last Reviewed by:** SM **Date:** 04 May 2026
 
 """
 import numpy as np
@@ -155,14 +155,14 @@ from numpy import inf
 from sasmodels.special import sas_sinx_x
 from sasmodels.special.fibonacci import fibonacci_sphere
 
-name = "nanoprisms"
-title = "nanoprisms of different cross-sections"
+name = "prism"
+title = "prism of different cross-sections"
 description = """
-        Model for nanoprisms of different cross-sections with orientation average using the Fibonacci quadrature"""
+        Model for prisms of different cross-sections with orientation average using the Fibonacci quadrature"""
 category = "shape:polyhedron"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
-               "Nanoprism scattering length density"],
+               "Prism scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["n_sides", "", 5, [3, 50], "volume",
@@ -368,7 +368,7 @@ def Fqabc(qa, qb, qc, n_sides, radius_average, length): # Form factor in 3D of t
     A = parallel_factor_value * perpendicular_factor_value
     return A
 
-def Iqabc(qa,qb,qc,n_sides,radius_average,length): # proportionnal to the volume**2
+def Iqabc(qa,qb,qc,n_sides,radius_average, length): # proportionnal to the volume**2
     """
     Calls the function that computes the edge length and the scattered intensity.
     Parameters
