@@ -4,6 +4,7 @@ the :ref:`magnetism` documentation.
 
 Definition
 ----------
+
 Scattering from spheres with a Gaussian interface.
 
 The scattering intensity $I(q)$ is calculated as:
@@ -27,7 +28,7 @@ Here $A(q)^2$ is the form factor, $P(q)$. The $scale$ is equivalent to the
 volume fraction of spheres, each of volume, $V$. And the contrast $(\Delta \rho)$
 is the difference in SLD between a sphere and the surrounding medium.
 
-In this model, **$R$ represents the radius at which the SLD has decreased to
+**In this model,** $R$ **represents the radius at which the SLD has decreased to
 half of its value at the core, not the overall radius of a sphere**. This is
 a frequent source of confusion when applying this model.
   
@@ -43,26 +44,26 @@ From Reference [1]:
 
 For this model to give meaningful results it is important $\sigma_\text{fuzzy} \ll R$.
 It is for the User to ensure that this condition is maintained, especially if
-applyingnpolydispersity to one or both length scales.
+applying polydispersity to one or both length scales.
     
 This model has been widely applied to the scattering from polymer microgel
 particles as illustrated below, where $R_\text{h}$ is the hydrodynamic radius.
 
 .. figure:: img/fuzzy_sphere_geometry.png
 
-    fuzzy_sphere model applied to a microgel particle (adapted [2], Fig 5).
+Figure shows the fuzzy_sphere model applied to a microgel particle (adapted from [2], Fig 5).
 
 Although the fuzzy sphere model often provides a good description of scattering
 data from such systems, advances in measurement techniques have highlighted
-that the $real-space$ density profile can be far more complex than this model
+that the *real-space* density profile can be far more complex than this model
 assumes [3].
 
-This model is not suitable for describing spherical particles decorated with
+This model is *not* suitable for describing spherical particles decorated with
 so-called polymer 'brushes' (where the SLD profile follows a parabolic decay) or
 spherical particles with terminally-attached polymer chains (where the SLD
 profile is expected to exhibit a maximum before the Gaussian decay).
 
-To model more complex SLD profiles, see the :ref:`onion` and :ref:`spherical_sld` models.
+To model more complex SLD profiles, see the :ref:`onion` and :ref:`spherical-sld` models.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
@@ -85,7 +86,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by: Steve King Date: April 15, 2026**
+* **Last Modified by: Steve King Date: April 16, 2026**
 * **Last Reviewed by:**
 """
 
@@ -109,10 +110,10 @@ category = "shape:sphere"
 
 # pylint: disable=bad-whitespace,line-too-long
 # ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",  3, [-inf, inf], "sld",    "Solvent scattering length density"],
-              ["radius",      "Ang",        60, [0, inf],    "volume", "Particle pseudo-radius (read the model help)"],
-              ["fuzziness",   "Ang",        10, [0, inf],    "volume",       "Std deviation from average thickness of the fuzzy interface (must be << radius)"],
+parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Scattering length density of sphere"],
+              ["sld_solvent", "1e-6/Ang^2",  3, [-inf, inf], "sld",    "Scattering length density of solvent"],
+              ["radius",      "Ang",        60, [0, inf],    "volume", "Pseudo-radius of sphere (read the definition in the model help)"],
+              ["fuzziness",   "Ang",        10, [0, inf],    "volume", "Std dev from the average thickness of the fuzzy interface (must be << radius)"],
              ]
 # pylint: enable=bad-whitespace,line-too-long
 
