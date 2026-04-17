@@ -1,5 +1,5 @@
 r"""
-This model provides the form factor for nanoprisms with different cross-sections.
+This model provides the form factor for a right prism which cross-section is a regular polygon. 
 Orientation averaging is done by using the Fibonacci quadrature.
 This quadrature provides a quasi-uniform distribution of points on the unit sphere
 using the golden ratio. The number of points to generate on the unit sphere is set to 500 points, it usually provides
@@ -127,15 +127,15 @@ References
 
 2. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
    In: Journal of Applied Crystallography - J. Appl. Cryst. (June 2011).
-   DOI:  https://doi.org/10.1107/S0021889811011691
+   DOI: https://doi.org/10.1107/S0021889811011691
 
 3. Croset, Bernard, "Form factor of any polyhedron: a general compact
    formula and its singularities" In: J. Appl. Cryst. (2017). 50, 1245–1255
-   https://doi.org/10.1107/S1600576717010147
+   DOI: https://doi.org/10.1107/S1600576717010147
 
 4. Wuttke, J. Numerically stable form factor of any polygon and polyhedron
    J Appl Cryst 54, 580-587 (2021)
-   https://doi.org/10.1107/S160057672100171
+   DOI: https://doi.org/10.1107/S1600576721001710
 
 Authorship and Verification
 ----------------------------
@@ -146,7 +146,7 @@ Authorship and Verification
 
 * **Last Modified by:** MIC **Date:** 11 December 2025
 
-* **Last Reviewed by:** SM **Date:** 04 May 2026
+* **Last Reviewed by:** SM **Date:** 17 April 2026
 
 """
 import numpy as np
