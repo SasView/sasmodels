@@ -1,5 +1,5 @@
 r"""
-This model provides the form factor for truncated tetrahedrons.
+This model provides the form factor for regular tetrahedrons.
 Orientation averaging is done by using the Fibonacci quadrature.
 This quadrature provides a quasi-uniform distribution of points on the unit sphere
 using the golden ratio. The number of points to generate on the unit sphere
@@ -9,12 +9,11 @@ and computational efficiency.
 Definition
 ----------
 
-To define the truncated tetrahedron form factor, the regular tetrahedron form factor has to be defined first.
-The truncated tetrahedron form factor will then be obtained by subtracting the four smaller tetrahedrons at its vertices.
- So first, let's consider a regular tetrahedron. The size of the tetrahedron is described by its circumradius :math:`R`,
+This model computes the form factor of a regular tetrahedron from its circumradius. 
+The size of the tetrahedron is described by its circumradius :math:`R`,
 which is the radius of the circumscribed sphere. The relationship between the circumradius
 and the edge length is also implemented. The edge length :math:`L`
-and volume :math:`V_T` are given by:
+and volume :math:`V` are given by:
 
 .. math::
 
@@ -22,7 +21,7 @@ and volume :math:`V_T` are given by:
 
 .. math::
 
-    V_{T}  = \frac{\sqrt{2}}{12} \, L^3
+    V = \frac{\sqrt{2}}{12} \, L^3
 
 .. figure:: img/tetrahedron_regular.png
 
@@ -30,6 +29,7 @@ and volume :math:`V_T` are given by:
 
 The four vertices of the tetrahedron, with :math:`\mathbf{v}_0` at the origin,
 are defined as:
+
 .. math::
 
     \mathbf{v}_0 = (0,\ 0,\ 0)
@@ -74,42 +74,15 @@ general tetrahedral form factor is given by:
 
 .. math::
 
-    F_\mathrm{T}(\mathbf{q}) = |\det(\mathbf{T})| \left\{
+    F_\mathrm{tetra}(\mathbf{q}) = |\det(\mathbf{T})| \left\{
         \frac{i}{Q_1 (Q_1 - Q_2)(Q_1 - Q_3)} \exp(i Q_1)
       + \frac{i}{Q_2 (Q_2 - Q_1)(Q_2 - Q_3)} \exp(i Q_2)
       + \frac{i}{Q_3 (Q_3 - Q_2)(Q_3 - Q_1)} \exp(i Q_3)
       - \frac{i}{Q_1 Q_2 Q_3}
     \right\}
 
-
-The truncated tetrahedron is a polyhedron obtained by truncating the vertices of a regular tetrahedron.
-
-.. figure:: img/truncated_tetrahedron.png
-.. figure:: img/tetra-octa-center-V1V2V3.png
-
-    Tetrahedron with different truncatures.
-
-The volume of the truncated tetrahedron is given by:
-
-.. math::
-
-    V_{T_{truncated}}  = V_{T}  (1 - 4t^3)
-
-The parameter :math:`t` represents the truncation level. At the maximum value :math:`t=1/2`,
-the corresponding shape is a regular octahedron. At the minimum value :math:`t=0`, 
-the shape is a regular tetrahedron. At :math:`t=1/3`, the corresponding shape is the
-Friauf polyhedron, in which all edges are equal.
-The truncated tetrahedron form factor is also obtained by subtracting the four
-smaller tetrahedrons at its vertices. It is expressed as:    
-
-.. math::
-
-    F_{T_{truncated}} (\vec{q},t, \vec{v_1},\vec{v_2},\vec{v_3}) 
-    = F_{T} (\vec{q},\vec{v_1},\vec{v_2},\vec{v_3})-F_{T} (\vec{q},t\vec{v_1},t\vec{v_2},t\vec{v_3})(1+e^{i(1-t)\vec{q} \cdot \vec{v_1}}+e^{i(1-t)\vec{q} \cdot \vec{v_2}}+\ e^{i(1-t)\vec{q} \cdot \vec{v_3}})\
-
-where the phase terms correspond to four translations inside the shape. 
-
-Singularities: the expression of the regular tetreahedron form factor presents numerical singularities in four distinct cases, each handled analytically.
+This expression presents numerical singularities in four distinct cases, each handled
+analytically.
 
 **Case 1** — :math:`\mathbf{q}` perpendicular to vertex :math:`\mathbf{v}_i`
 (:math:`Q_i = 0`, with :math:`Q_j, Q_k \neq 0` and :math:`Q_j \neq Q_k`):
@@ -150,10 +123,10 @@ The formula can be expressed by three alternatives
 
 .. math::
 
-    F_V(\mathbf{q}) = V_\mathrm{T}
+    F_V(\mathbf{q}) = V_\mathrm{tetra}
       + |\det(\mathbf{T})| \, \frac{i(Q_1 + Q_2 + Q_3)}{24}
 
-where the tetrahedral volume is :math:`V_\mathrm{T} = |\det(\mathbf{T})| / 6`.
+where the tetrahedral volume is :math:`V_\mathrm{tetra} = |\det(\mathbf{T})| / 6`.
 
 Orientation average: The 1D form factor corresponds to the orientation
 average with all the possible orientations having the same probability.
@@ -170,7 +143,7 @@ all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
 .. math::
 
-    P(q) =  \sum_{j=1}^{N} w_j I(q\mathbf{u}_{j}, R, t)
+    P(q) =  \sum_{j=1}^{N} w_j I(q\mathbf{u}_{j}, R)
 
 .. figure:: img/fibonacci_sphere.png
 
@@ -237,10 +210,10 @@ from numpy import inf
 
 from sasmodels.special.fibonacci import fibonacci_sphere
 
-name = "tetrahedron_truncated"
-title = "Tetrahedron truncated"
+name = "tetrahedron"
+title = "Regular tetrahedron"
 description = """
-        Model for a truncated tetrahedron with orientation average using the Fibonacci quadrature"""
+        Model for a regular tetrahedron with orientation average using the Fibonacci quadrature"""
 category = "shape:polyhedron"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
@@ -248,70 +221,66 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["circumradius", "Ang", 100, [0., inf], "volume",
-               "Circumradius of the full tetrahedron"],
-              ["t", "", 0, [0, 0.5], "volume",
-               "truncation"],
+               "Circumradius"],
                ]
 
 ### Functions for geometrical calculations:
 # volume, edge length and vertices of the tetrahedron.
-def form_volume(circumradius, t):
+def form_volume(circumradius):
     """
-    Computes the volume of the truncated tetrahedron from its circumradius.
+    Computes the volume of the tetrahedron from its circumradius.
     Parameters
     ----------
     circumradius : float
-        Circumradius of the full tetrahedron.
-    t : float
-        Truncation parameter.
+        Circumradius of the tetrahedron.
     Returns
     -------
     volume : float
-        Volume of the truncated tetrahedron.
+        Volume of the tetrahedron.
     """
     edge = edge_from_circumradius(circumradius)
-    volume = edge**3 * np.sqrt(2) / 12 * (1 - 4*t**3)
+    volume = edge**3 * np.sqrt(2) / 12
     return volume
 
 def edge_from_circumradius(circumradius):
     """
-    Computes the edge length of the full tetrahedron from its circumradius.
+    Computes the edge length of the tetrahedron from its circumradius.
     Parameters
     ----------
     circumradius : float
-        Circumradius of the full tetrahedron.
+        Circumradius of the tetrahedron.
     Returns
     -------
     edge : float
-        Edge length of the full tetrahedron.
+        Edge length of the tetrahedron.
     """
     return 4 / np.sqrt(6) * circumradius
 
 def circumradius_from_edge(edge):
     """
-    Computes the circumradius of the full tetrahedron from its edge length.
+    Computes the circumradius of the tetrahedron from its edge length.
     Parameters
     ----------
     edge : float
-        Edge length of the full tetrahedron.
+        Edge length of the tetrahedron.
     Returns
     -------
     circumradius : float
-        Circumradius of the full tetrahedron.
+        Circumradius of the tetrahedron.
     """
     return np.sqrt(6) / 4 * edge
 
 def vertices(circumradius):
     """
-    Computes the vertices of the full tetrahedron from its circumrdius.
+    Computes the vertices of a regular tetrahedron from its circumradius.
     Parameters
     ----------
     circumradius : float
-        Circumradius of the full tetrahedron.
+        Circumradius of the tetrahedron.
     Returns
     -------
     vertices : list
-        List of the coordinates of the vertices of the full tetrahedron.
+        List of the coordinates of the vertices of the tetrahedron.
     """
     edge = edge_from_circumradius(circumradius)
     # The origin is located at V0
@@ -458,9 +427,9 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
     return scattering_amplitude
 
 
-def Fqabc(qa, qb, qc, circumradius, t):
+def Fqabc(qa, qb, qc, circumradius):
     """
-    Computes the form factor amplitude of the truncated tetrahedron
+    Computes the form factor amplitude of the tetrahedron
     from its circumradius and the three components of the
     scattering vector q.
     Parameters
@@ -469,48 +438,41 @@ def Fqabc(qa, qb, qc, circumradius, t):
         Circumradius of the tetrahedron.
     qa, qb, qc : float
         Components of the scattering vector q
-    t : float
-        Truncation parameter.
     Returns
     -------
     Fqabc :
-        Form factor amplitude of the truncated tetrahedron at the
+        Form factor amplitude of the tetrahedron at the
         specific three dimensional q.
     """
     V0, V1, V2, V3 = vertices(circumradius)
-    scattering_amplitude =  Fq_ortho(qa, qb, qc, V1, V2, V3) - Fq_ortho(qa, qb, qc, V1*t, V2*t, V3*t) * (
-                   (1 + np.exp(1j * (1-t) * (qa * V1[0] + qb * V1[1] + qc * V1[2])))+
-                   np.exp(1j * (1-t) * (qa * V2[0] + qb * V2[1] + qc * V2[2])) +
-                   np.exp(1j * (1-t) * (qa * V3[0] + qb * V3  [1] + qc * V3[2])))
+    scattering_amplitude = Fq_ortho(qa, qb, qc, V1, V2, V3)
 
     return scattering_amplitude
 
 
-def Iqabc(qa, qb, qc, circumradius, t): # proportionnal to the volume**2
+def Iqabc(qa, qb, qc, circumradius): # proportional to the volume**2
     """
-    Computes the scattered intensity of the truncated tetrahedron at the specific
+    Computes the scattered intensity of the tetrahedron at the specific
     three dimensional q components from the form factor amplitude Fqabc.
     Parameters
     ----------
     qa, qb, qc : float or array
         Components of the scattering vector q
     circumradius : float
-        Circumradius of the full tetrahedron.
-    t : float
-        Truncation parameter.
+        Circumradius of the tetrahedron.
     Returns
     -------
     Iqabc : float or array
         Scattered intensity of the tetrahedron at the specific three
         dimensional q components.
     """
-    A = Fqabc(qa, qb, qc, circumradius, t)
+    A = Fqabc(qa, qb, qc, circumradius)
     intensity = (np.abs(A))**2  # intensity is proportional to the volume
     return intensity
 
-def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 500):
+def Iq(q, sld, sld_solvent, circumradius:float, npoints_fibonacci:int= 500):
     """
-    Computes the scattering intensity I(q) of the truncated tetrahedrons averaged over all
+    Computes the scattering intensity I(q) of tetrahedrons averaged over all
     orientations using the Fibonacci quadrature.
     The number of points on the sphere is set by npoints_fibonacci.
     Each point has an equal weight = 1/npoints_fibonacci.
@@ -521,9 +483,7 @@ def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 
     sld, sld_solvent :
         Contrast of scattering length density
     circumradius : float
-        Circumradius of the full tetrahedron.
-    t : float
-        Truncation parameter.
+        Circumradius of the tetrahedron.
     npoints_fibonacci : int
         Number of Fibonacci points on the sphere, set to 500 by default
         (higher number increases accuracy but also computation time,
@@ -541,7 +501,7 @@ def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
     # Compute intensity
-    intensity = Iqabc(qa, qb, qc, circumradius, t)  # shape (nq, npoints)
+    intensity = Iqabc(qa, qb, qc, circumradius)  # shape (nq, npoints)
     # Uniform average over the sphere
     integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4
@@ -549,14 +509,8 @@ def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 
 Iq.vectorized = True
 
 tests = [
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "circumradius": 100, "sld": 1., "sld_solvent": 0.},
      0.01, 48.00520],
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0, "sld": 1., "sld_solvent": 0.},
-     [0.01, 0.1], [48.00520, 0.57463]],
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0.5, "sld": 1., "sld_solvent": 0.},
-     0.0001, 25.65146],
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0.3, "sld": 1., "sld_solvent": 0.},
-     0.0001, 45.75264],
-
+    [{"background": 0, "scale": 1, "circumradius": 100, "sld": 1., "sld_solvent": 0.},
+     [0.01, 0.1], [48.00520, 0.57461]],
 ]
-
