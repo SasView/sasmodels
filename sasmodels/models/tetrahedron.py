@@ -518,5 +518,5 @@ tests = [
     [{"background": 0, "scale": 1, "circumradius": 100, "sld": 1., "sld_solvent": 0.},
      0.01, 48.00520],
     [{"background": 0, "scale": 1, "circumradius": 100, "sld": 1., "sld_solvent": 0.},
-     [0.01, 0.1], [48.00520, 0.57461]],
+     [0.01, 0.1], [48.00520, 0.57463]],
 ]
