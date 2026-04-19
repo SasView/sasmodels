@@ -295,11 +295,11 @@ def vertices(circumradius):
 def Fq_ortho(qa, qb, qc, V1, V2, V3):
     """
     General function that computes the form factor amplitude
-    of the tetrahedron.
-    Takes into account the singularities:
+    of the tetrahedra.
+    Takes in account the singularities:
      - q perpendicular to a vertex,
-     - q perpendicular to an edge
-     - q perpendicular to a face
+     - q perpendicular to a an edge
+     - q perpendicular to a to a face
      - q tending to 0.
     Code written by Tianjuan Yang, adapted by Sara Mokhtari.
     https://doi.org/10.1107/S160057672201130X
@@ -321,15 +321,11 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
     Q2 = qa* V2[0] + qb * V2[1] + qc * V2[2]
     Q3 = qa * V3[0] + qb * V3[1] + qc * V3[2]
     det_T = np.linalg.det(T)
-    scattering_amplitude = det_T * (
-        1j * np.exp(1j * Q3) / (Q3 * (Q3 - Q2) * (Q3 - Q1)) +
-        1j * np.exp(1j * Q2) / (Q2 * (Q2 - Q1) * (Q2 - Q3)) +
-        1j * np.exp(1j * Q1) / (Q1 * (Q1 - Q2) * (Q1 - Q3)) -
-        1j / (Q1 * Q2 * Q3))
+    scattering_amplitude = np.zeros_like(Q1, dtype=complex)
 
     # Calculation at singularities
     # 1.1 q perpendicular to vertex V1 (Q_i = 0, here Q_i is Q_1)
-    row2 = np.where(
+    row2 = (
         (np.abs(Q1) <= 1e-9) & (np.abs(Q2) >= 1e-9) &
         (np.abs(Q3) >= 1e-9) & (np.abs(Q2 - Q3) >= 1e-9))
     scattering_amplitude[row2] = det_T * (
@@ -342,7 +338,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
         (Q2[row2]**2 * Q3[row2]**2))
 
     # 1.2 q perpendicular to vertex V2 (Q_i = 0, here Q_i is Q_2)
-    row3 = np.where(
+    row3 = (
         (np.abs(Q2) <= 1e-9) & (np.abs(Q1) >= 1e-9) &
         (np.abs(Q3) >= 1e-9) & (np.abs(Q1 - Q3) >= 1e-9))
     scattering_amplitude[row3] = det_T * (
@@ -355,7 +351,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
         (Q1[row3]**2 * Q3[row3]**2))
 
     # 1.3 q perpendicular to vertex V3 (Q_i = 0, here Q_i is Q_3)
-    row4 = np.where(
+    row4 = (
         (np.abs(Q3) <= 1e-9) & (np.abs(Q1) >= 1e-9) &
         (np.abs(Q2) >= 1e-9) & (np.abs(Q1 - Q2) >= 1e-9))
     scattering_amplitude[row4] = det_T * (
@@ -368,7 +364,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
         (Q1[row4]**2 * Q2[row4]**2))
 
     # 2.1 q perpendicular to an edge (Q_i = Q_j, here Q_i is Q_1 and Q_j is Q_3)
-    row5 = np.where(
+    row5 = (
         (np.abs(Q1 - Q3) < 1e-9) & (np.abs(Q1) >= 1e-9) &
         (np.abs(Q1 - Q2) >= 1e-9) & (np.abs(Q3) >= 1e-9))
     scattering_amplitude[row5] = det_T * (
@@ -381,7 +377,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
         1j / (Q1[row5]**2 * Q2[row5]))
 
     # 2.2 q perpendicular to an edge (Q_i = Q_j, here Q_i is Q_1 and Q_j is Q_2)
-    row6 = np.where(
+    row6 = (
         (np.abs(Q1 - Q2) < 1e-9) & (np.abs(Q1) >= 1e-9) &
         (np.abs(Q2 - Q3) >= 1e-9) & (np.abs(Q2) >= 1e-9))
     scattering_amplitude[row6] = det_T * (
@@ -394,7 +390,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
         1j / (Q1[row6]**2 * Q3[row6]))
 
     # 2.3 q perpendicular to an edge (Q_i = Q_j, here Q_i is Q_2 and Q_j is Q_3)
-    row7 = np.where(
+    row7 = (
         (np.abs(Q2 - Q3) < 1e-9) & (np.abs(Q2) >= 1e-9) &
         (np.abs(Q1 - Q3) >= 1e-9) & (np.abs(Q3) >= 1e-9))
     scattering_amplitude[row7] = det_T * (
@@ -407,7 +403,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
         1j / (Q2[row7]**2 * Q1[row7]))
 
     # 3. q perpendicular to a face (Q_i = Q_j = Q_k, here Q_i is Q_1, Q_j is Q_2 and Q_k is Q_3)
-    row8 = np.where(
+    row8 = (
         (np.abs(Q1 - Q2) <= 1e-5) &
         (np.abs(Q1 - Q3) <= 1e-5) &
         (np.abs(Q2 - Q3) <= 1e-5) &
@@ -419,10 +415,20 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
         (2 * Q1[row8]**3) - 1j / Q1[row8]**3)
 
     # 4. q tending to 0 (first-order Taylor expansion)
-    row9 = np.where(Q1**2 + Q2**2 + Q3**2 < 1e-6)
+    row9 = (Q1**2 + Q2**2 + Q3**2 < 1e-6)
     scattering_amplitude[row9] = (
         det_T / 6 +
         1j * det_T * (Q1[row9] + Q2[row9] + Q3[row9]))
+
+    regular = ~(row2 | row3 | row4 | row5 | row6 | row7 | row8 | row9)
+    scattering_amplitude[regular] = det_T * (
+        1j * np.exp(1j * Q3[regular]) /
+        (Q3[regular] * (Q3[regular] - Q2[regular]) * (Q3[regular] - Q1[regular])) +
+        1j * np.exp(1j * Q2[regular]) /
+        (Q2[regular] * (Q2[regular] - Q1[regular]) * (Q2[regular] - Q3[regular])) +
+        1j * np.exp(1j * Q1[regular]) /
+        (Q1[regular] * (Q1[regular] - Q2[regular]) * (Q1[regular] - Q3[regular])) -
+        1j / (Q1[regular] * Q2[regular] * Q3[regular]))
 
     return scattering_amplitude
 
