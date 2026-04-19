@@ -47,7 +47,7 @@ are defined as:
     \mathbf{v}_3 = (\frac{L}{\sqrt{2}},\ 0,\frac{L}{\sqrt{2}})
 
 The form factor amplitude of a regular tetrahedron is derived using the
-projection method described by Yang *et al.* [#Yang2023]_. The tetrahedron
+projection method described by Yang and al. [4]. The tetrahedron
 is defined by four vertices
 :math:`(\mathbf{v}_0, \mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3)`,
 where :math:`\mathbf{v}_0` is placed at the origin and serves

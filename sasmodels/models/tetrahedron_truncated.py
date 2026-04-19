@@ -11,7 +11,7 @@ Definition
 
 To define the truncated tetrahedron form factor, the regular tetrahedron form factor has to be defined first.
 The truncated tetrahedron form factor will then be obtained by subtracting the four smaller tetrahedrons at its vertices.
- So first, let's consider a regular tetrahedron. The size of the tetrahedron is described by its circumradius :math:`R`,
+So first, let's consider a regular tetrahedron. The size of the tetrahedron is described by its circumradius :math:`R`,
 which is the radius of the circumscribed sphere. The relationship between the circumradius
 and the edge length is also implemented. The edge length :math:`L`
 and volume :math:`V_T` are given by:
@@ -30,6 +30,7 @@ and volume :math:`V_T` are given by:
 
 The four vertices of the tetrahedron, with :math:`\mathbf{v}_0` at the origin,
 are defined as:
+
 .. math::
 
     \mathbf{v}_0 = (0,\ 0,\ 0)
@@ -47,7 +48,7 @@ are defined as:
     \mathbf{v}_3 = (\frac{L}{\sqrt{2}},\ 0,\frac{L}{\sqrt{2}})
 
 The form factor amplitude of a regular tetrahedron is derived using the
-projection method described by Yang *et al.* [#Yang2023]_. The tetrahedron
+projection method described by Yang and al. [4]. The tetrahedron
 is defined by four vertices
 :math:`(\mathbf{v}_0, \mathbf{v}_1, \mathbf{v}_2, \mathbf{v}_3)`,
 where :math:`\mathbf{v}_0` is placed at the origin and serves
