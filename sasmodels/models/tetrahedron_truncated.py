@@ -481,7 +481,7 @@ def Fqabc(qa, qb, qc, circumradius, t):
     scattering_amplitude =  Fq_ortho(qa, qb, qc, V1, V2, V3) - Fq_ortho(qa, qb, qc, V1*t, V2*t, V3*t) * (
                    (1 + np.exp(1j * (1-t) * (qa * V1[0] + qb * V1[1] + qc * V1[2])))+
                    np.exp(1j * (1-t) * (qa * V2[0] + qb * V2[1] + qc * V2[2])) +
-                   np.exp(1j * (1-t) * (qa * V3[0] + qb * V3  [1] + qc * V3[2])))
+                   np.exp(1j * (1-t) * (qa * V3[0] + qb * V3[1] + qc * V3[2])))
 
     return scattering_amplitude
 
