@@ -165,7 +165,7 @@ double P_POLY(double Q, double RL, double SIGL, double d, double N_agg)
 }
 
 /* ----------- SASVIEW ENTRY POINT ----------- */
-double SQ_COMP(double Q, double RL, double SIGL, double d, double N_agg)
+double SQ_COMPACT(double Q, double RL, double SIGL, double d, double N_agg)
 {
     return P_POLY(Q, RL, SIGL, d, N_agg);
 }
@@ -175,7 +175,7 @@ double Iq(double Q, double R_clust, double sig_rel_R, double dist_points, double
 {
     double intensity;
     
-    intensity = SQ_COMP(Q, R_clust, sig_rel_R, dist_points, N_agg);
+    intensity = SQ_COMPACT(Q, R_clust, sig_rel_R, dist_points, N_agg);
     
     return intensity;
 }

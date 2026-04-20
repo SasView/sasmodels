@@ -48,16 +48,16 @@ Authorship and Verification
 
 import numpy as np
 
-name = "composite_polydisperse_cluster"
-title = "Composite Polydisperse Cluster Structure Factor"
+name = "compact_polydisperse_cluster"
+title = "Compact Polydisperse Cluster Structure Factor"
 description = """
-Structure factor for a polydisperse spherical polydisperse cluster
+Structure factor for a compact polydisperse cluster
 with internal correlations.
 """
 
 category = "structure-factor"
 
-# Must match C kernel signature: Iq(Q, RL, SIGL, RS, ETA)
+# Must match C kernel signature: Iq(Q, R_clust, sig_rel_R, dist_points, N_agg)
 parameters = [
     ["R_clust",   "Ang", 40.0, [0.0, np.inf], "", "Average cluster radius"],
     ["sig_rel_R", "",      0.4, [0.0, 1.0],    "", "Relative size polydispersity"],
@@ -65,7 +65,7 @@ parameters = [
     ["N_agg",  "",      50, [10, 100],   "", "Weight average aggregation number"]
 ]
 
-source = ["composite_polydisperse_cluster.c"]
+source = ["compact_polydisperse_cluster.c"]
 
 def random():
     import random
@@ -77,4 +77,4 @@ def random():
     }
 
 def test():
-    print("composite_polydisperse_cluster model loaded successfully.")
+    print("compact_polydisperse_cluster model loaded successfully.")
