@@ -13,8 +13,8 @@ It uses the following equation:
 
 .. math::
 
-       S(q) &= 1 + \frac{D_f\  \Gamma\!(D_f-1)}{[1+1/(q \xi)^2\  ]^{(D_f -1)/2}}
-    \frac{\sin[(D_f-1) \tan^{-1}(q \xi) ]}{(q R_0)^{D_f}}
+    S(q) = 1 + \frac{D_f\, \Gamma(D_f-1)}{\left[1+1/(q\xi)^2\right]^{(D_f-1)/2}}
+    \frac{\sin\left[(D_f-1)\tan^{-1}(q\xi)\right]}{(q R_0)^{D_f}}
 
 where $\xi$ is the correlation length representing the cluster size and $D_f$
 is the fractal dimension, representing the self similarity of the structure.
