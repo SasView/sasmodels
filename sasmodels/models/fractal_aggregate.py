@@ -7,8 +7,8 @@ Definition
 ----------
 This model calculates the structure factor of a fractal-like aggregates.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes. 
-  
+WARNING: Should not be used in combination with very anisotrpic particle shapes.
+
 It uses the following equation:
 
 .. math::
@@ -19,7 +19,7 @@ It uses the following equation:
 where $\xi$ is the correlation length representing the cluster size and $D_f$
 is the fractal dimension, representing the self similarity of the structure.
 
-The expresion has been reformulated so that the aggregation number $N_{agg}$ is a fit paramter in stead of $\xi$ 
+The expresion has been reformulated so that the aggregation number $N_{agg}$ is a fit paramter in stead of $\xi$
 Parameters
 ----------
 d : distance between adjacent scatterers
@@ -27,8 +27,8 @@ D_fract : fractal dimension
 N_agg : number of particles in the fractal cluster
 
 See also
-Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of 
-structure factors for analysis of small-angle scattering data from 
+Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 
@@ -48,7 +48,7 @@ Authorship and Verification
 
 * **Author:** Jan Skov Pedersen
 * **Last Modified by:** Jan Skov Pedersen, April 12, 2026
-* **Last Reviewed by:** Reviewer Name Here **Date:** 
+* **Last Reviewed by:** Reviewer Name Here **Date:**
 """
 
 

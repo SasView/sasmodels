@@ -2,13 +2,13 @@ r"""
 Definition
 ----------
 
-Linear aggregate structure factor. 
+Linear aggregate structure factor.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes. 
+WARNING: Should not be used in combination with very anisotrpic particle shapes.
 
-Equations are given in 
-Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of 
-structure factors for analysis of small-angle scattering data from 
+Equations are given in
+Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 The model is more specifically eq. (21,22) in the paper.
@@ -37,8 +37,8 @@ Translated FORTRAN code
 References
 ----------
 
-# Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of 
-structure factors for analysis of small-angle scattering data from 
+# Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 Authorship and Verification
@@ -46,11 +46,10 @@ Authorship and Verification
 
 * **Author:** Jan Skov Pedersen
 * **Last Modified by:** Jan Skov Pedersen, April 12, 2026
-* **Last Reviewed by:** Reviewer Name Here **Date:** 
+* **Last Reviewed by:** Reviewer Name Here **Date:**
 """
 
 import numpy as np
-from numpy import inf
 
 name = "linear_aggregate"
 title = "Linear aggregate structure factor"

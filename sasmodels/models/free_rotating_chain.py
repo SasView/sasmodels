@@ -4,14 +4,14 @@ Definition
 
 Free‑rotating chain structure factor: Eandom flight.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes. 
+WARNING: Should not be used in combination with very anisotrpic particle shapes.
 
 This model calculates the structure factor of a free‑rotating chain
 of scattering points, following the treatment of Burchard and Kajiwara.
 
-Equations are given in 
-Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of 
-structure factors for analysis of small-angle scattering data from 
+Equations are given in
+Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 The model is more specifically eq. (23,24) in the paper.

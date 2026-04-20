@@ -4,7 +4,7 @@ Definition
 
 Stabilized power_law structure factor.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes. 
+WARNING: Should not be used in combination with very anisotrpic particle shapes.
 
 It uses rhe equation:
 
@@ -15,8 +15,8 @@ It uses rhe equation:
 where *amp* is the scale of the power law and *pow* is the exponent.
 
 See also
-Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of 
-structure factors for analysis of small-angle scattering data from 
+Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 Validation
@@ -44,7 +44,7 @@ title = "Stabilized power-law structure factor"
 description = """\
 I(q) = 1 + amp *(0.01/q)^pow
     amp: scale of power law
-    pow: exponent of power law 
+    pow: exponent of power law
 """
 category = "structure-factor"
 structure_factor = False

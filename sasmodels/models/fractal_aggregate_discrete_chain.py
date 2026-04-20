@@ -5,7 +5,7 @@ Fractal Structure Factor S(q)
 Fractal structure factor :math:`S(q)` using a discrete-chain high-q baseline
 and a low-q crossover.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes. 
+WARNING: Should not be used in combination with very anisotrpic particle shapes.
 
 This model calculates the structure factor of fractal-like aggregates
 according to the following equation:
@@ -29,7 +29,7 @@ High-q Baseline Modification
 ----------------------------
 
 The high-q limit is modified to simulate local point correlations, as in a
-random-flight model.  
+random-flight model.
 The term ``1`` in the expression for :math:`S(q)` is replaced by:
 
 .. math::
@@ -42,21 +42,21 @@ The term ``1`` in the expression for :math:`S(q)` is replaced by:
 The low-q crossover constant is :math:`C = 5.2`.
 
 See also
-Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of 
-structure factors for analysis of small-angle scattering data from 
+Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 
 Parameters
 ----------
 
-``d``  
+``d``
     Distance between adjacent scatterers.
 
-``D_fract``  
+``D_fract``
     Fractal dimension :math:`D_f`.
 
-``N_agg``  
+``N_agg``
     Number of particles in the fractal cluster.
 
 Validation
@@ -67,14 +67,14 @@ Translated from original FORTRAN code.
 References
 ----------
 
-* Teixeira, J. (1988). *Small-angle scattering by fractal systems*.  
+* Teixeira, J. (1988). *Small-angle scattering by fractal systems*.
   **Journal of Applied Crystallography**, 21(6), 781–785.
 
 Authorship and Verification
 ---------------------------
 
-* **Author:** Jan Skov Pedersen  
-* **Last Modified by:** Jan Skov Pedersen, April 12, 2026  
+* **Author:** Jan Skov Pedersen
+* **Last Modified by:** Jan Skov Pedersen, April 12, 2026
 * **Last Reviewed by:** Reviewer Name Here (Date)
 """
 
