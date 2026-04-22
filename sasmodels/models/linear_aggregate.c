@@ -19,8 +19,9 @@ static inline double sinx(double x)
  *
  * Parameters:
  *   Q      - momentum transfer
- *   N_agg  - number of points (integer)
- *   dist_points      - separation between points (fit parameter)
+ *   radius_effective - separation between points (fit parameter)
+ *   volfraction - unused (required for P@S parameter order)
+ *   N_agg  - effective number of points (may be non-integer)
  *
  * Returns:
  *   linear_aggregate(Q)
@@ -28,12 +29,12 @@ static inline double sinx(double x)
  * Notes:
  *   Exits with warning if N_agg > 100
  */
-static double sq_linN(double Q, int N_agg, double dist_points)
+static double sq_linN(double Q, int N_agg, double sep)
 {
     int k;
     double SUM, SN;
 
-    double d = dist_points;
+    double d = sep;
     
     if (N_agg <= 1)
         return 1.0;
@@ -64,27 +65,30 @@ static double sq_linN(double Q, int N_agg, double dist_points)
  *
  * Parameters:
  *   Q   - momentum transfer
- *   an  - real (non-integer) number of points
- *   d   - separation between points (fit parameter)
+ *   radius_effective - separation between points
+ *   volfraction - unused
+ *   N_agg - real (non-integer) number of points
  *
  * Returns:
  *   linear_aggregate(Q)
  */
-double Iq(double Q, double an, double d)
+double Iq(double Q, double radius_effective, double volfraction, double N_agg)
 {
     int N;
     double w;
     double intensity;
 
-    if (an <= 1.0)
+    (void)volfraction;
+
+    if (N_agg <= 1.0)
         return 1.0;
 
-    N = (int)an;
-    w = an - (double)N;
+    N = (int)N_agg;
+    w = N_agg - (double)N;
 
     intensity =
-        (1.0 - w) * sq_linN(Q, N, d)
-      +        w  * sq_linN(Q, N + 1, d);
+        (1.0 - w) * sq_linN(Q, N, radius_effective)
+      +        w  * sq_linN(Q, N + 1, radius_effective);
 
     return intensity;
 }

@@ -10,20 +10,14 @@
  * Proceedings of the Royal Society of London. A. Mathematical and Physical Sciences,
  * 316(1525), 185-199.
  *
- * Inputs:
+ * Sasmodels interface:
  *   Q   - momentum transfer
- *   RN  - real number of rotating points
- *   d   - separation between points (fit parameter)
- *
- * Output:
- *   Returns free_rotating_chain(Q, RN, d)
- *
- * Notes:
- *   This routine is a direct translation of the original Fortran code by Jan Skov Pedersen.
- *   All variables are treated as real (double precision).
+ *   radius_effective - separation d between points
+ *   volfraction - unused (required for P@S parameter order)
+ *   N_agg - real number of rotating points (RN)
  */
 
-double Iq(double Q, double N_agg, double dist_points)
+double Iq(double Q, double radius_effective, double volfraction, double N_agg)
 {
     int N_SPH, N_SPH1;
     double W;
@@ -32,8 +26,10 @@ double Iq(double Q, double N_agg, double dist_points)
     double x;
     double intensity;
 
-	double RN = N_agg;
-	double d = dist_points;
+    double RN = N_agg;
+    double d = radius_effective;
+
+    (void)volfraction;
 
     /* integer and fractional parts of RN */
     N_SPH = (int)fabs(RN);
@@ -43,7 +39,10 @@ double Iq(double Q, double N_agg, double dist_points)
     x = Q * d;
 
     /* sinc kernel */
-    ARG = sin(x) / x;
+    if (fabs(x) < 1e-12)
+        ARG = 1.0;
+    else
+        ARG = sin(x) / x;
 
     /* FOR N */
     SN =  ((double)N_SPH) / (1.0 - ARG)

@@ -2,17 +2,21 @@ r"""
 Definition
 ----------
 
-Stabilized power_law structure factor.
+Stabilized power-law structure factor.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes.
+WARNING: Should not be used in combination with very anisotropic particle shapes.
 
-It uses rhe equation:
+It uses the equation:
 
 .. math::
 
-    S(q) = 1.0 + amp (0.01/q)^pow
+    S(q) = 1.0 + \mathrm{amp}\,(0.01/q)^{\mathrm{pow}}
 
 where *amp* is the scale of the power law and *pow* is the exponent.
+
+The first two parameters follow sasmodels structure-factor conventions for
+:math:`P@S` products: *radius_effective* and *volfraction* are **not** used in
+the formula above.
 
 See also
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
@@ -42,32 +46,25 @@ from numpy import inf
 name = "stabilized_power_law"
 title = "Stabilized power-law structure factor"
 description = """\
-I(q) = 1 + amp *(0.01/q)^pow
+S(q) = 1 + amp *(0.01/q)^pow
     amp: scale of power law
     pow: exponent of power law
 """
 category = "structure-factor"
-structure_factor = False
+structure_factor = True
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["amp", "", 100, [0, inf], "", "scale of power law"],
-              ["pow", "", 2, [0, 6], "", "exponent of power law "]
-             ]
+parameters = [
+    ["radius_effective", "Ang", 50.0, [0.0, inf], "",
+     "unused in S(q); required for P@S products"],
+    ["volfraction", "", 0.2, [0.0, 1.0], "",
+     "unused in S(q); required for P@S products"],
+    ["amp", "", 100, [0, inf], "", "scale of power law"],
+    ["pow", "", 2, [0, 6], "", "exponent of power law "],
+]
 
-def Iq(q, amp=100, pow=2):
-    """
-    Parameters:
-        q:      input scattering vectors, units 1/Ang
-        amp:      amplitude of power law , default value=2
-        pow:      exponent of power law , default value=2
-    Returns:
-        S(q):   1D scattering intensity at q, units none
-    """
-    iq = 1.0 + amp * (0.01/q) ** pow
-    return iq
 
-# include tests for your model
-# tests = [
-#     [{'m': 2.0, 'b' : 1.0}, [q1, q2], [expected_Iq1, expected_Iq2]],
-#     [{'m': 3.0, 'b' : 5.0}, [q3, q4], [expected_Iq3, expected_Iq4]],
-# ]
+def Iq(q, radius_effective, volfraction, amp, pow):
+    """Return S(q); *radius_effective* and *volfraction* are unused."""
+    _ = (radius_effective, volfraction)
+    return 1.0 + amp * (0.01 / q) ** pow

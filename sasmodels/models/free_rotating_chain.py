@@ -2,9 +2,9 @@ r"""
 Definition
 ----------
 
-Free‑rotating chain structure factor: Eandom flight.
+Free‑rotating chain structure factor: random flight.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes.
+WARNING: Should not be used in combination with very anisotropic particle shapes.
 
 This model calculates the structure factor of a free‑rotating chain
 of scattering points, following the treatment of Burchard and Kajiwara.
@@ -32,6 +32,12 @@ where:
 
 and :math:`S_N(Q)` is the Debye sum for a free‑rotating chain.
 
+Parameters
+----------
+radius_effective : separation between chain points :math:`d` (Å).
+volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products.
+N_agg : aggregation number :math:`RN`.
+
 References
 ----------
 
@@ -58,11 +64,14 @@ Structure factor of a free-rotating chain (random flight)
 """
 
 category = "structure-factor"
+structure_factor = True
 
-# Parameters must match the kernel signature: Iq(Q, RN, d)
+# Must match C: Iq(Q, radius_effective, volfraction, N_agg)
 parameters = [
+    ["radius_effective", "Ang", 20.0, [0.0, np.inf], "", "Separation between points"],
+    ["volfraction", "", 0.2, [0.0, 1.0], "",
+     "unused in S(q); required for P@S products"],
     ["N_agg", "", 20.0, [1.0, np.inf], "", "Aggregation number"],
-    ["dist_points", "Ang", 20.0, [0.0, np.inf], "", "Separation between points"],
 ]
 
 # Kernel source
@@ -70,9 +79,11 @@ source = ["free_rotating_chain.c"]
 
 def random():
     import random
+
     return {
+        "radius_effective": random.uniform(10.0, 50.0),
+        "volfraction": random.uniform(0.01, 0.3),
         "N_agg": random.uniform(1.0, 100.0),
-        "dist_points": random.uniform(10.0, 50.0),
     }
 
 def test():

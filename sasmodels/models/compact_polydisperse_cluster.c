@@ -171,11 +171,9 @@ double SQ_COMPACT(double Q, double RL, double SIGL, double d, double N_agg)
 }
 
 /* SasView required function */
-double Iq(double Q, double R_clust, double sig_rel_R, double dist_points, double N_agg)
+double Iq(double Q, double radius_effective, double volfraction,
+          double R_clust, double sig_rel_R, double N_agg)
 {
-    double intensity;
-    
-    intensity = SQ_COMPACT(Q, R_clust, sig_rel_R, dist_points, N_agg);
-    
-    return intensity;
+    (void)volfraction;
+    return SQ_COMPACT(Q, R_clust, sig_rel_R, radius_effective, N_agg);
 }

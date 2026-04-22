@@ -5,7 +5,7 @@ Fractal Structure Factor S(q)
 Fractal structure factor :math:`S(q)` using a discrete-chain high-q baseline
 and a low-q crossover.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes.
+WARNING: Should not be used in combination with very anisotropic particle shapes.
 
 This model calculates the structure factor of fractal-like aggregates
 according to the following equation:
@@ -41,23 +41,20 @@ The term ``1`` in the expression for :math:`S(q)` is replaced by:
 
 The low-q crossover constant is :math:`C = 5.2`.
 
+Parameters
+----------
+
+radius_effective : inter-scatterer distance :math:`d` (Å); see also
+    *radius_effective_mode* when combining with a form factor.
+volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products.
+``D_fract`` : fractal dimension :math:`D_f`.
+``N_agg`` : number of particles in the fractal cluster.
+
 See also
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
 structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
-
-Parameters
-----------
-
-``d``
-    Distance between adjacent scatterers.
-
-``D_fract``
-    Fractal dimension :math:`D_f`.
-
-``N_agg``
-    Number of particles in the fractal cluster.
 
 Validation
 ----------
@@ -90,22 +87,27 @@ Fractal Structure Factor S(q) with local correlation between points
 """
 
 category = "structure-factor"
+structure_factor = True
 
-# Must match C signature: Iq(q, d, D, N)
+# Must match C: Iq(q, radius_effective, volfraction, D_fract, N_agg)
 parameters = [
-    ["dist_points", "Ang", 20.0, [0.0, np.inf], "", "Inter-scatterer distance"],
-    ["D_fract", "",      2.0, [1.0, 3.0],     "", "Fractal dimension"],
-    ["N_agg", "",     50.0, [1.0, np.inf], "", "Number of particles in cluster"]
+    ["radius_effective", "Ang", 20.0, [0.0, np.inf], "", "Inter-scatterer distance"],
+    ["volfraction", "", 0.2, [0.0, 1.0], "",
+     "unused in S(q); required for P@S products"],
+    ["D_fract", "", 2.0, [1.0, 3.0], "", "Fractal dimension"],
+    ["N_agg", "", 50.0, [1.0, np.inf], "", "Number of particles in cluster"],
 ]
 
 source = ["fractal_aggregate_discrete_chain.c"]
 
 def random():
     import random
+
     return {
-        "d_points": random.uniform(10.0, 80.0),
+        "radius_effective": random.uniform(10.0, 80.0),
+        "volfraction": random.uniform(0.01, 0.3),
         "D_fract": random.uniform(1.1, 2.9),
-        "N_agg": random.uniform(5.0, 300.0)
+        "N_agg": random.uniform(5.0, 300.0),
     }
 
 def test():

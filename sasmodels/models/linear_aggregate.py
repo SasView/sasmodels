@@ -4,7 +4,7 @@ Definition
 
 Linear aggregate structure factor.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes.
+WARNING: Should not be used in combination with very anisotropic particle shapes.
 
 Equations are given in
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
@@ -28,6 +28,12 @@ where:
 - :math:`w = RN - N`
 
 and :math:`S_N(Q)` is the Debye sum for the aggregate.
+
+Parameters
+----------
+radius_effective : distance between scatterers on the chain (Å).
+volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products.
+N_agg : aggregation number.
 
 Validation
 ----------
@@ -57,20 +63,25 @@ description = """\
 Linear aggregate structure factor
 """
 category = "structure-factor"
+structure_factor = True
 
 parameters = [
-    ['N_agg', '', 50.0, [0, np.inf], '', 'Aggregation number'],
-    ['dist_points', 'Ang', 20.0, [0, np.inf], '', 'distance between scatterers']
+    ["radius_effective", "Ang", 20.0, [0.0, np.inf], "", "distance between scatterers"],
+    ["volfraction", "", 0.2, [0.0, 1.0], "",
+     "unused in S(q); required for P@S products"],
+    ["N_agg", "", 50.0, [0.0, np.inf], "", "Aggregation number"],
 ]
 
 source = ["linear_aggregate.c"]
 
 def random():
     import random
+
     return {
-        'N_agg': random.uniform(1, 100),
-        'dist_points': random.uniform(10, 50)
+        "radius_effective": random.uniform(10, 50),
+        "volfraction": random.uniform(0.01, 0.3),
+        "N_agg": random.uniform(1, 100),
     }
 
 def test():
-    print('Steucture factor of linear aggregate')
+    print("Structure factor of linear aggregate")

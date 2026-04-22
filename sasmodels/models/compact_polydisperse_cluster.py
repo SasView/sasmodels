@@ -1,9 +1,9 @@
 r"""
 Definition
 ----------
-Structure factor for a polydisperse spherical cluster with internal correlations..
+Structure factor for a polydisperse spherical cluster with internal correlations.
 
-WARNING: Should not be used in combination with very anisotrpic particle shapes.
+WARNING: Should not be used in combination with very anisotropic particle shapes.
 
 Polydispersity described by Schulz distribution
 and expressions taken from Pedersen, J. S., Møller, T. L., Raak, N., & Corredig,
@@ -16,7 +16,7 @@ spherical particles made up of spheres and spherical particles with s
 pherical voids. Applied Crystallography, 59(1).
 
 Modifications have been done for adapting to monodisperse distance between
-points in cluster  and for allowing weight averrage aggregation number to  be a fit paramter.
+points in cluster and for allowing weight-average aggregation number to be a fit parameter.
 
 See also
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
@@ -24,11 +24,15 @@ structure factors for analysis of small-angle scattering data from
 desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 
-Parameters:
-R_clust   : mean radius of large clusters
+Parameters
+----------
+radius_effective : minimum distance between scatterers (Å); first parameter for
+    :math:`P@S` wiring (see sasmodels structure-factor conventions).
+volfraction : unused in this :math:`S(q)`; required as second parameter for
+    :math:`P@S` products.
+R_clust : mean radius of large clusters
 sig_rel_R : relative polydispersity of R_cluster
-dist_points   : minimum distance between scatterers
-N_agg  : weight average aggregation number
+N_agg : weight-average aggregation number
 
 References
 ----------
@@ -56,24 +60,30 @@ with internal correlations.
 """
 
 category = "structure-factor"
+structure_factor = True
 
-# Must match C kernel signature: Iq(Q, R_clust, sig_rel_R, dist_points, N_agg)
+# Must match C: Iq(Q, radius_effective, volfraction, R_clust, sig_rel_R, N_agg)
 parameters = [
-    ["R_clust",   "Ang", 40.0, [0.0, np.inf], "", "Average cluster radius"],
-    ["sig_rel_R", "",      0.4, [0.0, 1.0],    "", "Relative size polydispersity"],
-    ["dist_points",   "Ang",  20.0, [0.0, np.inf], "", "Minimum distance between scatterers"],
-    ["N_agg",  "",      50, [10, 100],   "", "Weight average aggregation number"]
+    ["radius_effective", "Ang", 20.0, [0.0, np.inf], "",
+     "Minimum distance between scatterers"],
+    ["volfraction", "", 0.2, [0.0, 1.0], "",
+     "unused in S(q); required for P@S products"],
+    ["R_clust", "Ang", 40.0, [0.0, np.inf], "", "Average cluster radius"],
+    ["sig_rel_R", "", 0.4, [0.0, 1.0], "", "Relative size polydispersity"],
+    ["N_agg", "", 50.0, [10.0, 100.0], "", "Weight-average aggregation number"],
 ]
 
 source = ["compact_polydisperse_cluster.c"]
 
 def random():
     import random
+
     return {
-        "R_clust":   random.uniform(50, 200),
+        "radius_effective": random.uniform(5, 30),
+        "volfraction": random.uniform(0.01, 0.3),
+        "R_clust": random.uniform(50, 200),
         "sig_rel_R": random.uniform(0.01, 0.3),
-        "dist_points":   random.uniform(5, 30),
-        "N_agg":  random.uniform(10, 1000)
+        "N_agg": random.uniform(10, 100),
     }
 
 def test():
