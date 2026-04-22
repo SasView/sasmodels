@@ -30,10 +30,8 @@ more appropriate.
 
 Parameters
 ----------
-radius_effective : distance between adjacent scatterers (Å); use *unconstrained*
-    *radius_effective_mode* to fit independently of the form-factor radius.
-volfraction : required for $P@S$ products; **not used** in this $S(q)$
-    (see ``sasmodels.product`` until optional structure-factor volfraction exists).
+radius_effective : distance between adjacent scatterers (Å); use unconstrained *radius_effective_mode* to fit independently of the form-factor radius
+volfraction : required for $P@S$ products; **not used** in this $S(q)$ (see ``sasmodels.product`` until optional structure-factor volfraction exists)
 D_fract : fractal dimension
 N_agg : number of particles in the fractal cluster
 

@@ -26,10 +26,8 @@ desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 Parameters
 ----------
-radius_effective : minimum distance between scatterers (Å); first parameter for
-    :math:`P@S` wiring (see sasmodels structure-factor conventions).
-volfraction : unused in this :math:`S(q)`; required as second parameter for
-    :math:`P@S` products.
+radius_effective : minimum distance between scatterers (Å); first parameter for :math:`P@S` wiring (see sasmodels structure-factor conventions)
+volfraction : unused in this :math:`S(q)`; required as second parameter for :math:`P@S` products
 R_clust : mean radius of large clusters
 sig_rel_R : relative polydispersity of R_cluster
 N_agg : weight-average aggregation number

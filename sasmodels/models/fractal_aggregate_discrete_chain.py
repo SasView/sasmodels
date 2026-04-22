@@ -43,12 +43,10 @@ The low-q crossover constant is :math:`C = 5.2`.
 
 Parameters
 ----------
-
-radius_effective : inter-scatterer distance :math:`d` (Å); see also
-    *radius_effective_mode* when combining with a form factor.
-volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products.
-``D_fract`` : fractal dimension :math:`D_f`.
-``N_agg`` : number of particles in the fractal cluster.
+radius_effective : inter-scatterer distance :math:`d` (Å); see *radius_effective_mode* when combining with a form factor
+volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products
+D_fract : fractal dimension :math:`D_f`
+N_agg : number of particles in the fractal cluster
 
 See also
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
