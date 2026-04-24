@@ -11,9 +11,11 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio, double t)
 // length_c is the half height along the c axis of the octahedron without truncature
 // b2a_ratio is length_b divided by Length_a
 // c2a_ratio is Length_c divided by Length_a
-// t varies from 0.5 (cuboctahedron) to 1 (octahedron)
+// t varies from 0 (octahedron) to 0.5 (cuboctahedron)
+// updated convention with t=0 for on truncation
+// t and tinv are exchanged starting from the previous version of the code
     const double tinv = 1.0 - t;
-    return (4./3.) * cube(length_a) * b2a_ratio * c2a_ratio *(1.-3*cube(tinv));
+    return (4./3.) * cube(length_a) * b2a_ratio * c2a_ratio *(1.-3*cube(t));
 }
 
 
@@ -42,13 +44,13 @@ Fq(double q,
     const double Lc = fmax(maybe_max, maybe_mid);
 
     // Find the circumradius by truncating the line from Lc to Lb. This chops of
-    // the similar triangle with sides (1-t)Lc, (1-t)Lb, leaving coordinate (tLc, (1-t)Lb).
+    // the similar triangle with sides (t)Lc, (t)Lb, leaving coordinate ((1-t)Lc, tLb).
     // The distance to the origin then follows.
-    const double qr_max_outer = q*sqrt(square(t*Lc) + square(tinv*Lb));
+    const double qr_max_outer = q*sqrt(square(tinv*Lc) + square(t*Lb));
     constant double *z_outer, *w_outer;
     int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
 
-    const double qr_max_inner = q*sqrt(square(t*Lb) + square(tinv*La));
+    const double qr_max_inner = q*sqrt(square(tinv*Lb) + square(t*La));
     constant double *z_inner, *w_inner;
     int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
 
@@ -96,16 +98,16 @@ Fq(double q,
             const double qx2 = square(qx);
             const double qy2 = square(qy);
             const double AA =
-                ((qy-qx)*sin(qy*tinv-qx*t) + (qy+qx)*sin(qy*tinv+qx*t)) / ((qy2-qz2)*(qy2-qx2)) +
-                ((qz-qx)*sin(qz*tinv-qx*t) + (qz+qx)*sin(qz*tinv+qx*t)) / ((qz2-qx2)*(qz2-qy2));
+                ((qy-qx)*sin(qy*t-qx*tinv) + (qy+qx)*sin(qy*t+qx*tinv)) / ((qy2-qz2)*(qy2-qx2)) +
+                ((qz-qx)*sin(qz*t-qx*tinv) + (qz+qx)*sin(qz*t+qx*tinv)) / ((qz2-qx2)*(qz2-qy2));
 
             const double BB =
-                ((qz-qy)*sin(qz*tinv-qy*t) + (qz+qy)*sin(qz*tinv+qy*t)) / ((qz2-qx2)*(qz2-qy2)) +
-                ((qx-qy)*sin(qx*tinv-qy*t) + (qx+qy)*sin(qx*tinv+qy*t)) / ((qx2-qy2)*(qx2-qz2));
+                ((qz-qy)*sin(qz*t-qy*tinv) + (qz+qy)*sin(qz*t+qy*tinv)) / ((qz2-qx2)*(qz2-qy2)) +
+                ((qx-qy)*sin(qx*t-qy*tinv) + (qx+qy)*sin(qx*t+qy*tinv)) / ((qx2-qy2)*(qx2-qz2));
 
             const double CC =
-                ((qx-qz)*sin(qx*tinv-qz*t) + (qx+qz)*sin(qx*tinv+qz*t)) / ((qx2-qy2)*(qx2-qz2)) +
-                ((qy-qz)*sin(qy*tinv-qz*t) + (qy+qz)*sin(qy*tinv+qz*t)) / ((qy2-qz2)*(qy2-qx2));
+                ((qx-qz)*sin(qx*t-qz*tinv) + (qx+qz)*sin(qx*t+qz*tinv)) / ((qx2-qy2)*(qx2-qz2)) +
+                ((qy-qz)*sin(qy*t-qz*tinv) + (qy+qz)*sin(qy*t+qz*tinv)) / ((qy2-qz2)*(qy2-qx2));
 
             // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
             const double AP = 3./(1. - 3.*cube(tinv)) * (AA+BB+CC);
@@ -172,19 +174,19 @@ Iqabc(double qa, double qb, double qc,
     const double qy2 = square(qy);
     const double qz2 = square(qz);
     const double AA =
-        ((qy-qx)*sin(qy*tinv-qx*t) + (qy+qx)*sin(qy*tinv+qx*t)) / ((qy2-qz2)*(qy2-qx2)) +
-        ((qz-qx)*sin(qz*tinv-qx*t) + (qz+qx)*sin(qz*tinv+qx*t)) / ((qz2-qx2)*(qz2-qy2));
+        ((qy-qx)*sin(qy*t-qx*tinv) + (qy+qx)*sin(qy*t+qx*tinv)) / ((qy2-qz2)*(qy2-qx2)) +
+        ((qz-qx)*sin(qz*t-qx*tinv) + (qz+qx)*sin(qz*t+qx*tinv)) / ((qz2-qx2)*(qz2-qy2));
 
     const double BB =
-        ((qz-qy)*sin(qz*tinv-qy*t) + (qz+qy)*sin(qz*tinv+qy*t)) / ((qz2-qx2)*(qz2-qy2)) +
-        ((qx-qy)*sin(qx*tinv-qy*t) + (qx+qy)*sin(qx*tinv+qy*t)) / ((qx2-qy2)*(qx2-qz2));
+        ((qz-qy)*sin(qz*t-qy*tinv) + (qz+qy)*sin(qz*t+qy*tinv)) / ((qz2-qx2)*(qz2-qy2)) +
+        ((qx-qy)*sin(qx*t-qy*tinv) + (qx+qy)*sin(qx*t+qy*tinv)) / ((qx2-qy2)*(qx2-qz2));
 
     const double CC =
-        ((qx-qz)*sin(qx*tinv-qz*t) + (qx+qz)*sin(qx*tinv+qz*t)) / ((qx2-qy2)*(qx2-qz2)) +
-        ((qy-qz)*sin(qy*tinv-qz*t) + (qy+qz)*sin(qy*tinv+qz*t)) / ((qy2-qz2)*(qy2-qx2));
+        ((qx-qz)*sin(qx*t-qz*tinv) + (qx+qz)*sin(qx*t+qz*tinv)) / ((qx2-qy2)*(qx2-qz2)) +
+        ((qy-qz)*sin(qy*t-qz*tinv) + (qy+qz)*sin(qy*t+qz*tinv)) / ((qy2-qz2)*(qy2-qx2));
 
     // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
-    const double AP = 3./(1. - 3.*cube(tinv)) * (AA+BB+CC);
+    const double AP = 3./(1. - 3.*cube(t)) * (AA+BB+CC);
 
 
     // Multiply by contrast and volume
