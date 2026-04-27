@@ -16,7 +16,7 @@ If you found this software useful to your work please cite and/or acknowledge it
 The latest instructions for citing and acknowledging are available on our website.
 
 [Citing SasModels](http://www.sasview.org/cite/#citing-sasmodels)
-[Acknowledging SasData](http://www.sasview.org/cite/#acknowledging-sasview)
+[Acknowledging SasModels](http://www.sasview.org/cite/#acknowledging-sasview)
 
 Install
 -------
