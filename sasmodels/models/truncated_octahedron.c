@@ -4,18 +4,18 @@
 //truncated octahedron volume 
 // NOTE: needs to be called form_volume() for a shape category
 static double
-form_volume(double length_a, double b2a_ratio, double c2a_ratio, double t)
+form_volume(double length_a, double b2a_ratio, double c2a_ratio, double truncation)
 {
 // length_a is the half height along the a axis of the octahedron without truncature
 // length_b is the half height along the b axis of the octahedron without truncature
 // length_c is the half height along the c axis of the octahedron without truncature
 // b2a_ratio is length_b divided by Length_a
 // c2a_ratio is Length_c divided by Length_a
-// t varies from 0 (octahedron) to 0.5 (cuboctahedron)
-// updated convention with t=0 for on truncation
-// t and tinv are exchanged starting from the previous version of the code
-    const double tinv = 1.0 - t;
-    return (4./3.) * cube(length_a) * b2a_ratio * c2a_ratio *(1.-3*cube(t));
+// truncation varies from 0 (octahedron) to 0.5 (cuboctahedron)
+// updated convention with truncation=0 for on truncation
+// truncation and tinv are exchanged starting from the previous version of the code
+    const double tinv = 1.0 - truncation;
+    return (4./3.) * cube(length_a) * b2a_ratio * c2a_ratio *(1.-3*cube(truncation));
 }
 
 
@@ -29,11 +29,11 @@ Fq(double q,
     double length_a,
     double b2a_ratio,
     double c2a_ratio,
-    double t)
+    double truncation)
 {
     const double length_b = length_a * b2a_ratio;
     const double length_c = length_a * c2a_ratio;
-    const double tinv = 1.0 - t;
+    const double tinv = 1.0 - truncation;
     // Because we are integrating over the entire surface, the orientation is arbitrary. Sort
     // the lengths Lc > Lb > La so that the integration will go faster.
     const double maybe_min = fmin(length_a, length_b);
@@ -44,13 +44,13 @@ Fq(double q,
     const double Lc = fmax(maybe_max, maybe_mid);
 
     // Find the circumradius by truncating the line from Lc to Lb. This chops of
-    // the similar triangle with sides (t)Lc, (t)Lb, leaving coordinate ((1-t)Lc, tLb).
+    // the similar triangle with sides (truncation)Lc, (truncation)Lb, leaving coordinate ((1-truncation)Lc, truncationLb).
     // The distance to the origin then follows.
-    const double qr_max_outer = q*sqrt(square(tinv*Lc) + square(t*Lb));
+    const double qr_max_outer = q*sqrt(square(tinv*Lc) + square(truncation*Lb));
     constant double *z_outer, *w_outer;
     int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
 
-    const double qr_max_inner = q*sqrt(square(tinv*Lb) + square(t*La));
+    const double qr_max_inner = q*sqrt(square(tinv*Lb) + square(truncation*La));
     constant double *z_inner, *w_inner;
     int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
 
@@ -98,19 +98,19 @@ Fq(double q,
             const double qx2 = square(qx);
             const double qy2 = square(qy);
             const double AA =
-                ((qy-qx)*sin(qy*t-qx*tinv) + (qy+qx)*sin(qy*t+qx*tinv)) / ((qy2-qz2)*(qy2-qx2)) +
-                ((qz-qx)*sin(qz*t-qx*tinv) + (qz+qx)*sin(qz*t+qx*tinv)) / ((qz2-qx2)*(qz2-qy2));
+                ((qy-qx)*sin(qy*truncation-qx*tinv) + (qy+qx)*sin(qy*truncation+qx*tinv)) / ((qy2-qz2)*(qy2-qx2)) +
+                ((qz-qx)*sin(qz*truncation-qx*tinv) + (qz+qx)*sin(qz*truncation+qx*tinv)) / ((qz2-qx2)*(qz2-qy2));
 
             const double BB =
-                ((qz-qy)*sin(qz*t-qy*tinv) + (qz+qy)*sin(qz*t+qy*tinv)) / ((qz2-qx2)*(qz2-qy2)) +
-                ((qx-qy)*sin(qx*t-qy*tinv) + (qx+qy)*sin(qx*t+qy*tinv)) / ((qx2-qy2)*(qx2-qz2));
+                ((qz-qy)*sin(qz*truncation-qy*tinv) + (qz+qy)*sin(qz*truncation+qy*tinv)) / ((qz2-qx2)*(qz2-qy2)) +
+                ((qx-qy)*sin(qx*truncation-qy*tinv) + (qx+qy)*sin(qx*truncation+qy*tinv)) / ((qx2-qy2)*(qx2-qz2));
 
             const double CC =
-                ((qx-qz)*sin(qx*t-qz*tinv) + (qx+qz)*sin(qx*t+qz*tinv)) / ((qx2-qy2)*(qx2-qz2)) +
-                ((qy-qz)*sin(qy*t-qz*tinv) + (qy+qz)*sin(qy*t+qz*tinv)) / ((qy2-qz2)*(qy2-qx2));
+                ((qx-qz)*sin(qx*truncation-qz*tinv) + (qx+qz)*sin(qx*truncation+qz*tinv)) / ((qx2-qy2)*(qx2-qz2)) +
+                ((qy-qz)*sin(qy*truncation-qz*tinv) + (qy+qz)*sin(qy*truncation+qz*tinv)) / ((qy2-qz2)*(qy2-qx2));
 
             // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
-            const double AP = 3./(1. - 3.*cube(tinv)) * (AA+BB+CC);
+            const double AP = 3./(1. - 3.*cube(truncation)) * (AA+BB+CC);
 
             inner_sum_F1 += w_inner[j] * AP;
             inner_sum_F2 += w_inner[j] * AP * AP;
@@ -132,7 +132,7 @@ Fq(double q,
     outer_sum_F2 /= M_PI_2;
 
     // Multiply by contrast and volume
-    const double s = (sld-solvent_sld) * form_volume(length_a, b2a_ratio,c2a_ratio, t);
+    const double s = (sld-solvent_sld) * form_volume(length_a, b2a_ratio,c2a_ratio, truncation);
 
     // Convert from [1e-12 A-1] to [cm-1]
     *F1 = 1e-2 * s * outer_sum_F1;
@@ -155,11 +155,11 @@ Iqabc(double qa, double qb, double qc,
     double length_a,
     double b2a_ratio,
     double c2a_ratio,
-    double t)
+    double truncation)
 {
     const double length_b = length_a * b2a_ratio;
     const double length_c = length_a * c2a_ratio;
-    const double tinv = 1.0 - t;
+    const double tinv = 1.0 - truncation;
 
     //HERE: Octahedron formula
     // NOTE: qa qb qc are the three components in 1/Ang of the scattering vector
@@ -174,29 +174,29 @@ Iqabc(double qa, double qb, double qc,
     const double qy2 = square(qy);
     const double qz2 = square(qz);
     const double AA =
-        ((qy-qx)*sin(qy*t-qx*tinv) + (qy+qx)*sin(qy*t+qx*tinv)) / ((qy2-qz2)*(qy2-qx2)) +
-        ((qz-qx)*sin(qz*t-qx*tinv) + (qz+qx)*sin(qz*t+qx*tinv)) / ((qz2-qx2)*(qz2-qy2));
+        ((qy-qx)*sin(qy*truncation-qx*tinv) + (qy+qx)*sin(qy*truncation+qx*tinv)) / ((qy2-qz2)*(qy2-qx2)) +
+        ((qz-qx)*sin(qz*truncation-qx*tinv) + (qz+qx)*sin(qz*truncation+qx*tinv)) / ((qz2-qx2)*(qz2-qy2));
 
     const double BB =
-        ((qz-qy)*sin(qz*t-qy*tinv) + (qz+qy)*sin(qz*t+qy*tinv)) / ((qz2-qx2)*(qz2-qy2)) +
-        ((qx-qy)*sin(qx*t-qy*tinv) + (qx+qy)*sin(qx*t+qy*tinv)) / ((qx2-qy2)*(qx2-qz2));
+        ((qz-qy)*sin(qz*truncation-qy*tinv) + (qz+qy)*sin(qz*truncation+qy*tinv)) / ((qz2-qx2)*(qz2-qy2)) +
+        ((qx-qy)*sin(qx*truncation-qy*tinv) + (qx+qy)*sin(qx*truncation+qy*tinv)) / ((qx2-qy2)*(qx2-qz2));
 
     const double CC =
-        ((qx-qz)*sin(qx*t-qz*tinv) + (qx+qz)*sin(qx*t+qz*tinv)) / ((qx2-qy2)*(qx2-qz2)) +
-        ((qy-qz)*sin(qy*t-qz*tinv) + (qy+qz)*sin(qy*t+qz*tinv)) / ((qy2-qz2)*(qy2-qx2));
+        ((qx-qz)*sin(qx*truncation-qz*tinv) + (qx+qz)*sin(qx*truncation+qz*tinv)) / ((qx2-qy2)*(qx2-qz2)) +
+        ((qy-qz)*sin(qy*truncation-qz*tinv) + (qy+qz)*sin(qy*truncation+qz*tinv)) / ((qy2-qz2)*(qy2-qx2));
 
     // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
-    const double AP = 3./(1. - 3.*cube(t)) * (AA+BB+CC);
+    const double AP = 3./(1. - 3.*cube(truncation)) * (AA+BB+CC);
 
 
     // Multiply by contrast and volume
     // contrast
     const double s = (sld-solvent_sld);
     // volume
-    // s *= form_volume(length_a, b2a_ratio,c2a_ratio, t);
+    // s *= form_volume(length_a, b2a_ratio,c2a_ratio, truncation);
 
     // Convert from [1e-12 A-1] to [cm-1]
-    double answer = 1.0e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, t) * AP);
+    double answer = 1.0e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, truncation) * AP);
     if (isnan(answer) || isinf(answer)) {
         return 0.0;
     }
