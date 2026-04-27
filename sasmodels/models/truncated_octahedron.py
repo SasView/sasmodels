@@ -1,7 +1,6 @@
 # octahedron_truncated model
 # Note: model title and parameter table are inserted automatically
 r"""
-
 This model provides the form factor P(q) for a general octahedron.
 It can be a regular octahedron shape with all edges of the same length.
 Or a general shape with different elongations along the three perpendicular two-fold axes.
@@ -15,40 +14,45 @@ Definition
 ----------
 
 The general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
-length_a, length_b and length_c are the distances from the center of the general octahedron to its 6 vertices.
+:math:`length_a`, :math:`length_b` and :math:`length_c` are the distances from the center of the general octahedron to its 6 vertices.
 
 Coordinates of the six vertices are:
-    (length_a, 0, 0),
-    (-length_a, 0, 0),
-    (0, length_b, 0),
-    (0, -length_b, 0),
-    (0, 0, length_c),
-    (0, 0, -length_c)
+    (:math:`length_a`, 0, 0),
+    (:math:`-length_a`, 0, 0),
+    (0, :math:`length_b`, 0),
+    (0, :math:`-length_b`, 0),
+    (0, 0, :math:`length_c`),
+    (0, 0, :math:`-length_c`)
 
-t is the truncation parameter.
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
-The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions
-A square facet crosses the x, y, z directions at distances equal to t length_a, t length_b and t length_c.
+The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
+The user-defined parameter `t` is the truncation ratio and is defined as: 0 < t < 0.5, 0 corresponding to no truncation
+(full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
+For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
+Indeed, a square facet crosses the x, y, z directions at distances equal to :math:`t_inv length_a`, :math:`t_inv length_b` and :math:`t_inv length_c`.
 
 A regular octahedron corresponds to:
 
 .. math::
 
-    length_a = length_b = length_c, \quad t = 1
+    length_a = length_b = length_c, \quad t = 0
 
 A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
 .. math:: 
 
-    length_a = length_b = length_c, \quad t = \frac{1}{2}
+    length_a = length_b = length_c, \quad t  = \frac{1}{2}
 
-The model contains 4 parameters: length_a, the two ratios b2a_ratio and c2a_ratio and t:
+The model contains 4 parameters: :math:`length_a`, the two ratios :math:`b2a_ratio` and :math:`c2a_ratio` and :math:`t`:
 
 .. math::
 
     b2a_{\text{ratio}} = \frac{length_b}{length_a}, \quad
     c2a_{\text{ratio}} = \frac{length_c}{length_a}, \quad
-    \frac{1}{2} < t < 1
+
+    0 < t < \frac{1}{2}
+
+
 
 For a regular shape:
 
@@ -60,7 +64,7 @@ Volume of the general shape including truncation is given by:
 
 .. math::
 
-    V = \frac{4}{3}\, length_{\text{a}}^{3}\, b2a_{\text{ratio}}\, c2a_{\text{ratio}}\,\bigl(1 - 3(1 - t)^{3}\bigr)
+    V = \frac{4}{3}\, length_{\text{a}}^{3}\, b2a_{\text{ratio}}\, c2a_{\text{ratio}}\,\bigl(1 - 3t^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
@@ -81,35 +85,35 @@ For a regular shape (no elongation):
 
 .. math::
 
-    V = \frac{4}{3} \, length_{\text{a}}^{3} \, \bigl(1 - 3 (1 - t)^3 \bigr)
+    V = \frac{4}{3} \, length_{\text{a}}^{3} \, \bigl(1 - 3 t^3 \bigr)
 
 The reference orientation of the shape is: a along x, b along y and c along z.
 Amplitude of the form factor AP for the reference orientation of the shape reads 
 
 .. math::
 
-    AP(q,\theta,\phi) = \frac{6}{1 - 3(1 - t)^3}\,(AA + BB + CC)
+    AP(q,\theta,\phi) = \frac{6}{1 - 3t^3}\,(AA + BB + CC)
 
 .. math::
 
-    AA = \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_x)\sin\big(q_y(1 - t) - q_x t\big)
-    + (q_y + q_x)\sin\big(q_y(1 - t) + q_x t\big)\Big]
-    + \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_x)\sin\big(q_z(1 - t) - q_x t\big)
-    + (q_z + q_x)\sin\big(q_z(1 - t) + q_x t\big)\Big]
+    AA = \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_x)\sin\big(q_y t - q_x t_{\text{inv}}\big)
+    + (q_y + q_x)\sin\big(q_y t + q_x t_{\text{inv}}\big)\Big]
+    + \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_x)\sin\big(q_z t - q_x t_{\text{inv}}\big)
+    + (q_z + q_x)\sin\big(q_z t + q_x t_{\text{inv}}\big)\Big]
 
 .. math::
 
-    BB = \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_y)\sin\big(q_z(1 - t) - q_y t\big)
-    + (q_z + q_y)\sin\big(q_z(1 - t) + q_y t\big)\Big]
-    + \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_y)\sin\big(q_x(1 - t) - q_y t\big)
-    + (q_x + q_y)\sin\big(q_x(1 - t) + q_y t\big)\Big]
+    BB = \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_y)\sin\big(q_z t - q_y t_{\text{inv}}\big)
+    + (q_z + q_y)\sin\big(q_z t + q_y t_{\text{inv}}\big)\Big]
+    + \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_y)\sin\big(q_x t - q_y t_{\text{inv}}\big)
+    + (q_x + q_y)\sin\big(q_x t + q_y t_{\text{inv}}\big)\Big]
 
 .. math::
 
-    CC = \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_z)\sin\big(q_x(1 - t) - q_z t\big)
-    + (q_x + q_z)\sin\big(q_x(1 - t) + q_z t\big)\Big]
-    + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y(1 - t) - q_z t\big)
-    + (q_y + q_z)\sin\big(q_y(1 - t) + q_z t\big)\Big]
+    CC = \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_z)\sin\big(q_x t - q_z t_{\text{inv}}\big)
+    + (q_x + q_z)\sin\big(q_x t + q_z t_{\text{inv}}\big)\Big]
+    + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y t - q_z t_{\text{inv}}\big)
+    + (q_y + q_z)\sin\big(q_y t + q_z t_{\text{inv}}\big)\Big]
 
 Capital Qx Qy Qz are the three components in [A-1] of the scattering vector.
 qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms.
@@ -160,7 +164,7 @@ units) *scale* represents the volume fraction (which is unitless).
 
 .. figure:: img/octahedrons_intensity_plot.png
 
-    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=1) of a = 300 Angstroms.
+    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=0) of a = 300 Angstroms.
 
 Validation
 ----------
@@ -199,18 +203,19 @@ Authorship and Verification
 
 from numpy import inf
 
-name = "octahedron_truncated"
+name = "truncated_octahedron"
 title = "Truncated Octahedron."
 description = """
 The amplitude AP is defined as follows.
+t is the truncation parameter, tinv is 1 - t and AA, BB and CC are the three terms of the form factor for the reference orientation of the shape.
 
-AP = 6./(1.-3*(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC)
+AP = 6./(1.-3*(t)**3)*(AA+BB+CC)
 
-AA = 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx)) * ((qy-qx)*sin(qy*(1.-t)-qx*t) + (qy+qx)*sin(qy*(1.-t)+qx*t)) + 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy)) * ((qz-qx)*sin(qz*(1.-t)-qx*t) + (qz+qx)*sin(qz*(1.-t)+qx*t))
+AA = 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx)) * ((qy-qx)*sin(qy*(t)-qx*tinv) + (qy+qx)*sin(qy*(t)+qx*tinv)) + 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy)) * ((qz-qx)*sin(qz*(t)-qx*tinv) + (qz+qx)*sin(qz*(t)+qx*tinv))
 
-BB = 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy)) * ((qz-qy)*sin(qz*(1.-t)-qy*t) + (qz+qy)*sin(qz*(1.-t)+qy*t)) + 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz)) * ((qx-qy)*sin(qx*(1.-t)-qy*t) + (qx+qy)*sin(qx*(1.-t)+qy*t))
+BB = 1./(2*(qz*qz-qx*qx)*(qz*qz-qy*qy)) * ((qz-qy)*sin(qz*(t)-qy*tinv) + (qz+qy)*sin(qz*(t)+qy*tinv)) + 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz)) * ((qx-qy)*sin(qx*(t)-qy*tinv) + (qx+qy)*sin(qx*(t)+qy*tinv))
 
-CC = 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz)) * ((qx-qz)*sin(qx*(1.-t)-qz*t) + (qx+qz)*sin(qx*(1.-t)+qz*t)) + 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx)) * ((qy-qz)*sin(qy*(1.-t)-qz*t) + (qy+qz)*sin(qy*(1.-t)+qz*t))
+CC = 1./(2*(qx*qx-qy*qy)*(qx*qx-qz*qz)) * ((qx-qz)*sin(qx*(t)-qz*tinv) + (qx+qz)*sin(qx*(t)+qz*tinv)) + 1./(2*(qy*qy-qz*qz)*(qy*qy-qx*qx)) * ((qy-qz)*sin(qy*(t)-qz*tinv) + (qy+qz)*sin(qy*(t)+qz*tinv))
 
 With capital QX QY QZ are the three components in [A-1] of the scattering vector
 and qx qy qz are the rescaled components (no unit) for computing AP term.
@@ -224,9 +229,9 @@ qz = Qz * length_c
 
 Reference orientation is with a along x axis, b along y axis and c along z axis
 
-Valid truncation parameter range: 0.5 < t < 1.
+Valid truncation parameter range: 0 < t < 0.5.
 
-t=1 is for octahedron
+t=0 is for octahedron
 t=0.5 is for cuboctahedron
 """
 
@@ -243,8 +248,8 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "Ratio b/a"],
               ["c2a_ratio", "", 1, [0, inf], "volume",
                "Ratio c/a"],
-              ["t", "", 0.89, [0.5, 1.0], "volume",
-               "truncation"],
+              ["truncation", "", 0, [0, 0.5], "volume",
+               "truncation ratio, 0 for octahedron and 0.5 for cuboctahedron"],
               ["theta", "degrees", 0, [-360, 360], "orientation",
                "c axis to beam angle"],
               ["phi", "degrees", 0, [-360, 360], "orientation",
@@ -253,7 +258,9 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "rotation about c axis"],
               ]
 
-source = ["lib/gauss20.c", "octahedron_truncated.c"]
+valid = "truncation >= 0 && truncation <= 0.5"
+single = False
+source = ["lib/adaptive.c", "truncated_octahedron.c"]
 # change to "lib/gauss76.c" or "lib/gauss150.c" to increase the number of integration points
 # for the orientational average. Note that it will increase calculation times.
 
@@ -261,8 +268,8 @@ source = ["lib/gauss20.c", "octahedron_truncated.c"]
 have_Fq = True
 
 tests = [
-    [{"background": 0, "scale": 1, "length_a": 100, "t": 1, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "length_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
      0.01, 120.57219],
-    [{"background": 0, "scale": 1, "length_a": 100, "t": 1, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "length_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
      [0.01, 0.1], [120.57219, 0.37418]],
 ]
