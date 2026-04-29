@@ -220,41 +220,41 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "tetrahedron scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["circumradius", "Ang", 100, [0., inf], "volume",
+              ["radius", "Ang", 100, [0., inf], "volume",
                "Circumradius"],
                ]
 
 ### Functions for geometrical calculations:
 # volume, edge length and vertices of the tetrahedron.
-def form_volume(circumradius):
+def form_volume(radius):
     """
     Computes the volume of the tetrahedron from its circumradius.
     Parameters
     ----------
-    circumradius : float
+    radius : float
         Circumradius of the tetrahedron.
     Returns
     -------
     volume : float
         Volume of the tetrahedron.
     """
-    edge = edge_from_circumradius(circumradius)
+    edge = edge_from_circumradius(radius)
     volume = edge**3 * np.sqrt(2) / 12
     return volume
 
-def edge_from_circumradius(circumradius):
+def edge_from_circumradius(radius):
     """
     Computes the edge length of the tetrahedron from its circumradius.
     Parameters
     ----------
-    circumradius : float
+    radius : float
         Circumradius of the tetrahedron.
     Returns
     -------
     edge : float
         Edge length of the tetrahedron.
     """
-    return 4 / np.sqrt(6) * circumradius
+    return 4 / np.sqrt(6) * radius
 
 def circumradius_from_edge(edge):
     """
@@ -265,24 +265,24 @@ def circumradius_from_edge(edge):
         Edge length of the tetrahedron.
     Returns
     -------
-    circumradius : float
+    radius : float
         Circumradius of the tetrahedron.
     """
     return np.sqrt(6) / 4 * edge
 
-def vertices(circumradius):
+def vertices(radius):
     """
     Computes the vertices of a regular tetrahedron from its circumradius.
     Parameters
     ----------
-    circumradius : float
+    radius : float
         Circumradius of the tetrahedron.
     Returns
     -------
     vertices : list
         List of the coordinates of the vertices of the tetrahedron.
     """
-    edge = edge_from_circumradius(circumradius)
+    edge = edge_from_circumradius(radius)
     # The origin is located at V0
     return np.array([[0, 0, 0], [edge/np.sqrt(2), edge/np.sqrt(2), 0],
                      [ 0, edge/np.sqrt(2), edge/np.sqrt(2)],
@@ -291,7 +291,7 @@ def vertices(circumradius):
 # Form factor and intensity calculations
 # Better to define first an intermediate function F_ortho(qa,qb,qc,V1,V2,V3)
 # for any tetrahedron shape
-# then Fqabc(qa,qb,qc, circumradius) will call directly F_ortho(qa,qb,qc,V1,V2,V3)
+# then Fqabc(qa,qb,qc, radius) will call directly F_ortho(qa,qb,qc,V1,V2,V3)
 def Fq_ortho(qa, qb, qc, V1, V2, V3):
     """
     General function that computes the form factor amplitude
@@ -433,7 +433,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
     return scattering_amplitude
 
 
-def Fqabc(qa, qb, qc, circumradius):
+def Fqabc(qa, qb, qc, radius):
     """
     Computes the form factor amplitude of the tetrahedron
     from its circumradius and the three components of the
@@ -441,7 +441,7 @@ def Fqabc(qa, qb, qc, circumradius):
     Parameters
     ----------
     circumradius : float
-        Circumradius of the tetrahedron.
+        radius of the tetrahedron.
     qa, qb, qc : float
         Components of the scattering vector q
     Returns
@@ -450,13 +450,13 @@ def Fqabc(qa, qb, qc, circumradius):
         Form factor amplitude of the tetrahedron at the
         specific three dimensional q.
     """
-    V0, V1, V2, V3 = vertices(circumradius)
+    V0, V1, V2, V3 = vertices(radius)
     scattering_amplitude = Fq_ortho(qa, qb, qc, V1, V2, V3)
 
     return scattering_amplitude
 
 
-def Iqabc(qa, qb, qc, circumradius): # proportional to the volume**2
+def Iqabc(qa, qb, qc, radius): # proportional to the volume**2
     """
     Computes the scattered intensity of the tetrahedron at the specific
     three dimensional q components from the form factor amplitude Fqabc.
@@ -472,11 +472,11 @@ def Iqabc(qa, qb, qc, circumradius): # proportional to the volume**2
         Scattered intensity of the tetrahedron at the specific three
         dimensional q components.
     """
-    A = Fqabc(qa, qb, qc, circumradius)
+    A = Fqabc(qa, qb, qc, radius)
     intensity = (np.abs(A))**2  # intensity is proportional to the volume
     return intensity
 
-def Iq(q, sld, sld_solvent, circumradius:float, npoints_fibonacci:int= 500):
+def Iq(q, sld, sld_solvent, radius:float, npoints_fibonacci:int= 500):
     """
     Computes the scattering intensity I(q) of tetrahedrons averaged over all
     orientations using the Fibonacci quadrature.
@@ -488,7 +488,7 @@ def Iq(q, sld, sld_solvent, circumradius:float, npoints_fibonacci:int= 500):
         Norm of the scattering vector
     sld, sld_solvent :
         Contrast of scattering length density
-    circumradius : float
+    radius : float
         Circumradius of the tetrahedron.
     npoints_fibonacci : int
         Number of Fibonacci points on the sphere, set to 500 by default
@@ -507,7 +507,7 @@ def Iq(q, sld, sld_solvent, circumradius:float, npoints_fibonacci:int= 500):
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
     # Compute intensity
-    intensity = Iqabc(qa, qb, qc, circumradius)  # shape (nq, npoints)
+    intensity = Iqabc(qa, qb, qc, radius)  # shape (nq, npoints)
     # Uniform average over the sphere
     integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4
@@ -515,8 +515,8 @@ def Iq(q, sld, sld_solvent, circumradius:float, npoints_fibonacci:int= 500):
 Iq.vectorized = True
 
 tests = [
-    [{"background": 0, "scale": 1, "circumradius": 100, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius": 100, "sld": 1., "sld_solvent": 0.},
      0.01, 48.00520],
-    [{"background": 0, "scale": 1, "circumradius": 100, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius": 100, "sld": 1., "sld_solvent": 0.},
      [0.01, 0.1], [48.00520, 0.57463]],
 ]

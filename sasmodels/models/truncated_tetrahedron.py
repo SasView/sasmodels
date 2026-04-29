@@ -238,8 +238,8 @@ from numpy import inf
 
 from sasmodels.special.fibonacci import fibonacci_sphere
 
-name = "tetrahedron_truncated"
-title = "Tetrahedron truncated"
+name = "truncated_tetrahedron"
+title = "Truncated tetrahedron"
 description = """
         Model for a truncated tetrahedron with orientation average using the Fibonacci quadrature"""
 category = "shape:polyhedron"
@@ -248,45 +248,45 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "tetrahedron scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["circumradius", "Ang", 100, [0., inf], "volume",
+              ["radius", "Ang", 100, [0., inf], "volume",
                "Circumradius of the full tetrahedron"],
-              ["t", "", 0, [0, 0.5], "volume",
-               "truncation"],
+              ["truncation", "", 0, [0, 0.5], "volume",
+               "truncation, 0 for full tetrahedron, 0.5 for octahedron"],
                ]
 
 ### Functions for geometrical calculations:
 # volume, edge length and vertices of the tetrahedron.
-def form_volume(circumradius, t):
+def form_volume(radius, truncation):
     """
     Computes the volume of the truncated tetrahedron from its circumradius.
     Parameters
     ----------
-    circumradius : float
+    radius : float
         Circumradius of the full tetrahedron.
-    t : float
+    truncation : float
         Truncation parameter.
     Returns
     -------
     volume : float
         Volume of the truncated tetrahedron.
     """
-    edge = edge_from_circumradius(circumradius)
-    volume = edge**3 * np.sqrt(2) / 12 * (1 - 4*t**3)
+    edge = edge_from_circumradius(radius)
+    volume = edge**3 * np.sqrt(2) / 12 * (1 - 4*truncation**3)
     return volume
 
-def edge_from_circumradius(circumradius):
+def edge_from_circumradius(radius):
     """
     Computes the edge length of the full tetrahedron from its circumradius.
     Parameters
     ----------
-    circumradius : float
+    radius : float
         Circumradius of the full tetrahedron.
     Returns
     -------
     edge : float
         Edge length of the full tetrahedron.
     """
-    return 4 / np.sqrt(6) * circumradius
+    return 4 / np.sqrt(6) * radius
 
 def circumradius_from_edge(edge):
     """
@@ -297,24 +297,24 @@ def circumradius_from_edge(edge):
         Edge length of the full tetrahedron.
     Returns
     -------
-    circumradius : float
+    radius : float
         Circumradius of the full tetrahedron.
     """
     return np.sqrt(6) / 4 * edge
 
-def vertices(circumradius):
+def vertices(radius):
     """
     Computes the vertices of the full tetrahedron from its circumrdius.
     Parameters
     ----------
-    circumradius : float
+    radius : float
         Circumradius of the full tetrahedron.
     Returns
     -------
     vertices : list
         List of the coordinates of the vertices of the full tetrahedron.
     """
-    edge = edge_from_circumradius(circumradius)
+    edge = edge_from_circumradius(radius)
     # The origin is located at V0
     return np.array([[0, 0, 0], [edge/np.sqrt(2), edge/np.sqrt(2), 0],
                      [ 0, edge/np.sqrt(2), edge/np.sqrt(2)],
@@ -323,7 +323,7 @@ def vertices(circumradius):
 # Form factor and intensity calculations
 # Better to define first an intermediate function F_ortho(qa,qb,qc,V1,V2,V3)
 # for any tetrahedron shape
-# then Fqabc(qa,qb,qc, circumradius) will call directly F_ortho(qa,qb,qc,V1,V2,V3)
+# then Fqabc(qa,qb,qc, radius) will call directly F_ortho(qa,qb,qc,V1,V2,V3)
 def Fq_ortho(qa, qb, qc, V1, V2, V3):
     """
     General function that computes the form factor amplitude
@@ -465,18 +465,18 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
     return scattering_amplitude
 
 
-def Fqabc(qa, qb, qc, circumradius, t):
+def Fqabc(qa, qb, qc, radius, truncation):
     """
     Computes the form factor amplitude of the truncated tetrahedron
     from its circumradius and the three components of the
     scattering vector q.
     Parameters
     ----------
-    circumradius : float
+    radius : float
         Circumradius of the tetrahedron.
     qa, qb, qc : float
         Components of the scattering vector q
-    t : float
+    truncation : float
         Truncation parameter.
     Returns
     -------
@@ -484,16 +484,16 @@ def Fqabc(qa, qb, qc, circumradius, t):
         Form factor amplitude of the truncated tetrahedron at the
         specific three dimensional q.
     """
-    V0, V1, V2, V3 = vertices(circumradius)
-    scattering_amplitude =  Fq_ortho(qa, qb, qc, V1, V2, V3) - Fq_ortho(qa, qb, qc, V1*t, V2*t, V3*t) * (
-                   (1 + np.exp(1j * (1-t) * (qa * V1[0] + qb * V1[1] + qc * V1[2])))+
-                   np.exp(1j * (1-t) * (qa * V2[0] + qb * V2[1] + qc * V2[2])) +
-                   np.exp(1j * (1-t) * (qa * V3[0] + qb * V3[1] + qc * V3[2])))
+    V0, V1, V2, V3 = vertices(radius)
+    scattering_amplitude =  Fq_ortho(qa, qb, qc, V1, V2, V3) - Fq_ortho(qa, qb, qc, V1*truncation, V2*truncation, V3*truncation) * (
+                   (1 + np.exp(1j * (1-truncation) * (qa * V1[0] + qb * V1[1] + qc * V1[2])))+
+                   np.exp(1j * (1-truncation) * (qa * V2[0] + qb * V2[1] + qc * V2[2])) +
+                   np.exp(1j * (1-truncation) * (qa * V3[0] + qb * V3[1] + qc * V3[2])))
 
     return scattering_amplitude
 
 
-def Iqabc(qa, qb, qc, circumradius, t): # proportionnal to the volume**2
+def Iqabc(qa, qb, qc, radius, truncation): # proportionnal to the volume**2
     """
     Computes the scattered intensity of the truncated tetrahedron at the specific
     three dimensional q components from the form factor amplitude Fqabc.
@@ -501,9 +501,9 @@ def Iqabc(qa, qb, qc, circumradius, t): # proportionnal to the volume**2
     ----------
     qa, qb, qc : float or array
         Components of the scattering vector q
-    circumradius : float
+    radius : float
         Circumradius of the full tetrahedron.
-    t : float
+    truncation : float
         Truncation parameter.
     Returns
     -------
@@ -511,11 +511,11 @@ def Iqabc(qa, qb, qc, circumradius, t): # proportionnal to the volume**2
         Scattered intensity of the tetrahedron at the specific three
         dimensional q components.
     """
-    A = Fqabc(qa, qb, qc, circumradius, t)
+    A = Fqabc(qa, qb, qc, radius, truncation)
     intensity = (np.abs(A))**2  # intensity is proportional to the volume
     return intensity
 
-def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 500):
+def Iq(q, sld, sld_solvent, radius:float, truncation:float, npoints_fibonacci:int= 500):
     """
     Computes the scattering intensity I(q) of the truncated tetrahedrons averaged over all
     orientations using the Fibonacci quadrature.
@@ -527,9 +527,9 @@ def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 
         Norm of the scattering vector
     sld, sld_solvent :
         Contrast of scattering length density
-    circumradius : float
+    radius : float
         Circumradius of the full tetrahedron.
-    t : float
+    truncation : float
         Truncation parameter.
     npoints_fibonacci : int
         Number of Fibonacci points on the sphere, set to 500 by default
@@ -548,7 +548,7 @@ def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
     # Compute intensity
-    intensity = Iqabc(qa, qb, qc, circumradius, t)  # shape (nq, npoints)
+    intensity = Iqabc(qa, qb, qc, radius, truncation)  # shape (nq, npoints)
     # Uniform average over the sphere
     integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4
@@ -556,13 +556,13 @@ def Iq(q, sld, sld_solvent, circumradius:float, t:float, npoints_fibonacci:int= 
 Iq.vectorized = True
 
 tests = [
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
      0.01, 48.00520],
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
      [0.01, 0.1], [48.00520, 0.57463]],
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0.5, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius": 100, "truncation": 0.5, "sld": 1., "sld_solvent": 0.},
      0.0001, 25.65993],
-    [{"background": 0, "scale": 1, "circumradius": 100, "t": 0.3, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius": 100, "truncation": 0.3, "sld": 1., "sld_solvent": 0.},
      0.0001, 45.77721],
 
 ]
