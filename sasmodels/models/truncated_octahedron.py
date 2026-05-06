@@ -259,8 +259,7 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
               ]
 
 valid = "truncation >= 0 && truncation <= 0.5"
-single = False
-source = ["lib/adaptive.c", "truncated_octahedron.c"]
+source = ["lib/gauss20.c", "truncated_octahedron.c"]
 # change to "lib/gauss76.c" or "lib/gauss150.c" to increase the number of integration points
 # for the orientational average. Note that it will increase calculation times.
 
