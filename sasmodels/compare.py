@@ -1610,11 +1610,15 @@ def explore(opts):
 def webview_explore(problem):
     import logging
 
-    import bumps.webview.server.webserver as server
     from aiohttp import web
-    from bumps.webview.server import api
-    from bumps.webview.server.cli import BumpsOptions
-
+    try:
+        from bumps import api
+        from bumps.cli import BumpsOptions
+        from bumps.webview import webserver as server
+    except ImportError: # CRUFT: bumps 1.1 rearranged internal structure
+        from bumps.webview.server import api
+        from bumps.webview.server import webserver as server
+        from bumps.webview.server.cli import BumpsOptions
     logging.getLogger("webview").setLevel(logging.WARNING)
 
     server.init_web_app()
@@ -1665,7 +1669,10 @@ class Explore:
 
     def __init__(self, opts):
         # type: (Dict[str, Any]) -> None
-        from bumps.cli import config_matplotlib  # type: ignore
+        try:
+            from bumps.plotutil import config_matplotlib  # type: ignore
+        except ImportError: # CRUFT: bumps 1.1 rearranged internal structure
+            from bumps.cli import config_matplotlib
 
         from . import bumps_model
 
