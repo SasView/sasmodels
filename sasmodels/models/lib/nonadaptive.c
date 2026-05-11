@@ -5,7 +5,7 @@
 #define GAUSS_500 0.0 // Doesn't matter since qr is ignored
 
 static int
-gauss_weights(double qr, constant double **w, constant double **z)
+gauss_weights(double qr, int n_outer, constant double **w, constant double **z)
 {
     *w = GAUSS_W; *z = GAUSS_Z; return GAUSS_N;
 }

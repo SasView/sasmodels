@@ -11216,8 +11216,9 @@ constant double Gauss5000Z[5000]={
 	 9.999998843594127e-01
 };
 
+#define _ADAPTIVE_MAX_N 200000
 static int
-gauss_weights(double qr, constant double **w, constant double **z)
+gauss_weights(double qr, int outer_n, constant double **w, constant double **z)
 {
 	// TODO: add more stages (150, 1500) so the n^2 model slowdown is a little less brutal
 	// TODO: adjust cutoff for n=500
@@ -11229,11 +11230,12 @@ gauss_weights(double qr, constant double **w, constant double **z)
 	//     Check that all models have reasonable cutoff.
 	// *w = Gauss5000Wt; *z = Gauss5000Z; return 5000; // max precision
 	// *w = Gauss76Wt; *z = Gauss76Z; return 76; // default
-	if (qr < 10) {
+
+	if (qr < 10 || outer_n >= _ADAPTIVE_MAX_N / 20) { // = 100_000 // 20
         *w = Gauss20Wt; *z = Gauss20Z; return 20;
-	} else if (qr < 100) {
+	} else if (qr < 100 || outer_n >= _ADAPTIVE_MAX_N / 76) { // = 100_000 // 76
         *w = Gauss76Wt; *z = Gauss76Z; return 76;
-    } else if (qr < 750) {
+    } else if (qr < 750 || outer_n >= _ADAPTIVE_MAX_N / 500) { // = 100_000 // 500
         *w = Gauss500Wt; *z = Gauss500Z; return 500;
     } else {
         *w = Gauss5000Wt; *z = Gauss5000Z; return 5000;

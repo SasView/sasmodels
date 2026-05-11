@@ -77,7 +77,7 @@ Fq(double q,
 
     const double qr_max_outer = q*fmax(sqrt(length_a*length_a + length_b*length_b), length_c)/2;
     constant double *w_outer, *z_outer;
-    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max_outer, 1, &w_outer, &z_outer);
 
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_total_F1 = 0.0; //initialize integral
@@ -88,7 +88,7 @@ Fq(double q,
 
         const double qr_max_inner = mu_proj*fmax(a_scaled, 1.0);  // = qab*max(len)/2
         constant double *w_inner, *z_inner;
-        int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
+        int n_inner = gauss_weights(qr_max_inner, n_outer, &w_inner, &z_inner);
 
         // inner integral (with gauss points), integration limits = 0, 1
         // corresponding to angles from 0 to pi/2.

@@ -8,7 +8,7 @@
 //   theta is the angle of the cylinder wrt q.
 static double
 _cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
-    double half_length)
+    double half_length, int outer_n)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
@@ -36,7 +36,7 @@ _cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
     //const double qr_max = fmax(qab_r, m+b);
     const double qr_max = fmax(qab*radius, m+b);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, outer_n, &w, &z);
 
     double total = 0.0;
     for (int i=0; i<n; i++) {
@@ -136,7 +136,7 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     // since the bell length is always greater than the bar radius.
     const double qr_max = q*fmax(half_length + radius_cap + h, radius);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
@@ -149,7 +149,7 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
         SINCOS(theta, sin_theta, cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
-        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length);
+        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length, n);
         // scale by sin_theta for spherical coord integration
         total_F1 += w[i] * Aq * sin_theta;
         total_F2 += w[i] * Aq * Aq * sin_theta;

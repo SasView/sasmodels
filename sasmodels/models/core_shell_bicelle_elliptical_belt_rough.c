@@ -95,7 +95,7 @@ Fq(double q,
 
     const double qr_max_outer = q*fmax(halfheight+thick_face, fmax(r_minor, r_major)+thick_rim);
     constant double *w_outer, *z_outer;
-    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max_outer, 1, &w_outer, &z_outer);
 
     //initialize integral
     double outer_total_F1 = 0.0;
@@ -113,7 +113,7 @@ Fq(double q,
 
         const double qr_max_inner = qab*(fmax(r_minor, r_major)+thick_rim);
         constant double *w_inner, *z_inner;
-        int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
+        int n_inner = gauss_weights(qr_max_inner, n_outer, &w_inner, &z_inner);
 
         double inner_total_F1 = 0;
         double inner_total_F2 = 0;

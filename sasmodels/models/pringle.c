@@ -18,7 +18,8 @@ void _integrate_bessel(
     double q_cos_psi,
     double n,
     double *Sn,
-    double *Cn)
+    double *Cn,
+    int n_outer)
 {
     // translate gauss point z in [-1,1] to a point in [0, radius]
     const double zm = 0.5*radius;
@@ -26,7 +27,7 @@ void _integrate_bessel(
 
     const double qr_max = fmax(q_cos_psi*radius*radius*fmax(alpha, beta), q_sin_psi*radius);
     constant double *w, *z;
-    int n_outer = gauss_weights(qr_max, &w, &z);
+    int n_outer = gauss_weights(qr_max, n_outer, &w, &z);
 
     // evaluate at Gauss points
     double sumS = 0.0;		// initialize integral
@@ -55,7 +56,8 @@ double _sum_bessel_orders(
     double alpha,
     double beta,
     double q_sin_psi,
-    double q_cos_psi)
+    double q_cos_psi.
+    int n_outer)
 {
     //calculate sum term from n = -3 to 3
     //Note 1:
@@ -71,7 +73,7 @@ double _sum_bessel_orders(
       _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, n, &Sn, &Cn);
       sum += 2.0*(Sn*Sn + Cn*Cn);
     }
-    _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, 0, &Sn, &Cn);
+    _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, 0, &Sn, &Cn, n_outer);
     sum += Sn*Sn+ Cn*Cn;
     return sum;
 }
@@ -87,7 +89,7 @@ double _integrate_psi(
     const double qhalf_thickness = q*0.5*thickness;
     const double qr_max = fmax(qhalf_thickness, q*radius);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n_outer = gauss_weights(qr_max, 1, &w, &z);
     //printf("qr_max=%.1f n=%d\n", qr_max, n);
 
     // translate gauss point z in [-1,1] to a point in [0, pi/2]
@@ -95,11 +97,11 @@ double _integrate_psi(
     const double zb = M_PI_4;
 
     double sum = 0.0;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n_outer; i++) {
         double psi = z[i]*zm + zb;
         double sin_psi, cos_psi;
         SINCOS(psi, sin_psi, cos_psi);
-        double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi);
+        double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi, n_outer);
         double sinc_term = square(sas_sinx_x(qhalf_thickness * cos_psi));
         double pringle_kernel = 4.0 * sin_psi * bessel_term * sinc_term;
         sum += w[i] * pringle_kernel;

@@ -1,7 +1,7 @@
 //barbell kernel - same as dumbbell
 static double
 _bell_kernel(double qab, double qc, double h, double radius_bell,
-             double half_length)
+             double half_length, int outer_n)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
@@ -22,7 +22,7 @@ _bell_kernel(double qab, double qc, double h, double radius_bell,
 
     const double qr_max = fmax(qab_r, m+b);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, outer_n, &w, &z);
 
     double total = 0.0;
     for (int i = 0; i < n; i++){
@@ -122,7 +122,7 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     // We want the radius, so divide that by two.
     const double qr_max = q*(half_length + radius_bell + h);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
@@ -135,7 +135,7 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
         SINCOS(theta, sin_theta, cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
-        const double Aq = _fq(qab, qc, h, radius_bell, radius, half_length);
+        const double Aq = _fq(qab, qc, h, radius_bell, radius, half_length, n);
         // scale by sin_theta for spherical coord integration
         total_F1 += w[i] * Aq * sin_theta;
         total_F2 += w[i] * Aq * Aq * sin_theta;

@@ -95,7 +95,7 @@ Fq(double q,
 
     const double qr_max = q*fmax(radius+thick_radius, 2*halflength+thick_face);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     double total_F1 = 0.0;
     double total_F2 = 0.0;

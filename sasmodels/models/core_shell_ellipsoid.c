@@ -106,7 +106,7 @@ Fq(double q,
 
     const double qr_max = q*fmax(equat_shell, polar_shell);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     // translate from [-1, 1] => [0, 1]
     const double m = 0.5;
