@@ -27,13 +27,13 @@ void _integrate_bessel(
 
     const double qr_max = fmax(q_cos_psi*radius*radius*fmax(alpha, beta), q_sin_psi*radius);
     constant double *w, *z;
-    int n_outer = gauss_weights(qr_max, n_outer, &w, &z);
+    int n_inner = gauss_weights(qr_max, n_outer, &w, &z);
 
     // evaluate at Gauss points
     double sumS = 0.0;		// initialize integral
     double sumC = 0.0;		// initialize integral
     double r;
-    for (int i=0; i < n_outer; i++) {
+    for (int i=0; i < n_inner; i++) {
         r = z[i]*zm + zb;
 
         const double qrs = r*q_sin_psi;
@@ -56,7 +56,7 @@ double _sum_bessel_orders(
     double alpha,
     double beta,
     double q_sin_psi,
-    double q_cos_psi.
+    double q_cos_psi,
     int n_outer)
 {
     //calculate sum term from n = -3 to 3
@@ -70,7 +70,7 @@ double _sum_bessel_orders(
     double Sn, Cn, sum;
     sum = 0.0;
     for (int n=3; n>0; n--) {
-      _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, n, &Sn, &Cn);
+      _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, n, &Sn, &Cn, n_outer);
       sum += 2.0*(Sn*Sn + Cn*Cn);
     }
     _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, 0, &Sn, &Cn, n_outer);

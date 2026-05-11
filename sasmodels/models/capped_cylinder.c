@@ -53,9 +53,9 @@ _cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
 }
 
 static double
-_fq(double qab, double qc, double h, double radius_cap, double radius, double half_length)
+_fq(double qab, double qc, double h, double radius_cap, double radius, double half_length, int n_outer)
 {
-    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, radius, half_length);
+    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, radius, half_length, n_outer);
     const double bj = sas_2J1x_x(radius*qab);
     const double si = sas_sinx_x(half_length*qc);
     const double cyl_Fq = 2.0*M_PI*radius*radius*half_length*bj*si;
@@ -170,8 +170,10 @@ Iqac(double qab, double qc,
     double sld, double solvent_sld, double radius,
     double radius_cap, double length)
 {
+    // TODO: For 2D data we may also want to limit the size of the integral at each (qx, qy)
+    const int n_outer = 1; // No limits on inner integral
     const double h = -sqrt(square(radius_cap) - square(radius));
-    const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length);
+    const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length, n_outer);
 
     // Multiply by contrast^2 and convert to cm-1
     const double s = (sld - solvent_sld);
