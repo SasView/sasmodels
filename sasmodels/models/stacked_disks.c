@@ -80,7 +80,7 @@ like clay platelets that are not exfoliated
 
     const double qr_max = fmax(halfheight+thick_layer, radius);
     constant double *w, *z;
-    int n = gauss_weights(q*qr_max, &w, &z);
+    int n = gauss_weights(q*qr_max, 1, &w, &z);
 
     double summ = 0.0;    //initialize integral
     for(int i=0; i<n; i++) {
