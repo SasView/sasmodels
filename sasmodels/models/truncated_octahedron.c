@@ -48,11 +48,11 @@ Fq(double q,
     // The distance to the origin then follows.
     const double qr_max_outer = q*sqrt(square(tinv*Lc) + square(truncation*Lb));
     constant double *z_outer, *w_outer;
-    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max_outer, 1, &w_outer, &z_outer);
 
     const double qr_max_inner = q*sqrt(square(tinv*Lb) + square(truncation*La));
     constant double *z_inner, *w_inner;
-    int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
+    int n_inner = gauss_weights(qr_max_inner, n_outer, &w_inner, &z_inner);
 
     //printf("La=%g Lb=%g Lc=%g npoints = %d x %d = %d\n", La, Lb, Lc, n_outer, n_inner, n_outer*n_inner);
 

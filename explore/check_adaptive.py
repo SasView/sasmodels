@@ -222,8 +222,16 @@ def triaxial_ellipsoid(a, b, c):
     )
     return pars
 
+@register(2)
+def truncated_octahedron(a, b, c, truncation=0.25):
+    pars = dict(
+        sld=1, sld_solvent=0,
+        length_a=a/2, b2a_ratio=b/a, c2a_ratio=c/a,
+        truncation=truncation,
+    )
+    return pars
 
-def check():
+def check(active_models=[]):
     import numpy as np
 
     def longlines(fn):
@@ -335,12 +343,16 @@ def check():
         print(f"\n\n=== {'big' if big else 'small'} {aspect}: {a=} {b=} {c=} ===")
         ab = max(a, b)
         for name, fn in UNNESTED.items():
+            if active_models and name not in active_models:
+                continue
             pars = dict(background=0, **fn(ab=ab, c=c))
             run_test(name, pars, q, n_gauss, test_q, test_tol)
             #break
 
         ab = max(a, b)
         for name, fn in NESTED.items():
+            if active_models and name not in active_models:
+                continue
             pars = dict(background=0, **fn(a=a, b=b, c=c))
             run_test(name, pars, q, n_gauss, test_q, test_tol)
             #break
@@ -356,4 +368,5 @@ def check():
     loop("cubes", a=200_000, b=200_000, c=200_000)
 
 if __name__ == "__main__":
-    check()
+    import sys
+    check(active_models=sys.argv[1:])
