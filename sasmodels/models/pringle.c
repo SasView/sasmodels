@@ -88,9 +88,10 @@ double _integrate_psi(
 {
     const double qhalf_thickness = q*0.5*thickness;
     const double qr_max = fmax(qhalf_thickness, q*radius);
-    constant double *w, *z;
-    int n_outer = gauss_weights(qr_max, 1, &w, &z);
-    //printf("qr_max=%.1f n=%d\n", qr_max, n);
+    constant double *w_outer, *z_outer;
+    // Keep outer loop to 76 or less
+    int n_outer = gauss_weights(qr_max, ADAPTIVE_MAX_76, &w_outer, &z_outer);
+    // printf("qr_max=%.1f n=%d\n", qr_max, n_outer);
 
     // translate gauss point z in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
@@ -98,13 +99,13 @@ double _integrate_psi(
 
     double sum = 0.0;
     for (int i = 0; i < n_outer; i++) {
-        double psi = z[i]*zm + zb;
+        double psi = z_outer[i]*zm + zb;
         double sin_psi, cos_psi;
         SINCOS(psi, sin_psi, cos_psi);
         double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi, n_outer);
         double sinc_term = square(sas_sinx_x(qhalf_thickness * cos_psi));
         double pringle_kernel = 4.0 * sin_psi * bessel_term * sinc_term;
-        sum += w[i] * pringle_kernel;
+        sum += w_outer[i] * pringle_kernel;
     }
 
     return zm * sum;

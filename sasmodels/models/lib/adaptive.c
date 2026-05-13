@@ -11216,7 +11216,62 @@ constant double Gauss5000Z[5000]={
 	 9.999998843594127e-01
 };
 
+// Adaptive integration uses nested gaussian integration with order determined by the
+// length scale qr, which drives the oscillation frequency of the scattering amplitude.
+// Using polar coordinates, the oscillation with longitude appears to be independent of
+// of latitude, so efficient spherical integration methods that sample roughly uniformly
+// in solid angle don't perform as well as expected. The theta-phi uniform grid only
+// uses 2x more points than the efficient grids, so the improvements from using
+// Gauss-Legendre integration outweigh the increase in the number of integration points.
+//
+// The qr for the loop over phi may be different from that over theta. This is particularly
+// the case for long rods, where the loop over phi depends on the cross section of the
+// rod, so you can use far fewer phi points than the max dimension of the shape would
+// suggest. Models such as the triaxial ellipsoid can relabel their axis so that c the
+// long axis of the shape, allowing a smaller number of total evaluation points.
+//
+// If size of the grid is too large even after relabeling then the evaluation will be
+// very slow. To prevent this, we pass the number of elements in the outer loop to
+// limit the size of the inner loop, giving n_outer*n_inner < _ADAPTIVE_MAX_N. This works
+// well enough for existing models, giving high accuracy results even for 20 micro shapes
+// at q=1e-3 (the upper limit of qr for USANS). Even out to q=1e-1 the calculations are
+// mostly within 10% of the full grid value (good enough to estimate slit resolution for
+// USANS measurements) without being exceedingly slow.
+//
+//     qr_outer = max dimension
+//     qr_inner = max cross section
+//     n_outer = gauss_weights(qr_outer, 1, &w_outer, &z_outer);
+//     n_inner = gauss_weights(qr_inner, n_outer, &w_inner, &z_inner);
+//
+// For a standard integral over a hemisphere ∫∫ F(θ,φ) sin θ dφ dθ with θ in [0, π/2]
+// and φ in [0, 2π], we do a u-substitution ∫∫ F(u,φ) du with u=cos θ in [0, 1]. Then
+// the loops will look like:
+//
+//    const double *w_outer, *z_outer;
+//    const int n_outer = gauss_weights(qr_outer, 1, &w_outer, &z_outer);
+//    double total_outer = 0.;
+//    for (int j=0; j < n_outer; j++) {
+//        cos_theta = 0.5*z_outer[j] + 0.5; // [-1, 1] => [0, 1]
+//        ...
+//        const double *w_inner, *z_inner;
+//        const int n_inner = gauss_weights(qr_inner, n_outer, &w_inner, &z_inner);
+//        double total_inner = 0.;
+//        for (int k=0; k < n_inner; k++) {
+//            phi = M_PI*(z_inner[k] + 1.0);  // [-1, 1] => [0, 2 pi]
+//            ...
+//            total_inner += w_inner[k]*Fq;
+//        }
+//        total_outer += w_outer[k]*total_inner;
+//     }
+//     total_outer /= 2.0*M_PI; // correct for dφ = 2πw/2, du = w/2
+//
+// Some models (barbell, capped cylinder, pringle) are not using spherical integration.
+// Instead we find that limiting the outer integral to 76 points leads to okay results:
+//
+//     n_outer = gauss_weights(qr_outer, ADAPTIVE_MAX_76, &w_outer, &z_outer);
+//
 #define _ADAPTIVE_MAX_N 200000
+#define ADAPTIVE_MAX_76 (_ADAPTIVE_MAX_N / 76)
 static int
 gauss_weights(double qr, int outer_n, constant double **w, constant double **z)
 {
