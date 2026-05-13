@@ -281,7 +281,13 @@ DOC_HEADER = """.. _%(id)s:
 %(docs)s
 """
 
-
+# TODO: set_integration_size should return a copy of info
+# For now it is set up so that the first call converts adaptive to non-adaptive
+# and subsequent calls convert number of gauss points for the non-adaptive.
+# There is currently no way to go back to adaptive after call set_integration_size.
+# If model_info is cached this will cause problems for a GUI or a notebook where the
+# user specifies n_gauss=0 for adaptive. This shows up with sasmodels.compare where
+# -n_gauss=0,76 shows differences but -n_gauss=76,0 shows none.
 def set_integration_size(info, n):
     # type: (ModelInfo, int) -> None
     """

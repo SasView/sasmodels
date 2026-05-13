@@ -63,7 +63,7 @@ Fq(double q,
 {
     const double qr_max = q*fmax(radius, 0.5*length);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;

@@ -16,7 +16,7 @@ elliptical_crosssection(double q, double a, double b)
 {
     const double qr_max = q*fmax(a, b);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     double sum=0.0;
     for(int i=0;i<n;i++) {

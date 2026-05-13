@@ -8,7 +8,7 @@
 //   theta is the angle of the cylinder wrt q.
 static double
 _cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
-    double half_length)
+    double half_length, int outer_n)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
@@ -36,7 +36,7 @@ _cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
     //const double qr_max = fmax(qab_r, m+b);
     const double qr_max = fmax(qab*radius, m+b);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, outer_n, &w, &z);
 
     double total = 0.0;
     for (int i=0; i<n; i++) {
@@ -53,9 +53,9 @@ _cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
 }
 
 static double
-_fq(double qab, double qc, double h, double radius_cap, double radius, double half_length)
+_fq(double qab, double qc, double h, double radius_cap, double radius, double half_length, int n_outer)
 {
-    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, radius, half_length);
+    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, radius, half_length, n_outer);
     const double bj = sas_2J1x_x(radius*qab);
     const double si = sas_sinx_x(half_length*qc);
     const double cyl_Fq = 2.0*M_PI*radius*radius*half_length*bj*si;
@@ -135,24 +135,26 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     // the fmax in the calculation below. This isn't needed for the barbell shape
     // since the bell length is always greater than the bar radius.
     const double qr_max = q*fmax(half_length + radius_cap + h, radius);
-    constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    //const double qr_max = q*(half_length + radius_cap + h);
+    constant double *w_outer, *z_outer;
+    // Keep outer loop to 76 or less
+    int n_outer = gauss_weights(qr_max, ADAPTIVE_MAX_76, &w_outer, &z_outer);
 
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
     const double zb = M_PI_4;
     double total_F1 = 0.0;
     double total_F2 = 0.0;
-    for (int i=0; i<n ;i++) {
-        const double theta = z[i]*zm + zb;
+    for (int i=0; i<n_outer ;i++) {
+        const double theta = z_outer[i]*zm + zb;
         double sin_theta, cos_theta; // slots to hold sincos function output
         SINCOS(theta, sin_theta, cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
-        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length);
+        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length, n_outer);
         // scale by sin_theta for spherical coord integration
-        total_F1 += w[i] * Aq * sin_theta;
-        total_F2 += w[i] * Aq * Aq * sin_theta;
+        total_F1 += w_outer[i] * Aq * sin_theta;
+        total_F2 += w_outer[i] * Aq * Aq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double form_avg = total_F1 * zm;
@@ -170,8 +172,10 @@ Iqac(double qab, double qc,
     double sld, double solvent_sld, double radius,
     double radius_cap, double length)
 {
+    // TODO: For 2D data we may also want to limit the size of the integral at each (qx, qy)
+    const int n_outer = 1; // No limits on inner integral
     const double h = -sqrt(square(radius_cap) - square(radius));
-    const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length);
+    const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length, n_outer);
 
     // Multiply by contrast^2 and convert to cm-1
     const double s = (sld - solvent_sld);

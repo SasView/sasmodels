@@ -78,7 +78,7 @@ Fq(double q,
 
     const double qr_max = q*fmax(shell_r, shell_h);
     constant double *z, *w;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     double total_F1 = 0.0;
     double total_F2 = 0.0;

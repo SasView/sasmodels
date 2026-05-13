@@ -84,11 +84,11 @@ Fq(double q, double *F1, double *F2, double radius_minor, double r_ratio, double
 
     constant double *w_outer, *z_outer;
     const double qr_max_outer = q*fmax(0.5*length, fmax(radius_minor, radius_minor*r_ratio));
-    int n_outer = gauss_weights(qr_max_outer, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max_outer, 1, &w_outer, &z_outer);
 
     constant double *w_inner, *z_inner;
     const double qr_max_inner = q*fmax(radius_minor, radius_major);
-    int n_inner = gauss_weights(qr_max_inner, &w_inner, &z_inner);
+    int n_inner = gauss_weights(qr_max_inner, n_outer, &w_inner, &z_inner);
 
     //initialize integral
     double outer_sum_F1 = 0.0;

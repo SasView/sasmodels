@@ -67,7 +67,7 @@ Fq(double q,
 
     const double qr_max = q*fmax(radius_polar,radius_equatorial);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     // translate a point in [-1,1] to a point in [0, 1]
     // const double u = z[i]*(upper-lower)/2 + (upper+lower)/2;

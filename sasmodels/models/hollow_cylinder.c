@@ -72,7 +72,7 @@ Fq(double q, double *F1, double *F2, double radius, double thickness, double len
 {
     const double qr_max= q * fmax(radius + thickness, 0.5*length);
     constant double *w, *z;
-    int n = gauss_weights(qr_max, &w, &z);
+    int n = gauss_weights(qr_max, 1, &w, &z);
 
     const double lower = 0.0;
     const double upper = 1.0;        //limits of numerical integral
