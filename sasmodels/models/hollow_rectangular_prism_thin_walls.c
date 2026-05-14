@@ -66,7 +66,7 @@ Fq(double q,
 
     const double qr_max_outer = q*fmax(sqrt(length_a*length_a + length_b*length_b), length_c)/2;
     constant double *w_outer, *z_outer;
-    int n_outer = gauss_weights(qr_max_outer, 1, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max_outer, ADAPTIVE_MAX_OUTER, &w_outer, &z_outer);
 
    //Integration limits to use in Gaussian quadrature
     const double v1a = 0.0;

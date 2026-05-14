@@ -4,6 +4,7 @@
 // Hack for barbell and capped cylinder keeps the outer integral to 76 points or fewer
 // by calling gauss_weights with n_outer=ADAPTIVE_MAX_76
 #define ADAPTIVE_MAX_76 1 // Doesn't matter since n_outer is ignored
+#define ADAPTIVE_MAX_OUTER 1 // Doesn't matter since n_outer is ignored
 
 static int
 gauss_weights(double qr, int n_outer, constant double **w, constant double **z)

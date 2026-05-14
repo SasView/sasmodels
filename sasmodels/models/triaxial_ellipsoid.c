@@ -113,10 +113,11 @@ Fq(double q,
     const double qr_max_inner = fmax(q*radius_equat_minor, q*radius_equat_major);
     const double qr_max = fmax(qr_max_inner, q*radius_polar);
     constant double *z_outer, *w_outer;
-    int n_outer = gauss_weights(qr_max, 1, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max, ADAPTIVE_MAX_OUTER, &w_outer, &z_outer);
 
     constant double *z_inner, *w_inner;
     int n_inner = gauss_weights(qr_max_inner, n_outer, &w_inner, &z_inner);
+    // printf("outer: qr=%g n=%d  inner: qr=%g n=%d\n", qr_max, n_outer, qr_max_inner, n_inner);
 
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
