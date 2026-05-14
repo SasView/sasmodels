@@ -72,7 +72,7 @@ Iq(double q,
 
 
 	    // normalisation to 1. of AP at q = 0. Division by a Factor 4/3.
-            const double AP = 6./(1.-3*(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
+            const double AP = 3./(1.-3*(1.-t)*(1.-t)*(1.-t))*(AA+BB+CC);
 
             inner_sum += GAUSS_W[j] * AP * AP;
 
