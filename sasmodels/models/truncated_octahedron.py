@@ -14,22 +14,22 @@ Definition
 ----------
 
 The general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
-:math:`length_a`, :math:`length_b` and :math:`length_c` are the distances from the center of the general octahedron to its 6 vertices.
+*length_a*, *length_b* and *length_c* are the distances from the center of the general octahedron to its 6 vertices.
 
 Coordinates of the six vertices are:
-    (:math:`length_a`, 0, 0),
-    (:math:`-length_a`, 0, 0),
-    (0, :math:`length_b`, 0),
-    (0, :math:`-length_b`, 0),
-    (0, 0, :math:`length_c`),
-    (0, 0, :math:`-length_c`)
+    (*length_a*, 0, 0),
+    (*-length_a*, 0, 0),
+    (0, *length_b*, 0),
+    (0, *-length_b*, 0),
+    (0, 0, *length_c*),
+    (0, 0, *-length_c*)
 
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
 The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
-The user-defined parameter `t` is the truncation ratio and is defined as: 0 < t < 0.5, 0 corresponding to no truncation
+The user-defined parameter `t` is the truncation ratio and is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
-For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
-Indeed, a square facet crosses the x, y, z directions at distances equal to :math:`t_inv length_a`, :math:`t_inv length_b` and :math:`t_inv length_c`.
+For the following formulas, we will use the notation *t_inv = 1 - t*.
+Indeed, a square facet crosses the x, y, z directions at distances equal to *t_inv length_a*, *t_inv length_b* and *t_inv length_c*.
 
 A regular octahedron corresponds to:
 
@@ -43,14 +43,14 @@ A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
     length_a = length_b = length_c, \quad t  = \frac{1}{2}
 
-The model contains 4 parameters: :math:`length_a`, the two ratios :math:`b2a_ratio` and :math:`c2a_ratio` and :math:`t`:
+The model contains 4 parameters: *length_a*, the two ratios *b2a_ratio* and *c2a_ratio* and *t*:
 
 .. math::
 
     b2a_{\text{ratio}} = \frac{length_b}{length_a}, \quad
     c2a_{\text{ratio}} = \frac{length_c}{length_a}, \quad
 
-    0 < t < \frac{1}{2}
+    0 ≤ t ≤ \frac{1}{2}
 
 
 
@@ -229,7 +229,7 @@ qz = Qz * length_c
 
 Reference orientation is with a along x axis, b along y axis and c along z axis
 
-Valid truncation parameter range: 0 < t < 0.5.
+Valid truncation parameter range: 0 ≤ t ≤ 0.5.
 
 t=0 is for octahedron
 t=0.5 is for cuboctahedron
