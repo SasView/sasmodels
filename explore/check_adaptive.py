@@ -223,7 +223,7 @@ def triaxial_ellipsoid(a, b, c):
     return pars
 
 
-def check():
+def check(models=[]):
     import numpy as np
 
     def longlines(fn):
@@ -235,17 +235,20 @@ def check():
                 return fn(*args, **kw)
         return wrapped
 
-    def get_kernel(model_name, n_gauss):
+    def get_kernel(model_name, n_gauss=0, dtype="double", platform="dll"):
+        # print(f"{model_name=} {n_gauss=} {dtype=} {platform=}")
         if model_name not in MODELS:
             model_info = core.load_model_info(model_name)
             MODELS[model_name] = model_info
             # set_integration_size() below overwrites info. Cache the adaptive version immediately
-            KERNELS[(model_name, 0)] = core.build_model(model_info, dtype="double", platform="dll")
-        if (model_name, n_gauss) not in KERNELS:
+            KERNELS[(model_name, 0, dtype, platform)] = core.build_model(model_info, dtype=dtype, platform=platform)
+        if (model_name, n_gauss, dtype, platform) not in KERNELS:
             model_info = MODELS[model_name]
-            generate.set_integration_size(model_info, n_gauss)
-            KERNELS[(model_name, n_gauss)] = core.build_model(model_info, dtype="double", platform="dll")
-        return KERNELS[(model_name, n_gauss)]
+            if n_gauss:
+                # ocl adaptive... this had better be the first or second get_kernel since set_integration_size is stateful
+                generate.set_integration_size(model_info, n_gauss)
+            KERNELS[(model_name, n_gauss, dtype, platform)] = core.build_model(model_info, dtype=dtype, platform=platform)
+        return KERNELS[(model_name, n_gauss, dtype, platform)]
 
 
     @longlines
@@ -255,12 +258,10 @@ def check():
         par_str = " ".join(f"{k}={v}" for k, v in pars.items())
         # print(f"{model_name} {par_str} -ngauss={test_n_gauss}")
         k_adaptive = get_kernel(model_name, n_gauss=0)
-        k_accurate = get_kernel(model_name, n_gauss=test_n_gauss)
         speed_data = data.empty_data1D(speed_q)
         test_data = data.empty_data1D(test_q)
 
-        Iq_test_accurate = DirectModel(test_data, k_accurate)(**pars)
-        Iq_test_adaptive = DirectModel(test_data, k_adaptive)(**pars)
+        Iq_test_adaptive = DirectModel(test_data, k_adaptive)(**pars) # clear startup overhead
         toc = tic()
         Iq_speed_adaptive = DirectModel(speed_data, k_adaptive)(**pars)
         dt_adaptive = toc()
@@ -272,6 +273,35 @@ def check():
                 print(f"{model_name} {par_str}")
                 labelled = True
 
+        if dt_adaptive > speed_target:
+            print_label()
+            print(f"! ** {model_name} is slow: {dt_adaptive:.1f} s for {len(speed_q)} points in [{speed_q.min()}, {speed_q.max()}]")
+
+        if gpu_speed_check: # gpu speed test
+            k_speed = get_kernel(model_name, n_gauss=0, dtype="single", platform="ocl")
+            _ = DirectModel(test_data, k_speed)(**pars)  # clear startup overhead
+            # print(k_speed)
+            toc = tic()
+            _ = DirectModel(speed_data, k_speed)(**pars)
+            dt_gpu = toc()
+
+            delta = dt_gpu/dt_adaptive - 1
+            if (abs(delta) > 1 and (dt_adaptive > 0.1 or dt_gpu > 0.1)) or dt_adaptive > 0.5 or delta > 5:
+                print_label()
+                value = f"{int(abs(delta)*100)}%" if abs(delta) < 2 else f"{abs(delta):.1f}x"
+                if delta > 0.2:
+                    comment = f"  [*** {value} slow down]"
+                elif delta < -0.2:
+                    comment = f"  [{value} speed up]"
+                else:
+                    comment = "  [slow]"
+                print(f"  cpu double: {dt_adaptive*1000:.1f} ms  gpu single: {dt_gpu*1000:.1f} ms{comment}")
+
+        if speed_only: # speed_only test
+            return
+
+        k_accurate = get_kernel(model_name, n_gauss=test_n_gauss)
+        Iq_test_accurate = DirectModel(test_data, k_accurate)(**pars)
         relerr = abs(Iq_test_adaptive - Iq_test_accurate)/Iq_test_accurate
         index = relerr > tol
         if index.any():
@@ -280,9 +310,6 @@ def check():
             print("  target", Iq_test_accurate[index])
             print("  actual", Iq_test_adaptive[index])
             print("  relerr", relerr[index])
-        if dt_adaptive > speed_target:
-            print_label()
-            print(f"! ** {model_name} is slow: {dt_adaptive:.1f} s for {len(speed_q)} points in [{speed_q.min()}, {speed_q.max()}]")
 
         # Compare against 76-point gaussian
         k_76 = get_kernel(model_name, n_gauss=76)
@@ -303,6 +330,10 @@ def check():
             print(f"! ** {model_name} adaptive speed: {dt_adaptive}   gauss-76 speed: {dt_76} ")
 
     speed_target = 2
+    # speed_only = True
+    # gpu_speed_check = True
+    speed_only = False
+    gpu_speed_check = False
     slowdown_target = 2
     big_n = 5000
     #small_n = 1000
@@ -335,12 +366,18 @@ def check():
         print(f"\n\n=== {'big' if big else 'small'} {aspect}: {a=} {b=} {c=} ===")
         ab = max(a, b)
         for name, fn in UNNESTED.items():
+            # skip models not listed
+            if models and name not in models:
+                continue
             pars = dict(background=0, **fn(ab=ab, c=c))
             run_test(name, pars, q, n_gauss, test_q, test_tol)
             #break
 
         ab = max(a, b)
         for name, fn in NESTED.items():
+            # skip models not listed
+            if models and name not in models:
+                continue
             pars = dict(background=0, **fn(a=a, b=b, c=c))
             run_test(name, pars, q, n_gauss, test_q, test_tol)
             #break
@@ -356,4 +393,5 @@ def check():
     loop("cubes", a=200_000, b=200_000, c=200_000)
 
 if __name__ == "__main__":
-    check()
+    import sys
+    check(models=sys.argv[1:])
