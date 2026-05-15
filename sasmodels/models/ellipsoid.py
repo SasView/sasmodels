@@ -153,7 +153,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 
-source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/adaptive.c", "ellipsoid.c"]
 have_Fq = True
 radius_effective_modes = [
     "average curvature", "equivalent volume sphere", "min radius", "max radius",

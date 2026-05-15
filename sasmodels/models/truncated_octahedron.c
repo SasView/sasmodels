@@ -1,5 +1,5 @@
-#include <math.h>
-#include <stdio.h>
+//#include <math.h>
+//#include <stdio.h>
 
 //truncated octahedron volume 
 // NOTE: needs to be called form_volume() for a shape category

@@ -74,8 +74,8 @@ Options (* for default):
     -zero indicates that q=0 should be included
 
     === model parameters ===
-    -preset*/-random[=seed] preset or random parameters
-    -sets=n generates n random datasets with the seed given by -random=seed
+    -preset*/-random/-seed=k preset or random parameters
+    -sets=n generates n random datasets
     -pars/-nopars* prints the parameter set or not
     -sphere[=150] set up spherical integration over theta/phi using n points
     -mono*/-poly suppress or allow polydispersity on generated parameters
@@ -89,9 +89,9 @@ Options (* for default):
     -ngauss=0 overrides the number of points in the 1-D gaussian quadrature
 
     === precision options ===
-    -engine=default uses the default calcution precision
-    -single/-double/-half/-fast sets an OpenCL calculation engine
-    -single!/-double!/-quad! sets an OpenMP calculation engine
+    -single/-double/-half/-fast sets a GPU calculation engine
+    -single!/-double!/-quad! sets a CPU calculation engine
+    -engine=a,b compare I(q) calculated with engine a and b
 
     === plotting ===
     -plot*/-noplot plots or suppress the plot of the model
@@ -1049,7 +1049,7 @@ OPTIONS = [
     '2d', '1d', 'sesans',
 
     # Parameter set
-    'preset', 'random', 'random=', 'sets=',
+    'preset', 'random', 'random=', 'sets=', 'seed=',
     'nopars', 'pars',
     'sphere', 'sphere=', # integrate over a sphere in 2d with n points
     'poly', 'mono',
@@ -1253,6 +1253,7 @@ def parse_opts(argv):
         elif arg.startswith('-res='):      opts['res'] = arg[5:]
         elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
+        elif arg.startswith('-seed='):     opts['seed'] = int(arg[6:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = arg[8:]
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
@@ -1330,6 +1331,10 @@ def parse_opts(argv):
 
     if PAR_SPLIT in opts['ngauss']:
         opts['ngauss'] = [int(k) for k in opts['ngauss'].split(PAR_SPLIT, 2)]
+        # TODO: change set_integration to be non-stateful so we can put adaptive after fixed
+        if opts['ngauss'][1] == 0:
+            a, b = opts['ngauss']
+            raise ValueError(f"Use -ngauss={b},{a} rather than -ngauss={a},{b}")
         comparison = True
     else:
         opts['ngauss'] = [int(opts['ngauss'])]*2

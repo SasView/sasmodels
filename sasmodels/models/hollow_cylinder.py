@@ -98,7 +98,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c", "hollow_cylinder.c"]
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent outer volume sphere",

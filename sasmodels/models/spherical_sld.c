@@ -57,6 +57,8 @@ static double f_linear(double q, double r, double contrast, double slope)
     return vol*(bes*contrast + fun*slope);
 }
 
+// TODO: why both Iq and Fq ?
+/*
 static double Iq(
     double q,
     double fp_n_shells,
@@ -114,6 +116,7 @@ static double Iq(
     const double f2 = f * f * 1.0e-4;
     return f2;
 }
+*/
 
 static void Fq(
     double q,
