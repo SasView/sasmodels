@@ -87,7 +87,7 @@ Authorship and Verification
 
 * **Author:**
 * **Last Modified by: Steve King Date: April 16, 2026**
-* **Last Reviewed by:**
+* **Last Reviewed by: Paul Butler Date: May 15, 2026**
 """
 
 import numpy as np
