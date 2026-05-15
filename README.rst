@@ -9,6 +9,15 @@ run much faster.  If not, then precompiled versions will be included with
 the distributed package.  New models can be added if OpenCL or a C compiler
 is available.
 
+Citing and Acknowledging SasModels
+----------------------------------
+
+If you found this software useful to your work please cite and/or acknowledge its use in your publications.
+The latest instructions for citing and acknowledging are available on our website.
+
+[Citing SasModels](http://www.sasview.org/cite/#citing-sasmodels)
+[Acknowledging SasModels](http://www.sasview.org/cite/#acknowledging-sasview)
+
 Install
 -------
 
