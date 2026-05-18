@@ -51,7 +51,7 @@ The model contains 4 parameters: :math:`radius_a`, the two ratios :math:`b2a_rat
     b2a_{\text{ratio}} = \frac{radius_b}{radius_a}, \quad
     c2a_{\text{ratio}} = \frac{radius_c}{radius_a}, \quad
 
-    0 < t < \frac{1}{2}
+    0 ≤ t ≤ \frac{1}{2}
 
 
 
