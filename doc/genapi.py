@@ -91,6 +91,7 @@ modules = [
     ('sasview_model', 'Sasview interface'),
     ('sesans', 'SESANS calculation routines'),
     ('special', 'Special functions library'),
+    ('special.fibonacci', 'Fibonacci spiral spherical integration'),
     ('weights', 'Distribution functions'),
 ]
 package = 'sasmodels'
