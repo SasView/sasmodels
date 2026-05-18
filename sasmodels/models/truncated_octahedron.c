@@ -4,18 +4,18 @@
 //truncated octahedron volume 
 // NOTE: needs to be called form_volume() for a shape category
 static double
-form_volume(double length_a, double b2a_ratio, double c2a_ratio, double truncation)
+form_volume(double radius_a, double b2a_ratio, double c2a_ratio, double truncation)
 {
-// length_a is the half height along the a axis of the octahedron without truncature
-// length_b is the half height along the b axis of the octahedron without truncature
-// length_c is the half height along the c axis of the octahedron without truncature
-// b2a_ratio is length_b divided by Length_a
-// c2a_ratio is Length_c divided by Length_a
+// radius_a is the half height along the a axis of the octahedron without truncature
+// radius_b is the half height along the b axis of the octahedron without truncature
+// radius_c is the half height along the c axis of the octahedron without truncature
+// b2a_ratio is radius_b divided by Radius_a
+// c2a_ratio is radius_c divided by Radius_a
 // truncation varies from 0 (octahedron) to 0.5 (cuboctahedron)
 // updated convention with truncation=0 for on truncation
 // truncation and tinv are exchanged starting from the previous version of the code
     const double tinv = 1.0 - truncation;
-    return (4./3.) * cube(length_a) * b2a_ratio * c2a_ratio *(1.-3*cube(truncation));
+    return (4./3.) * cube(radius_a) * b2a_ratio * c2a_ratio *(1.-3*cube(truncation));
 }
 
 
@@ -26,35 +26,35 @@ Fq(double q,
     double *F2,
     double sld,
     double solvent_sld,
-    double length_a,
+    double radius_a,
     double b2a_ratio,
     double c2a_ratio,
     double truncation)
 {
-    const double length_b = length_a * b2a_ratio;
-    const double length_c = length_a * c2a_ratio;
+    const double radius_b = radius_a * b2a_ratio;
+    const double radius_c = radius_a * c2a_ratio;
     const double tinv = 1.0 - truncation;
     // Because we are integrating over the entire surface, the orientation is arbitrary. Sort
-    // the lengths Lc > Lb > La so that the integration will go faster.
-    const double maybe_min = fmin(length_a, length_b);
-    const double maybe_max = fmax(length_a, length_b);
-    const double maybe_mid = fmax(maybe_min, length_c);
-    const double La = fmin(maybe_min, length_c);
-    const double Lb = fmin(maybe_max, maybe_mid);
-    const double Lc = fmax(maybe_max, maybe_mid);
+    // the lengths Rc > Rb > Ra so that the integration will go faster.
+    const double maybe_min = fmin(radius_a, radius_b);
+    const double maybe_max = fmax(radius_a, radius_b);
+    const double maybe_mid = fmax(maybe_min, radius_c);
+    const double Ra = fmin(maybe_min, radius_c);
+    const double Rb = fmin(maybe_max, maybe_mid);
+    const double Rc = fmax(maybe_max, maybe_mid);
 
-    // Find the circumradius by truncating the line from Lc to Lb. This chops of
-    // the similar triangle with sides (truncation)Lc, (truncation)Lb, leaving coordinate ((1-truncation)Lc, truncationLb).
+    // Find the circumradius by truncating the line from Rc to Rb. This chops of
+    // the similar triangle with sides (truncation)Rc, (truncation)Rb, leaving coordinate ((1-truncation)Rc, truncationRb).
     // The distance to the origin then follows.
-    const double qr_max_outer = q*sqrt(square(tinv*Lc) + square(truncation*Lb));
+    const double qr_max_outer = q*sqrt(square(tinv*Rc) + square(truncation*Rb));
     constant double *z_outer, *w_outer;
     int n_outer = gauss_weights(qr_max_outer, 1, &w_outer, &z_outer);
 
-    const double qr_max_inner = q*sqrt(square(tinv*Lb) + square(truncation*La));
+    const double qr_max_inner = q*sqrt(square(tinv*Rb) + square(truncation*Ra));
     constant double *z_inner, *w_inner;
     int n_inner = gauss_weights(qr_max_inner, n_outer, &w_inner, &z_inner);
 
-    //printf("La=%g Lb=%g Lc=%g npoints = %d x %d = %d\n", La, Lb, Lc, n_outer, n_inner, n_outer*n_inner);
+    //printf("Ra=%g Rb=%g Rc=%g npoints = %d x %d = %d\n", Ra, Rb, Rc, n_outer, n_inner, n_outer*n_inner);
 
     const double v1a = 0.0;
     const double v1b = M_PI_2;  //theta integration limits
@@ -69,7 +69,7 @@ Fq(double q,
         const double cos_theta = 0.5*(z_outer[i] + 1.0); // [-1, 1] => [0, 1]
         const double sin_theta = sqrt(1.0 - square(cos_theta)); // = sin(acos(cos_theta))
         const double qc = q * cos_theta;
-        const double qz = qc * Lc;
+        const double qz = qc * Rc;
         const double qz2 = square(qz);
 
         double inner_sum_F1 = 0.0;
@@ -86,9 +86,9 @@ Fq(double q,
             // NOTE: qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms
             const double qa = q * sin_theta * cos_phi;
             const double qb = q * sin_theta * sin_phi;
-            const double qx = qa * La;
-            const double qy = qb * Lb;
-
+            const double qx = qa * Ra;
+            const double qy = qb * Rb;
+            const double qz = qc * Rc;
             // TODO: test for q=0 and return the limiting value.
             // From the equations, lim q -> 0 seems to be O(1/q^2), so it diverges. And indeed,
             // for q < 1e-8 the function begins to rise.
@@ -132,7 +132,7 @@ Fq(double q,
     outer_sum_F2 /= M_PI_2;
 
     // Multiply by contrast and volume
-    const double s = (sld-solvent_sld) * form_volume(length_a, b2a_ratio,c2a_ratio, truncation);
+    const double s = (sld-solvent_sld) * form_volume(radius_a, b2a_ratio, c2a_ratio, truncation);
 
     // Convert from [1e-12 A-1] to [cm-1]
     *F1 = 1e-2 * s * outer_sum_F1;
@@ -152,21 +152,21 @@ static double
 Iqabc(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
-    double length_a,
+    double radius_a,
     double b2a_ratio,
     double c2a_ratio,
     double truncation)
 {
-    const double length_b = length_a * b2a_ratio;
-    const double length_c = length_a * c2a_ratio;
+    const double radius_b = radius_a * b2a_ratio;
+    const double radius_c = radius_a * c2a_ratio;
     const double tinv = 1.0 - truncation;
 
     //HERE: Octahedron formula
     // NOTE: qa qb qc are the three components in 1/Ang of the scattering vector
     // NOTE: qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms
-    const double qx = qa * length_a;
-    const double qy = qb * length_b;
-    const double qz = qc * length_c;
+    const double qx = qa * radius_a;
+    const double qy = qb * radius_b;
+    const double qz = qc * radius_c;
 
     // TODO: calculation is unstable for small q.
     // PAK: reordered the equations and moved factor of 1/2 to normalization.
@@ -193,10 +193,10 @@ Iqabc(double qa, double qb, double qc,
     // contrast
     const double s = (sld-solvent_sld);
     // volume
-    // s *= form_volume(length_a, b2a_ratio,c2a_ratio, truncation);
+    // s *= form_volume(radius_a, b2a_ratio,c2a_ratio, truncation);
 
     // Convert from [1e-12 A-1] to [cm-1]
-    double answer = 1.0e-4 * square(s * form_volume(length_a, b2a_ratio,c2a_ratio, truncation) * AP);
+    double answer = 1.0e-4 * square(s * form_volume(radius_a, b2a_ratio,c2a_ratio, truncation) * AP);
     if (isnan(answer) || isinf(answer)) {
         return 0.0;
     }
