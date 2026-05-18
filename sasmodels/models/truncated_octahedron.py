@@ -27,7 +27,7 @@ Coordinates of the six vertices are:
 
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
 The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
-The user-defined parameter `t` is the truncation ratio and is defined as: 0 < t < 0.5, 0 corresponding to no truncation
+The user-defined parameter `t` is the truncation ratio and is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
 For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
 Indeed, a square facet crosses the x, y, z directions at distances equal to :math:`t_inv radius_a`, :math:`t_inv radius_b` and :math:`t_inv radius_c`.
