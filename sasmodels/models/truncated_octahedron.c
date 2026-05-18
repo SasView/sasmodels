@@ -56,11 +56,6 @@ Fq(double q,
 
     //printf("Ra=%g Rb=%g Rc=%g npoints = %d x %d = %d\n", Ra, Rb, Rc, n_outer, n_inner, n_outer*n_inner);
 
-    const double v1a = 0.0;
-    const double v1b = M_PI_2;  //theta integration limits
-    const double v2a = 0.0;
-    const double v2b = M_PI_2;  //phi integration limits
-
     double outer_sum_F1 = 0.0;
     double outer_sum_F2 = 0.0;
 
