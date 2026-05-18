@@ -48,7 +48,7 @@ Fq(double q,
     // The distance to the origin then follows.
     const double qr_max_outer = q*sqrt(square(tinv*Rc) + square(truncation*Rb));
     constant double *z_outer, *w_outer;
-    int n_outer = gauss_weights(qr_max_outer, 1, &w_outer, &z_outer);
+    int n_outer = gauss_weights(qr_max_outer, ADAPTIVE_MAX_OUTER, &w_outer, &z_outer);
 
     const double qr_max_inner = q*sqrt(square(tinv*Rb) + square(truncation*Ra));
     constant double *z_inner, *w_inner;
