@@ -19,14 +19,12 @@ def fibonacci_sphere(npoints_fibonacci: int):
     Generates npoints quasi-uniformly distributed on the unit sphere
     in Cartesian coordinates (x,y,z) and their associated weights.
 
-    Parameters
-    ----------
+    **Parameters**
 
     npoints : int
         Number of points to generate.
 
-    Returns
-    -------
+    **Returns**
 
     points : ndarray, shape (npoints, 3)
         Cartesian coordinates of the points on the unit sphere.
@@ -50,8 +48,7 @@ def plot_fibonacci_sphere(npoints_fibonacci=500, figsize=(7, 7)):
     """
     3D representation of Fibonacci points on the unit sphere.
 
-    Parameters
-    ----------
+    **Parameters**
 
     npoints : int
         Number of points to generate and display.
