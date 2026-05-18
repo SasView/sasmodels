@@ -8,21 +8,51 @@ from sasmodels.data import load_data
 
 # latex data, same sample usans and sans
 # particles radius ~2300, uniform dispersity
-datasets = load_data(str(data_path / '1d_data' / 'latex_smeared.xml'), index='all')
+all_data = load_data(str(data_path / '1d_data' / 'latex_smeared.xml'), index='all')
 #[print(data) for data in datasets]
+datasets = all_data # Both SANS and USANS
+#datasets = all_data[0:1] # SANS
+#datasets = all_data[1:2] # USANS
 
-# A single sphere model to share between the datasets.  We will use
+# A single model to share between the datasets.  We will use
 # FreeVariables below to set the parameters that are independent between
 # the datasets.
-kernel = load_model('sphere')
-pars = dict(scale=0.01, background=0.0, sld=5.0, sld_solvent=0.0, radius=1500.,
-            #radius_pd=0.1, radius_pd_n=35,
-            )
+model_name = "ellipsoid"
+if model_name == "sphere":
+    kernel = load_model("sphere")
+    pars = dict(
+        scale=0.01, background=0.0, sld=5.0, sld_solvent=0.0, radius=1500.,
+        #radius_pd=0.1, radius_pd_n=35,
+        )
+elif model_name == "ellipsoid":
+    kernel = load_model("ellipsoid")
+    pars = dict(
+        scale=0.01, background=0.0, sld=5.0, sld_solvent=0.0,
+        radius_polar=1500., radius_equatorial=1500.,
+        )
+elif model_name == "triaxial_ellipsoid":
+    kernel = load_model("triaxial_ellipsoid", dtype="double!")
+    pars = dict(
+        scale=0.01, background=0.0, sld=5.0, sld_solvent=0.0,
+        radius_polar=1500., radius_equat_major=1500., radius_equat_minor=1500.,
+        )
+else:
+    raise ValueError("Use model_name in sphere, ellipsoid, triaxial_ellipsoid")
+
 model = Model(kernel, **pars)
 
 # radius and polydispersity (if any) are shared
-model.radius.range(0, 3000.)
-#model.radius_pd.range(0, 1)
+if model_name == "sphere":
+    model.radius.range(0, 3000.)
+    # model.radius_pd.range(0, 1)
+elif model_name == "ellipsoid":
+    model.radius_equatorial.range(0, 3000.)
+    model.radius_polar.range(0, 3000.)
+elif model_name == "triaxial_ellipsoid":
+    model.radius_equat_major.range(0, 3000.)
+    model.radius_equat_minor.range(0, 3000.)
+    model.radius_polar.range(0, 3000.)
+
 
 # Contrast and dilution are the same for both measurements, but are not
 # separable with a single measurement (i.e., I(q) ~ F(q) contrast^2 Vf),

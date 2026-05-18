@@ -151,7 +151,8 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
         SINCOS(theta, sin_theta, cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
-        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length, n_outer);
+        // Don't constrain size of inner loop to n_outer
+        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length, 1);
         // scale by sin_theta for spherical coord integration
         total_F1 += w_outer[i] * Aq * sin_theta;
         total_F2 += w_outer[i] * Aq * Aq * sin_theta;

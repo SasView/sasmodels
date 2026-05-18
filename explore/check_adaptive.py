@@ -226,12 +226,12 @@ def triaxial_ellipsoid(a, b, c):
 def truncated_octahedron(a, b, c, truncation=0.25):
     pars = dict(
         sld=1, sld_solvent=0,
-        length_a=a/2, b2a_ratio=b/a, c2a_ratio=c/a,
+        radius_a=a/2, b2a_ratio=b/a, c2a_ratio=c/a,
         truncation=truncation,
     )
     return pars
 
-def check(active_models=[]):
+def check(models=[]):
     import numpy as np
 
     def longlines(fn):
@@ -243,18 +243,35 @@ def check(active_models=[]):
                 return fn(*args, **kw)
         return wrapped
 
-    def get_kernel(model_name, n_gauss):
+    def get_kernel(model_name, n_gauss=0, dtype="double", platform="dll"):
+        # print(f"{model_name=} {n_gauss=} {dtype=} {platform=}")
         if model_name not in MODELS:
             model_info = core.load_model_info(model_name)
             MODELS[model_name] = model_info
             # set_integration_size() below overwrites info. Cache the adaptive version immediately
-            KERNELS[(model_name, 0)] = core.build_model(model_info, dtype="double", platform="dll")
-        if (model_name, n_gauss) not in KERNELS:
+            KERNELS[(model_name, 0, dtype, platform)] = core.build_model(model_info, dtype=dtype, platform=platform)
+        if (model_name, n_gauss, dtype, platform) not in KERNELS:
             model_info = MODELS[model_name]
-            generate.set_integration_size(model_info, n_gauss)
-            KERNELS[(model_name, n_gauss)] = core.build_model(model_info, dtype="double", platform="dll")
-        return KERNELS[(model_name, n_gauss)]
+            if n_gauss:
+                # ocl adaptive... this had better be the first or second get_kernel since set_integration_size is stateful
+                generate.set_integration_size(model_info, n_gauss)
+            KERNELS[(model_name, n_gauss, dtype, platform)] = core.build_model(model_info, dtype=dtype, platform=platform)
+        return KERNELS[(model_name, n_gauss, dtype, platform)]
 
+    def timer(fn):
+        # Clear startup overhead
+        toc = tic()
+        fn()
+        dt = toc()
+        if dt > 1:
+            return dt
+        # loop
+        toc = tic()
+        fn()
+        dt = toc()
+        n = int(0.5 // dt)
+        for _ in range(n): fn()
+        return toc()/(n+1)
 
     @longlines
     def run_test(model_name, pars, speed_q, test_n_gauss, test_q, tol):
@@ -262,16 +279,12 @@ def check(active_models=[]):
         # Parameter string suitable for use with "python -m sasmodels.compare model par=value..."
         par_str = " ".join(f"{k}={v}" for k, v in pars.items())
         # print(f"{model_name} {par_str} -ngauss={test_n_gauss}")
-        k_adaptive = get_kernel(model_name, n_gauss=0)
-        k_accurate = get_kernel(model_name, n_gauss=test_n_gauss)
+        k_adaptive = get_kernel(model_name, n_gauss=0, dtype="double", platform="dll")
         speed_data = data.empty_data1D(speed_q)
         test_data = data.empty_data1D(test_q)
 
-        Iq_test_accurate = DirectModel(test_data, k_accurate)(**pars)
-        Iq_test_adaptive = DirectModel(test_data, k_adaptive)(**pars)
-        toc = tic()
-        Iq_speed_adaptive = DirectModel(speed_data, k_adaptive)(**pars)
-        dt_adaptive = toc()
+        Iq_test_adaptive = DirectModel(test_data, k_adaptive)(**pars) # clear startup overhead
+        dt_adaptive = timer(lambda: DirectModel(speed_data, k_adaptive)(**pars))
 
         labelled = False
         def print_label():
@@ -280,6 +293,43 @@ def check(active_models=[]):
                 print(f"{model_name} {par_str}")
                 labelled = True
 
+        if dt_adaptive > speed_target:
+            print_label()
+            print(f"! ** {model_name} is slow: {dt_adaptive:.1f} s for {len(speed_q)} points in [{speed_q.min()}, {speed_q.max()}]")
+
+        if speed_check: # compare speed of adaptive with
+            if speed_check == "gpu":
+                k_speed = get_kernel(model_name, n_gauss=0, dtype="single", platform="ocl")
+            elif speed_check == "gauss-76":
+                k_speed = get_kernel(model_name, n_gauss=76)
+            else:
+                raise ValueError(f"Unknown speed check: {speed_check}. Use gpu or gauss-76")
+            dt_speed = timer(lambda: DirectModel(speed_data, k_speed)(**pars))
+
+            delta = dt_speed/dt_adaptive - 1
+            if delta >= 1 or delta <= -0.5 or dt_adaptive > 0.5:
+                print_label()
+                value = (
+                    f"{dt_speed/dt_adaptive:.1f}x slower" if delta >= 1
+                    else f"{dt_adaptive/dt_speed:.1f}x faster" if delta < -0.5
+                    else f"{int(delta*100)}% slower" if delta > 0.0
+                    else f"{int(-delta*100)}% faster"
+                )
+                if delta > 0.2:
+                    comment = f"  [{speed_check} {value}]" + (" ***" if speed_check != "gauss-76" else "")
+                elif delta < -0.2:
+                    comment = f"  [{speed_check} {value}]" + (" ***" if speed_check == "gauss-76" else "")
+                elif dt_adaptive > 0.2:
+                    comment = "  [slow]"
+                else:
+                    comment = ""
+                print(f"  cpu double: {dt_adaptive*1000:.1f} ms  {speed_check}: {dt_speed*1000:.1f} ms{comment}")
+
+        if speed_only: # speed_only test
+            return
+
+        k_accurate = get_kernel(model_name, n_gauss=test_n_gauss, dtype="double", platform="dll")
+        Iq_test_accurate = DirectModel(test_data, k_accurate)(**pars)
         relerr = abs(Iq_test_adaptive - Iq_test_accurate)/Iq_test_accurate
         index = relerr > tol
         if index.any():
@@ -288,30 +338,25 @@ def check(active_models=[]):
             print("  target", Iq_test_accurate[index])
             print("  actual", Iq_test_adaptive[index])
             print("  relerr", relerr[index])
-        if dt_adaptive > speed_target:
-            print_label()
-            print(f"! ** {model_name} is slow: {dt_adaptive:.1f} s for {len(speed_q)} points in [{speed_q.min()}, {speed_q.max()}]")
 
         # Compare against 76-point gaussian
-        k_76 = get_kernel(model_name, n_gauss=76)
+        k_76 = get_kernel(model_name, n_gauss=76, dtype="double", platform="dll")
         Iq_test_76 = DirectModel(test_data, k_76)(**pars)
         relerr_76 = abs(Iq_test_76 - Iq_test_accurate)/Iq_test_accurate
-        index = (relerr_76 > tol) & (relerr > tol) & (relerr > 10*relerr_76)
+        index = (relerr_76 > tol) #& (relerr > tol) & (relerr > 10*relerr_76)
         if index.any():
             print_label()
-            print("! ** gauss-76 is better than adaptive for {model_name} at some q values")
+            #print("! ** gauss-76 is better than adaptive for {model_name} at some q values")
+            print("! ** gauss-76 is out of tolerance")
             print("  qvalue", test_q[index])
             print("  relerr", relerr[index])
             print("  rel-76", relerr_76[index])
-        toc = tic()
-        _ = DirectModel(speed_data, k_adaptive)(**pars)
-        dt_76 = toc()
-        if dt_adaptive / dt_76 > slowdown_target and dt_adaptive > 0.01:
-            print_label()
-            print(f"! ** {model_name} adaptive speed: {dt_adaptive}   gauss-76 speed: {dt_76} ")
 
     speed_target = 2
-    slowdown_target = 2
+    #speed_only = True
+    #speed_check = None
+    speed_only = False
+    speed_check = "gauss-76"  # None | "" | "gpu" | "gauss-76"
     big_n = 5000
     #small_n = 1000
     small_n = big_n
@@ -320,7 +365,6 @@ def check(active_models=[]):
 == Speed and accuracy tests for all adaptive integration models ==
 * target evaluation time is {speed_target} s (running on a mac M2 chip)
 *     q in [1e-5, 1] with 40 points per decade for 201 points total
-*     warns if the adaptive model is 2x slower than a 76-point gaussian
 * large models tested against {big_n} point gaussian integration
 *     q=[5e-4, 1e-3, 2e-3] with tol=1e-5 relative (measured q)
 *     q=[0.01, 0.1] with tol=0.2 relative (slit resolution limits)
@@ -343,19 +387,19 @@ def check(active_models=[]):
         print(f"\n\n=== {'big' if big else 'small'} {aspect}: {a=} {b=} {c=} ===")
         ab = max(a, b)
         for name, fn in UNNESTED.items():
-            if active_models and name not in active_models:
+            # skip models not listed
+            if models and name not in models:
                 continue
             pars = dict(background=0, **fn(ab=ab, c=c))
             run_test(name, pars, q, n_gauss, test_q, test_tol)
-            #break
 
         ab = max(a, b)
         for name, fn in NESTED.items():
-            if active_models and name not in active_models:
+            # skip models not listed
+            if models and name not in models:
                 continue
             pars = dict(background=0, **fn(a=a, b=b, c=c))
             run_test(name, pars, q, n_gauss, test_q, test_tol)
-            #break
 
     # small size (20 nm) tests
     loop("rods", a=20, b=40, c=200)
@@ -369,4 +413,4 @@ def check(active_models=[]):
 
 if __name__ == "__main__":
     import sys
-    check(active_models=sys.argv[1:])
+    check(models=sys.argv[1:])

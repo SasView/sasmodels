@@ -11240,7 +11240,7 @@ constant double Gauss5000Z[5000]={
 //
 //     qr_outer = max dimension
 //     qr_inner = max cross section
-//     n_outer = gauss_weights(qr_outer, 1, &w_outer, &z_outer);
+//     n_outer = gauss_weights(qr_outer, ADAPTIVE_MAX_OUTER, &w_outer, &z_outer);
 //     n_inner = gauss_weights(qr_inner, n_outer, &w_inner, &z_inner);
 //
 // For a standard integral over a hemisphere ∫∫ F(θ,φ) sin θ dφ dθ with θ in [0, π/2]
@@ -11270,8 +11270,9 @@ constant double Gauss5000Z[5000]={
 //
 //     n_outer = gauss_weights(qr_outer, ADAPTIVE_MAX_76, &w_outer, &z_outer);
 //
-#define _ADAPTIVE_MAX_N 200000
+#define _ADAPTIVE_MAX_N 100000
 #define ADAPTIVE_MAX_76 (_ADAPTIVE_MAX_N / 76)
+#define ADAPTIVE_MAX_OUTER (_ADAPTIVE_MAX_N / 500)
 static int
 gauss_weights(double qr, int outer_n, constant double **w, constant double **z)
 {
@@ -11286,11 +11287,11 @@ gauss_weights(double qr, int outer_n, constant double **w, constant double **z)
 	// *w = Gauss5000Wt; *z = Gauss5000Z; return 5000; // max precision
 	// *w = Gauss76Wt; *z = Gauss76Z; return 76; // default
 
-	if (qr < 10 || outer_n >= _ADAPTIVE_MAX_N / 20) { // = 100_000 // 20
+	if (qr < 10 || outer_n > _ADAPTIVE_MAX_N / 76) {
         *w = Gauss20Wt; *z = Gauss20Z; return 20;
-	} else if (qr < 100 || outer_n >= _ADAPTIVE_MAX_N / 76) { // = 100_000 // 76
+	} else if (qr < 100 || outer_n > _ADAPTIVE_MAX_N / 500) {
         *w = Gauss76Wt; *z = Gauss76Z; return 76;
-    } else if (qr < 750 || outer_n >= _ADAPTIVE_MAX_N / 500) { // = 100_000 // 500
+    } else if (qr < 750 || outer_n > _ADAPTIVE_MAX_N / 5000) {
         *w = Gauss500Wt; *z = Gauss500Z; return 500;
     } else {
         *w = Gauss5000Wt; *z = Gauss5000Z; return 5000;

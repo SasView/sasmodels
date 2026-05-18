@@ -14,7 +14,7 @@ Definition
 ----------
 
 The general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
-:math:`radius_a`, :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices, 
+:math:`radius_a`, :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
 which are equivalent to the circumradiuses of the general octahedron along the three directions.
 
 Coordinates of the six vertices are:
@@ -230,7 +230,7 @@ qz = Qz * radius_c
 
 Reference orientation is with a along x axis, b along y axis and c along z axis
 
-Valid truncation parameter range: 0 < t < 0.5.
+Valid truncation parameter range: 0 ≤ t ≤ 0.5.
 
 t=0 is for octahedron
 t=0.5 is for cuboctahedron
