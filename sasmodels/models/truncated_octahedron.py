@@ -14,41 +14,42 @@ Definition
 ----------
 
 The general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
-*length_a*, *length_b* and *length_c* are the distances from the center of the general octahedron to its 6 vertices.
+:math:`radius_a`, :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
+which are equivalent to the circumradiuses of the general octahedron along the three directions.
 
 Coordinates of the six vertices are:
-    (*length_a*, 0, 0),
-    (*-length_a*, 0, 0),
-    (0, *length_b*, 0),
-    (0, *-length_b*, 0),
-    (0, 0, *length_c*),
-    (0, 0, *-length_c*)
+    (:math:`radius_a`, 0, 0),
+    (:math:`-radius_a`, 0, 0),
+    (0, :math:`radius_b`, 0),
+    (0, :math:`-radius_b`, 0),
+    (0, 0, :math:`radius_c`),
+    (0, 0, :math:`-radius_c`)
 
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
 The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
 The user-defined parameter `t` is the truncation ratio and is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
-For the following formulas, we will use the notation *t_inv = 1 - t*.
-Indeed, a square facet crosses the x, y, z directions at distances equal to *t_inv length_a*, *t_inv length_b* and *t_inv length_c*.
+For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
+Indeed, a square facet crosses the x, y, z directions at distances equal to :math:`t_inv radius_a`, :math:`t_inv radius_b` and :math:`t_inv radius_c`.
 
 A regular octahedron corresponds to:
 
 .. math::
 
-    length_a = length_b = length_c, \quad t = 0
+    radius_a = radius_b = radius_c, \quad t = 0
 
 A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
 .. math:: 
 
-    length_a = length_b = length_c, \quad t  = \frac{1}{2}
+    radius_a = radius_b = radius_c, \quad t  = \frac{1}{2}
 
-The model contains 4 parameters: *length_a*, the two ratios *b2a_ratio* and *c2a_ratio* and *t*:
+The model contains 4 parameters: :math:`radius_a`, the two ratios :math:`b2a_ratio` and :math:`c2a_ratio` and :math:`t`:
 
 .. math::
 
-    b2a_{\text{ratio}} = \frac{length_b}{length_a}, \quad
-    c2a_{\text{ratio}} = \frac{length_c}{length_a}, \quad
+    b2a_{\text{ratio}} = \frac{radius_b}{radius_a}, \quad
+    c2a_{\text{ratio}} = \frac{radius_c}{radius_a}, \quad
 
     0 ≤ t ≤ \frac{1}{2}
 
@@ -64,28 +65,28 @@ Volume of the general shape including truncation is given by:
 
 .. math::
 
-    V = \frac{4}{3}\, length_{\text{a}}^{3}\, b2a_{\text{ratio}}\, c2a_{\text{ratio}}\,\bigl(1 - 3t^{3}\bigr)
+    V = \frac{4}{3}\, radius_{\text{a}}^{3}\, b2a_{\text{ratio}}\, c2a_{\text{ratio}}\,\bigl(1 - 3t^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
 
 .. math::
 
-    A_{\text{edge}}^{2} = length_{\text{a}}^{2} + length_{\text{b}}^{2},\qquad
-    B_{\text{edge}}^{2} = length_{\text{a}}^{2} + length_{\text{c}}^{2},\qquad
-    C_{\text{edge}}^{2} = length_{\text{b}}^{2} + length_{\text{c}}^{2}
+    A_{\text{edge}}^{2} = radius_{\text{a}}^{2} + radius_{\text{b}}^{2},\qquad
+    B_{\text{edge}}^{2} = radius_{\text{a}}^{2} + radius_{\text{c}}^{2},\qquad
+    C_{\text{edge}}^{2} = radius_{\text{b}}^{2} + radius_{\text{c}}^{2}
 
 For a regular shape (no elongation):
 
 .. math::
 
     b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1,\qquad
-    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = length_{\text{a}} \sqrt{2},\qquad
-    length_{\text{a}} = length_{\text{b}} = length_{\text{c}} = A_{\text{edge}} / \sqrt{2}
+    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2},\qquad
+    radius_{\text{a}} = radius_{\text{b}} = radius_{\text{c}} = A_{\text{edge}} / \sqrt{2}
 
 .. math::
 
-    V = \frac{4}{3} \, length_{\text{a}}^{3} \, \bigl(1 - 3 t^3 \bigr)
+    V = \frac{4}{3} \, radius_{\text{a}}^{3} \, \bigl(1 - 3 t^3 \bigr)
 
 The reference orientation of the shape is: a along x, b along y and c along z.
 Amplitude of the form factor AP for the reference orientation of the shape reads 
@@ -126,9 +127,9 @@ qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms.
 
 .. math::
 
-    q_x = Q_x \, length_{\text{a}},\qquad
-    q_y = Q_y \, length_{\text{b}},\qquad
-    q_z = Q_z \, length_{\text{c}}
+    q_x = Q_x \, radius_{\text{a}},\qquad
+    q_y = Q_y \, radius_{\text{b}},\qquad
+    q_z = Q_z \, radius_{\text{c}}
 
 
 θ is the angle between the scattering vector and the z axis.
@@ -223,9 +224,9 @@ and qx qy qz are the rescaled components (no unit) for computing AP term.
 Qx = q * sin_theta * cos_phi
 Qy = q * sin_theta * sin_phi
 Qz = q * cos_theta
-qx = Qx * length_a
-qy = Qy * length_b
-qz = Qz * length_c
+qx = Qx * radius_a
+qy = Qy * radius_b
+qz = Qz * radius_c
 
 Reference orientation is with a along x axis, b along y axis and c along z axis
 
@@ -242,7 +243,7 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "Octahedron scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["length_a", "Ang", 400, [0, inf], "volume",
+              ["radius_a", "Ang", 400, [0, inf], "volume",
                "half height along a axis"],
               ["b2a_ratio", "", 1, [0, inf], "volume",
                "Ratio b/a"],
@@ -259,16 +260,17 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
               ]
 
 valid = "truncation >= 0 && truncation <= 0.5"
-source = ["lib/gauss20.c", "truncated_octahedron.c"]
-# change to "lib/gauss76.c" or "lib/gauss150.c" to increase the number of integration points
-# for the orientational average. Note that it will increase calculation times.
+single = False
+source = ["lib/adaptive.c", "truncated_octahedron.c"]
+# to use non adaptative instead, Note that it will increase calculation times.
+# source = ["lib/gauss76.c", "lib/nonadaptive.c", "truncated_octahedron.c"]
 
 # Fq() function is used in the .c code
 have_Fq = True
 
 tests = [
-    [{"background": 0, "scale": 1, "length_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
      0.01, 120.57219],
-    [{"background": 0, "scale": 1, "length_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
      [0.01, 0.1], [120.57219, 0.37418]],
 ]

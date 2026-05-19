@@ -222,6 +222,14 @@ def triaxial_ellipsoid(a, b, c):
     )
     return pars
 
+@register(2)
+def truncated_octahedron(a, b, c, truncation=0.25):
+    pars = dict(
+        sld=1, sld_solvent=0,
+        radius_a=a/2, b2a_ratio=b/a, c2a_ratio=c/a,
+        truncation=truncation,
+    )
+    return pars
 
 def check(models=[]):
     import numpy as np
