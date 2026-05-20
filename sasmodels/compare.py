@@ -539,10 +539,6 @@ def constrain_pars(model_info, pars):
     if '*' in name:
         name = name.split('*')[0]
 
-    # Suppress magnetism for python models (not yet implemented)
-    if not model_info.compiled:
-        pars.update(suppress_magnetism(pars))
-
     if name == 'barbell':
         if pars['radius_bell'] < pars['radius']:
             _swap_pars(pars, 'radius_bell', 'radius')
