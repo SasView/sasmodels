@@ -165,7 +165,7 @@ units) *scale* represents the volume fraction (which is unitless).
 
 .. figure:: img/octahedrons_intensity_plot.png
 
-    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=0) of a = 300 Angstroms.
+    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=0) of a = 400 Angstroms.
 
 Validation
 ----------
