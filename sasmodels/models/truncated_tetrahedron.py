@@ -24,9 +24,9 @@ and volume :math:`V_T` are given by:
 
     V_{T}  = \frac{\sqrt{2}}{12} \, L^3
 
-.. figure:: img/tetrahedron_regular.png
+.. figure:: img/tetra_truncation.png
 
-    Regular tetrahedron in its reference orientation.
+    Regular tetrahedron with circumradius :math:`R` and edge length :math:`L`. After truncation, the true edge length is :math:`(1-2t)L`.
 
 The four vertices of the tetrahedron, with :math:`\mathbf{v}_0` at the origin,
 are defined as:
@@ -86,7 +86,6 @@ general tetrahedral form factor is given by:
 The truncated tetrahedron is a polyhedron obtained by truncating the vertices of a regular tetrahedron.
 
 .. figure:: img/truncated_tetrahedron.png
-.. figure:: img/tetra-octa-center-V1V2V3.png
 
     Tetrahedron with different truncatures.
 
