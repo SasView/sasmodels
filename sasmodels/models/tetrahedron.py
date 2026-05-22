@@ -23,7 +23,7 @@ and volume :math:`V` are given by:
 
     V = \frac{\sqrt{2}}{12} \, L^3
 
-.. figure:: img/tetrahedron_regular.png
+.. figure:: img/tetrahedron.png
 
     Regular tetrahedron in its reference orientation.
 
