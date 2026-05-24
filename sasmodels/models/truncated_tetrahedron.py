@@ -37,7 +37,7 @@ are defined as:
 
 .. math::
 
-    \mathbf{v}_1 =  (\frac{L}{\sqrt{2}},\ \frac{L}{\sqrt{2}},\ 0\right)
+    \mathbf{v}_1 =  (\frac{L}{\sqrt{2}},\ \frac{L}{\sqrt{2}},\ 0)
 
 .. math::
 
@@ -77,7 +77,7 @@ general tetrahedral form factor is given by:
 
     F_\mathrm{T}(\mathbf{q}) = |\det(\mathbf{T})| \left\{
         \frac{i}{Q_1 (Q_1 - Q_2)(Q_1 - Q_3)} \exp(i Q_1)
-      + \frac{i}{Q_2 (Q_2 - Q_1)(Q_2 - Q_3)} \exp(i Q_2)
+      + \frac{i}{Q_2 (Q_2 - Q_1)(Q_2 - Q_3)} \exp(i Q_2) \\
       + \frac{i}{Q_3 (Q_3 - Q_2)(Q_3 - Q_1)} \exp(i Q_3)
       - \frac{i}{Q_1 Q_2 Q_3}
     \right\}
@@ -104,8 +104,12 @@ smaller tetrahedrons at its vertices. It is expressed as:
 
 .. math::
 
-    F_{T_{truncated}} (\vec{q},t, \vec{v_1},\vec{v_2},\vec{v_3}) 
-    = F_{T} (\vec{q},\vec{v_1},\vec{v_2},\vec{v_3})-F_{T} (\vec{q},t\vec{v_1},t\vec{v_2},t\vec{v_3})(1+e^{i(1-t)\vec{q} \cdot \vec{v_1}}+e^{i(1-t)\vec{q} \cdot \vec{v_2}}+\ e^{i(1-t)\vec{q} \cdot \vec{v_3}})\
+    F_{T_{\text{truncated}}} (\vec{q},t, \vec{v_1},\vec{v_2},\vec{v_3}) 
+    = F_{T} (\vec{q},\vec{v_1},\vec{v_2},\vec{v_3})
+    - F_{T} (\vec{q},t\vec{v_1},t\vec{v_2},t\vec{v_3})
+    \left(1 + e^{i(1-t)\vec{q} \cdot \vec{v_1}}
+            + e^{i(1-t)\vec{q} \cdot \vec{v_2}}
+            + e^{i(1-t)\vec{q} \cdot \vec{v_3}}\right)
 
 where the phase terms correspond to four translations inside the shape. 
 

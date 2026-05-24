@@ -18,19 +18,23 @@ The general octahedron is defined by its dimensions along its three perpendicula
 which are equivalent to the circumradiuses of the general octahedron along the three directions.
 
 Coordinates of the six vertices are:
-    (:math:`radius_a`, 0, 0),
-    (:math:`-radius_a`, 0, 0),
-    (0, :math:`radius_b`, 0),
-    (0, :math:`-radius_b`, 0),
-    (0, 0, :math:`radius_c`),
-    (0, 0, :math:`-radius_c`)
+
+.. math::
+
+    (radius_a,\ 0,\ 0) \\
+    (-radius_a,\ 0,\ 0) \\
+    (0,\ radius_b,\ 0) \\
+    (0,\ -radius_b,\ 0) \\
+    (0,\ 0,\ radius_c) \\
+    (0,\ 0,\ -radius_c)
 
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
 The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
 The user-defined parameter `t` is the truncation ratio and is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
 For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
-Indeed, a square facet crosses the x, y, z directions at distances equal to :math:`t_inv radius_a`, :math:`t_inv radius_b` and :math:`t_inv radius_c`.
+Indeed, a square facet crosses the x, y, z directions at distances equal to 
+:math:`t_{\mathrm{inv}} \, radius_a`, :math:`t_{\mathrm{inv}} \, radius_b` and :math:`t_{\mathrm{inv}} \, radius_c`.
 
 A regular octahedron corresponds to:
 
@@ -80,8 +84,8 @@ For a regular shape (no elongation):
 
 .. math::
 
-    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1,\qquad
-    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2},\qquad
+    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1,  \\
+    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2},  \\
     radius_{\text{a}} = radius_{\text{b}} = radius_{\text{c}} = A_{\text{edge}} / \sqrt{2}
 
 .. math::
@@ -98,21 +102,21 @@ Amplitude of the form factor AP for the reference orientation of the shape reads
 .. math::
 
     AA = \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_x)\sin\big(q_y t - q_x t_{\text{inv}}\big)
-    + (q_y + q_x)\sin\big(q_y t + q_x t_{\text{inv}}\big)\Big]
+    + (q_y + q_x)\sin\big(q_y t + q_x t_{\text{inv}}\big)\Big] \\
     + \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_x)\sin\big(q_z t - q_x t_{\text{inv}}\big)
     + (q_z + q_x)\sin\big(q_z t + q_x t_{\text{inv}}\big)\Big]
 
 .. math::
 
     BB = \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_y)\sin\big(q_z t - q_y t_{\text{inv}}\big)
-    + (q_z + q_y)\sin\big(q_z t + q_y t_{\text{inv}}\big)\Big]
+    + (q_z + q_y)\sin\big(q_z t + q_y t_{\text{inv}}\big)\Big] \\
     + \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_y)\sin\big(q_x t - q_y t_{\text{inv}}\big)
     + (q_x + q_y)\sin\big(q_x t + q_y t_{\text{inv}}\big)\Big]
 
 .. math::
 
     CC = \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_z)\sin\big(q_x t - q_z t_{\text{inv}}\big)
-    + (q_x + q_z)\sin\big(q_x t + q_z t_{\text{inv}}\big)\Big]
+    + (q_x + q_z)\sin\big(q_x t + q_z t_{\text{inv}}\big)\Big] \\
     + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y t - q_z t_{\text{inv}}\big)
     + (q_y + q_z)\sin\big(q_y t + q_z t_{\text{inv}}\big)\Big]
 

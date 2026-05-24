@@ -36,7 +36,7 @@ are defined as:
 
 .. math::
 
-    \mathbf{v}_1 =  (\frac{L}{\sqrt{2}},\ \frac{L}{\sqrt{2}},\ 0\right)
+    \mathbf{v}_1 =  (\frac{L}{\sqrt{2}},\ \frac{L}{\sqrt{2}},\ 0)
 
 .. math::
 
@@ -76,7 +76,7 @@ general tetrahedral form factor is given by:
 
     F_\mathrm{tetra}(\mathbf{q}) = |\det(\mathbf{T})| \left\{
         \frac{i}{Q_1 (Q_1 - Q_2)(Q_1 - Q_3)} \exp(i Q_1)
-      + \frac{i}{Q_2 (Q_2 - Q_1)(Q_2 - Q_3)} \exp(i Q_2)
+      + \frac{i}{Q_2 (Q_2 - Q_1)(Q_2 - Q_3)} \exp(i Q_2) \\
       + \frac{i}{Q_3 (Q_3 - Q_2)(Q_3 - Q_1)} \exp(i Q_3)
       - \frac{i}{Q_1 Q_2 Q_3}
     \right\}
