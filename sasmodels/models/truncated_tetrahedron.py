@@ -104,12 +104,12 @@ smaller tetrahedrons at its vertices. It is expressed as:
 
 .. math::
 
-    F_{T_{\text{truncated}}} (\vec{q},t, \vec{v_1},\vec{v_2},\vec{v_3}) 
-    = F_{T} (\vec{q},\vec{v_1},\vec{v_2},\vec{v_3})
-    - F_{T} (\vec{q},t\vec{v_1},t\vec{v_2},t\vec{v_3})
-    \left(1 + e^{i(1-t)\vec{q} \cdot \vec{v_1}}
-            + e^{i(1-t)\vec{q} \cdot \vec{v_2}}
-            + e^{i(1-t)\vec{q} \cdot \vec{v_3}}\right)
+    F_{T_{\text{truncated}}} (\mathbf{q},t, \mathbf{v_1},\mathbf{v_2},\mathbf{v_3}) 
+    = F_{T} (\mathbf{q},\mathbf{v_1},\mathbf{v_2},\mathbf{v_3})
+    - F_{T} (\mathbf{q},t\mathbf{v_1},t\mathbf{v_2},t\mathbf{v_3})
+    \left(1 + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_1}}
+            + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_2}}
+            + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_3}}\right)
 
 where the phase terms correspond to four translations inside the shape. 
 
@@ -199,7 +199,7 @@ The model has been tested against experimental data obtained on gold
 tetrahedrons at synchrotron Soleil.
 Moreover, comparisons with Debye formula calculations were made using
 DebyeCalculator library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
-Good agreement was found at q < 1 1/Angstrom.
+Good agreement was found at q < 1 1/Å.
 
 References
 ----------
@@ -211,17 +211,17 @@ References
 
 2. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
    In: Journal of Applied Crystallography - J APPL CRYST 44 (June 2011).
-   DOI: 10.1107/S0021889811011691
+   https://doi.org/10.1107/S0021889811011691
 
 3. Croset, B. (2017) 
-   Form factor of any polyhedron: a general compact formula and its singularities. 
-   Journal of Applied Crystallography, 50(5), 1245-1255. 
+   "Form factor of any polyhedron: a general compact formula and its singularities". 
+   In: Journal of Applied Crystallography, 50(5), 1245-1255. 
    https://doi.org/10.1107/s1600576717010147.
 
 4. Yang, T., Chen, X., Zhang, J., Ma, J., & Liu, S. (2023).
-   Form factor of any polyhedron and its singularities derived from a projection method. 
-   Journal of Applied Crystallography, 56(1), 167–177.
-   DOI:  https://doi.org/10.1107/s160057672201130x
+   "Form factor of any polyhedron and its singularities derived from a projection method". 
+   In: Journal of Applied Crystallography, 56(1), 167–177.
+   https://doi.org/10.1107/s160057672201130x
 
 
 Authorship and Verification

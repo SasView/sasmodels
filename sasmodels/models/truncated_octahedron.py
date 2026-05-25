@@ -48,15 +48,14 @@ A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
     radius_a = radius_b = radius_c, \quad t  = \frac{1}{2}
 
-The model contains 4 parameters: :math:`radius_a`, the two ratios :math:`b2a_ratio` and :math:`c2a_ratio` and :math:`t`:
+The model contains 4 parameters: :math:`radius_a`, the two ratios :math:`b2a_{\mathrm{ratio}}` and :math:`c2a_{\mathrm{ratio}}` and :math:`t`:
 
 .. math::
 
     b2a_{\text{ratio}} = \frac{radius_b}{radius_a}, \quad
-    c2a_{\text{ratio}} = \frac{radius_c}{radius_a}, \quad
+    c2a_{\text{ratio}} = \frac{radius_c}{radius_a}, \\
 
     0 ≤ t ≤ \frac{1}{2}
-
 
 
 For a regular shape:
@@ -84,8 +83,14 @@ For a regular shape (no elongation):
 
 .. math::
 
-    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1,  \\
-    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2},  \\
+    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1
+
+.. math::
+
+    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2}
+
+.. math::
+    
     radius_{\text{a}} = radius_{\text{b}} = radius_{\text{c}} = A_{\text{edge}} / \sqrt{2}
 
 .. math::
@@ -169,28 +174,29 @@ units) *scale* represents the volume fraction (which is unitless).
 
 .. figure:: img/octahedrons_intensity_plot.png
 
-    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=0) of a = 400 Angstroms.
+    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=0) of radius_a = 400 Å.
 
 Validation
 ----------
 
 Validation of the code is made using numerical checks.
 Comparisons with Debye formula calculations were made using DebyeCalculator library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
-Good agreement was found at q < 0.1 1/Angstrom.
+Good agreement was found at q < 0.1 1/Å.
 
 References
 ----------
 
 1. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
    In: Journal of Applied Crystallography - J APPL CRYST 44 (June 2011).
-   DOI: 10.1107/S0021889811011691
+   https://doi.org/10.1107/S0021889811011691
 
 2. Croset, Bernard, "Form factor of any polyhedron: a general compact
-   formula and its singularities" In: J. Appl. Cryst. (2017). 50, 1245–1255
+   formula and its singularities".
+   In: J. Appl. Cryst. (2017). 50, 1245–1255
    https://doi.org/10.1107/S1600576717010147
 
-3. Wuttke, J. Numerically stable form factor of any polygon and polyhedron
-   J Appl Cryst 54, 580-587 (2021)
+3. Wuttke, J. "Numerically stable form factor of any polygon and polyhedron".
+   In: J Appl Cryst 54, 580-587 (2021)
    https://doi.org/10.1107/S160057672100171
 
 Authorship and Verification
