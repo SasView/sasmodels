@@ -1,5 +1,5 @@
 r"""
-This model provides the form factor for a right prism which cross-section is a regular polygon. 
+This model provides the form factor for a right prism whose cross-section is a regular polygon. 
 Orientation averaging is done by using the Fibonacci quadrature.
 This quadrature provides a quasi-uniform distribution of points on the unit sphere
 using the golden ratio. The number of points to generate on the unit sphere is set to 500 points, it usually provides
@@ -100,8 +100,8 @@ Instead of rotating the shape through all the possible orientations,
 it is equivalent to integrate the 3D scattering vector over a sphere of radius q with the shape in its reference orientation.
 
 The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform distribution of points on the unit sphere.
-The repartition of the N points is computed using the golden ratio (see fibonacci.py). 
-Each point of the quadrature on the unit sphere correspond to a vector :math:`\mathbf{u}_{j}`.
+The distribution of the N points is computed using the golden ratio (see fibonacci.py). 
+Each point of the quadrature on the unit sphere corresponds to a vector :math:`\mathbf{u}_{j}`.
 In the sum, all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
 .. math::

@@ -2,7 +2,7 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 This model provides the form factor P(q) for a general octahedron.
-It can be a regular octahedron shape with all edges of the same length.
+It can be a regular octahedron, with all edges of equal length.
 Or a general shape with different elongations along the three perpendicular two-fold axes.
 It includes the possibility to add an adjustable square truncation at each of the six vertices.
 This model includes the general cuboctahedron shape for the maximum value of truncation.
@@ -14,8 +14,9 @@ Definition
 ----------
 
 This model computes the form factor of a general octahedron by defining its size through
-its circumradius (parameter called *radius_a* in the model), the elongations through the ratios of b and c to a  (parameters called *b2a_ratio* and *c2a_ratio* in the model) and the truncation level through the
-truncation ratio (parameter called *truncation* in the model).
+its circumradius :math:`radius_a` (parameter called *radius_a* in the model), 
+the elongations through the ratios :math:`\frac{b}{a}` and :math:`\frac{c}{a}` (parameters called *b2a_ratio* and *c2a_ratio* in the model) and the truncation level through the
+truncation ratio *t* (parameter called *truncation* in the model).
 
 Indeed, the general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
 :math:`radius_a` (parameter called *radius_a* in the model), :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
@@ -52,27 +53,12 @@ A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
     radius_a = radius_b = radius_c, \quad t  = \frac{1}{2}
 
-The model contains 4 parameters: *radius_a*, the two ratios *b2a_ratio* and *c2a_ratio*, and *truncation*. They are defined as:
+
+The volume of the general shape including truncation is given by:
 
 .. math::
 
-    b2a_{\text{ratio}} = \frac{radius_b}{radius_a}, \quad
-    c2a_{\text{ratio}} = \frac{radius_c}{radius_a}, \\
-
-    0 ≤ t ≤ \frac{1}{2}
-
-
-For a regular shape:
-
-.. math::
-
-    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1
-
-Volume of the general shape including truncation is given by:
-
-.. math::
-
-    V = \frac{4}{3}\, radius_{\text{a}}^{3}\, b2a_{\text{ratio}}\, c2a_{\text{ratio}}\,\bigl(1 - 3t^{3}\bigr)
+    V = \frac{4}{3}\, radius_{\text{a}}^{3}\, \frac{b}{a}\, \frac{c}{a}\,\bigl(1 - 3t^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
@@ -87,7 +73,7 @@ For a regular shape (no elongation):
 
 .. math::
 
-    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1
+    \frac{b}{a} = \frac{c}{a} = 1
 
 .. math::
 

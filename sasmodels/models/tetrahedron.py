@@ -135,9 +135,9 @@ of radius q with the shape in its reference orientation.
 
 The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform
 distribution of points on the unit sphere.
-The repartition of the N points is computed using the golden ratio
+The distribution of the N points is computed using the golden ratio
 (see fibonacci.py). Each point of the quadrature on the unit sphere
-correspond to a vector :math:`\mathbf{u}_{j}`. In the sum,
+corresponds to a vector :math:`\mathbf{u}_{j}`. In the sum,
 all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
 .. math::
