@@ -13,8 +13,12 @@ It contains both the form factor for a reference orientation and the 1D form fac
 Definition
 ----------
 
-The general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
-:math:`radius_a`, :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
+This model computes the form factor of a general octahedron by defining its size through
+its circumradius (parameter called *radius_a* in the model), the elongations through the ratios of b and c to a  (parameters called *b2a_ratio* and *c2a_ratio* in the model) and the truncation level through the
+truncation ratio (parameter called *truncation* in the model).
+
+Indeed, the general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
+:math:`radius_a` (parameter called *radius_a* in the model), :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
 which are equivalent to the circumradiuses of the general octahedron along the three directions.
 
 Coordinates of the six vertices are:
@@ -30,7 +34,7 @@ Coordinates of the six vertices are:
 
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
 The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
-The user-defined parameter `t` is the truncation ratio and is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
+The truncation ratio *t* (parameter called `truncation` in the model) is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
 For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
 Indeed, a square facet crosses the x, y, z directions at distances equal to 
@@ -48,7 +52,7 @@ A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
     radius_a = radius_b = radius_c, \quad t  = \frac{1}{2}
 
-The model contains 4 parameters: :math:`radius_a`, the two ratios :math:`b2a_{\mathrm{ratio}}` and :math:`c2a_{\mathrm{ratio}}` and :math:`t`:
+The model contains 4 parameters: *radius_a*, the two ratios *b2a_ratio* and *c2a_ratio*, and *truncation*. They are defined as:
 
 .. math::
 
@@ -186,18 +190,16 @@ Good agreement was found at q < 0.1 1/Å.
 References
 ----------
 
-1. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
-   In: Journal of Applied Crystallography - J APPL CRYST 44 (June 2011).
-   https://doi.org/10.1107/S0021889811011691
+1. Li, X., Shew, C., He, L., Meilleur, F., Myles, D. A. A., Liu, E., Zhang, Y., Smith, G. S.,
+   Herwig, K. W., Pynn, R., & Chen, W. (2011). Scattering functions of Platonic solids.
+   *Journal Of Applied Crystallography*, 44(3), 545‑557. https://doi.org/10.1107/s0021889811011691
 
-2. Croset, Bernard, "Form factor of any polyhedron: a general compact
-   formula and its singularities".
-   In: J. Appl. Cryst. (2017). 50, 1245–1255
-   https://doi.org/10.1107/S1600576717010147
+2. Croset, B. (2017). Form factor of any polyhedron : a general compact formula and its singularities.
+   *Journal Of Applied Crystallography*, 50(5), 1245‑1255. https://doi.org/10.1107/s1600576717010147
 
-3. Wuttke, J. "Numerically stable form factor of any polygon and polyhedron".
-   In: J Appl Cryst 54, 580-587 (2021)
-   https://doi.org/10.1107/S160057672100171
+3. Wuttke, J. (2021). Numerically stable form factor of any polygon and polyhedron.
+   *Journal Of Applied Crystallography*, 54(2), 580‑587. https://doi.org/10.1107/s1600576721001710
+
 
 Authorship and Verification
 ----------------------------

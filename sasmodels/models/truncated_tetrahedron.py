@@ -9,10 +9,12 @@ and computational efficiency.
 Definition
 ----------
 
+This model allows calculating the form factor of a truncated tetrahedron by defining its initial size
+through its circumradius :math:`R` (parameter called *radius* in the model) and its truncation rate :math:`t` (parameter called *truncation* in the model) .
 To define the truncated tetrahedron form factor, the regular tetrahedron form factor has to be defined first.
 The truncated tetrahedron form factor will then be obtained by subtracting the four smaller tetrahedrons at its vertices.
-So first, let's consider a regular tetrahedron. The size of the tetrahedron is described by its circumradius :math:`R`,
-which is the radius of the circumscribed sphere. The relationship between the circumradius
+So first, let's consider a regular tetrahedron. The size of the tetrahedron is described by its circumradius :math:`R`
+, which is the radius of the circumscribed sphere. The relationship between the circumradius
 and the edge length is also implemented. The edge length :math:`L`
 and volume :math:`V_T` are given by:
 
@@ -95,7 +97,7 @@ The volume of the truncated tetrahedron is given by:
 
     V_{T_{truncated}}  = V_{T}  (1 - 4t^3)
 
-The parameter :math:`t` represents the truncation level. At the maximum value :math:`t=1/2`,
+:math:`t` represents the truncation level. At the maximum value :math:`t=1/2`,
 the corresponding shape is a regular octahedron. At the minimum value :math:`t=0`, 
 the shape is a regular tetrahedron. At :math:`t=1/3`, the corresponding shape is the
 Friauf polyhedron, in which all edges are equal.
@@ -204,24 +206,19 @@ Good agreement was found at q < 1 1/Å.
 References
 ----------
 
-1. Patterson, A. L. (1939)
-   "The Diffraction of X-Rays by Small Crystalline Particles". 
-   In: Phys. Rev. 56 (1939), pp. 972–977. 
-   https://link.aps.org/doi/10.1103/PhysRev.56.972.
+1. Patterson, A. L. (1939). The Diffraction of X-Rays by Small Crystalline Particles.
+   *Physical Review*, 56(10), 972‑977. https://doi.org/10.1103/physrev.56.972
 
-2. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
-   In: Journal of Applied Crystallography - J APPL CRYST 44 (June 2011).
-   https://doi.org/10.1107/S0021889811011691
+2. Li, X., Shew, C., He, L., Meilleur, F., Myles, D. A. A., Liu, E., Zhang, Y., Smith, G. S.,
+   Herwig, K. W., Pynn, R., & Chen, W. (2011). Scattering functions of Platonic solids.
+   *Journal Of Applied Crystallography*, 44(3), 545‑557. https://doi.org/10.1107/s0021889811011691
 
-3. Croset, B. (2017) 
-   "Form factor of any polyhedron: a general compact formula and its singularities". 
-   In: Journal of Applied Crystallography, 50(5), 1245-1255. 
-   https://doi.org/10.1107/s1600576717010147.
+3. Croset, B. (2017). Form factor of any polyhedron : a general compact formula and its singularities.
+   *Journal Of Applied Crystallography*, 50(5), 1245‑1255. https://doi.org/10.1107/s1600576717010147
 
 4. Yang, T., Chen, X., Zhang, J., Ma, J., & Liu, S. (2023).
-   "Form factor of any polyhedron and its singularities derived from a projection method". 
-   In: Journal of Applied Crystallography, 56(1), 167–177.
-   https://doi.org/10.1107/s160057672201130x
+   Form factor of any polyhedron and its singularities derived from a projection method.
+   *Journal of Applied Crystallography*, 56(1), 167–177. https://doi.org/10.1107/s160057672201130x
 
 
 Authorship and Verification
