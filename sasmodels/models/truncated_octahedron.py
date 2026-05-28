@@ -2,7 +2,7 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 This model provides the form factor P(q) for a general octahedron.
-It can be a regular octahedron shape with all edges of the same length.
+It can be a regular octahedron, with all edges of equal length.
 Or a general shape with different elongations along the three perpendicular two-fold axes.
 It includes the possibility to add an adjustable square truncation at each of the six vertices.
 This model includes the general cuboctahedron shape for the maximum value of truncation.
@@ -13,24 +13,33 @@ It contains both the form factor for a reference orientation and the 1D form fac
 Definition
 ----------
 
-The general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
-:math:`radius_a`, :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
+This model computes the form factor of a general octahedron by defining its size through
+its circumradius :math:`radius_a` (parameter called *radius_a* in the model), 
+the elongations through the ratios :math:`\frac{b}{a}` and :math:`\frac{c}{a}` (parameters called *b2a_ratio* and *c2a_ratio* in the model) and the truncation level through the
+truncation ratio *t* (parameter called *truncation* in the model).
+
+Indeed, the general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
+:math:`radius_a` (parameter called *radius_a* in the model), :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
 which are equivalent to the circumradiuses of the general octahedron along the three directions.
 
 Coordinates of the six vertices are:
-    (:math:`radius_a`, 0, 0),
-    (:math:`-radius_a`, 0, 0),
-    (0, :math:`radius_b`, 0),
-    (0, :math:`-radius_b`, 0),
-    (0, 0, :math:`radius_c`),
-    (0, 0, :math:`-radius_c`)
+
+.. math::
+
+    (radius_a,\ 0,\ 0) \\
+    (-radius_a,\ 0,\ 0) \\
+    (0,\ radius_b,\ 0) \\
+    (0,\ -radius_b,\ 0) \\
+    (0,\ 0,\ radius_c) \\
+    (0,\ 0,\ -radius_c)
 
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
 The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
-The user-defined parameter `t` is the truncation ratio and is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
+The truncation ratio *t* (parameter called `truncation` in the model) is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
 For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
-Indeed, a square facet crosses the x, y, z directions at distances equal to :math:`t_inv radius_a`, :math:`t_inv radius_b` and :math:`t_inv radius_c`.
+Indeed, a square facet crosses the x, y, z directions at distances equal to 
+:math:`t_{\mathrm{inv}} \, radius_a`, :math:`t_{\mathrm{inv}} \, radius_b` and :math:`t_{\mathrm{inv}} \, radius_c`.
 
 A regular octahedron corresponds to:
 
@@ -44,28 +53,12 @@ A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
     radius_a = radius_b = radius_c, \quad t  = \frac{1}{2}
 
-The model contains 4 parameters: :math:`radius_a`, the two ratios :math:`b2a_ratio` and :math:`c2a_ratio` and :math:`t`:
+
+The volume of the general shape including truncation is given by:
 
 .. math::
 
-    b2a_{\text{ratio}} = \frac{radius_b}{radius_a}, \quad
-    c2a_{\text{ratio}} = \frac{radius_c}{radius_a}, \quad
-
-    0 ≤ t ≤ \frac{1}{2}
-
-
-
-For a regular shape:
-
-.. math::
-
-    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1
-
-Volume of the general shape including truncation is given by:
-
-.. math::
-
-    V = \frac{4}{3}\, radius_{\text{a}}^{3}\, b2a_{\text{ratio}}\, c2a_{\text{ratio}}\,\bigl(1 - 3t^{3}\bigr)
+    V = \frac{4}{3}\, radius_{\text{a}}^{3}\, \frac{b}{a}\, \frac{c}{a}\,\bigl(1 - 3t^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
@@ -80,8 +73,14 @@ For a regular shape (no elongation):
 
 .. math::
 
-    b2a_{\text{ratio}} = c2a_{\text{ratio}} = 1,\qquad
-    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2},\qquad
+    \frac{b}{a} = \frac{c}{a} = 1
+
+.. math::
+
+    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2}
+
+.. math::
+    
     radius_{\text{a}} = radius_{\text{b}} = radius_{\text{c}} = A_{\text{edge}} / \sqrt{2}
 
 .. math::
@@ -98,21 +97,21 @@ Amplitude of the form factor AP for the reference orientation of the shape reads
 .. math::
 
     AA = \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_x)\sin\big(q_y t - q_x t_{\text{inv}}\big)
-    + (q_y + q_x)\sin\big(q_y t + q_x t_{\text{inv}}\big)\Big]
+    + (q_y + q_x)\sin\big(q_y t + q_x t_{\text{inv}}\big)\Big] \\
     + \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_x)\sin\big(q_z t - q_x t_{\text{inv}}\big)
     + (q_z + q_x)\sin\big(q_z t + q_x t_{\text{inv}}\big)\Big]
 
 .. math::
 
     BB = \frac{1}{2\,(q_z^2 - q_x^2)\,(q_z^2 - q_y^2)}\Big[(q_z - q_y)\sin\big(q_z t - q_y t_{\text{inv}}\big)
-    + (q_z + q_y)\sin\big(q_z t + q_y t_{\text{inv}}\big)\Big]
+    + (q_z + q_y)\sin\big(q_z t + q_y t_{\text{inv}}\big)\Big] \\
     + \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_y)\sin\big(q_x t - q_y t_{\text{inv}}\big)
     + (q_x + q_y)\sin\big(q_x t + q_y t_{\text{inv}}\big)\Big]
 
 .. math::
 
     CC = \frac{1}{2\,(q_x^2 - q_y^2)\,(q_x^2 - q_z^2)}\Big[(q_x - q_z)\sin\big(q_x t - q_z t_{\text{inv}}\big)
-    + (q_x + q_z)\sin\big(q_x t + q_z t_{\text{inv}}\big)\Big]
+    + (q_x + q_z)\sin\big(q_x t + q_z t_{\text{inv}}\big)\Big] \\
     + \frac{1}{2\,(q_y^2 - q_z^2)\,(q_y^2 - q_x^2)}\Big[(q_y - q_z)\sin\big(q_y t - q_z t_{\text{inv}}\big)
     + (q_y + q_z)\sin\big(q_y t + q_z t_{\text{inv}}\big)\Big]
 
@@ -165,29 +164,28 @@ units) *scale* represents the volume fraction (which is unitless).
 
 .. figure:: img/octahedrons_intensity_plot.png
 
-    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=0) of a = 300 Angstroms.
+    Scattering intensity of a cuboctahedron (t=0.5) and a regular octahedron (t=0) of radius_a = 400 Å.
 
 Validation
 ----------
 
 Validation of the code is made using numerical checks.
 Comparisons with Debye formula calculations were made using DebyeCalculator library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
-Good agreement was found at q < 0.1 1/Angstrom.
+Good agreement was found at q < 0.1 1/Å.
 
 References
 ----------
 
-1. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
-   In: Journal of Applied Crystallography - J APPL CRYST 44 (June 2011).
-   DOI: 10.1107/S0021889811011691
+1. Li, X., Shew, C., He, L., Meilleur, F., Myles, D. A. A., Liu, E., Zhang, Y., Smith, G. S.,
+   Herwig, K. W., Pynn, R., & Chen, W. (2011). Scattering functions of Platonic solids.
+   *Journal Of Applied Crystallography*, 44(3), 545‑557. https://doi.org/10.1107/s0021889811011691
 
-2. Croset, Bernard, "Form factor of any polyhedron: a general compact
-   formula and its singularities" In: J. Appl. Cryst. (2017). 50, 1245–1255
-   https://doi.org/10.1107/S1600576717010147
+2. Croset, B. (2017). Form factor of any polyhedron : a general compact formula and its singularities.
+   *Journal Of Applied Crystallography*, 50(5), 1245‑1255. https://doi.org/10.1107/s1600576717010147
 
-3. Wuttke, J. Numerically stable form factor of any polygon and polyhedron
-   J Appl Cryst 54, 580-587 (2021)
-   https://doi.org/10.1107/S160057672100171
+3. Wuttke, J. (2021). Numerically stable form factor of any polygon and polyhedron.
+   *Journal Of Applied Crystallography*, 54(2), 580‑587. https://doi.org/10.1107/s1600576721001710
+
 
 Authorship and Verification
 ----------------------------
