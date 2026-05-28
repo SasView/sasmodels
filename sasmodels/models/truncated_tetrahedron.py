@@ -9,10 +9,12 @@ and computational efficiency.
 Definition
 ----------
 
+This model allows calculating the form factor of a truncated tetrahedron by defining its initial size
+through its circumradius :math:`R` (parameter called *radius* in the model) and its truncation rate :math:`t` (parameter called *truncation* in the model) .
 To define the truncated tetrahedron form factor, the regular tetrahedron form factor has to be defined first.
 The truncated tetrahedron form factor will then be obtained by subtracting the four smaller tetrahedrons at its vertices.
-So first, let's consider a regular tetrahedron. The size of the tetrahedron is described by its circumradius :math:`R`,
-which is the radius of the circumscribed sphere. The relationship between the circumradius
+So first, let's consider a regular tetrahedron. The size of the tetrahedron is described by its circumradius :math:`R`
+, which is the radius of the circumscribed sphere. The relationship between the circumradius
 and the edge length is also implemented. The edge length :math:`L`
 and volume :math:`V_T` are given by:
 
@@ -24,9 +26,9 @@ and volume :math:`V_T` are given by:
 
     V_{T}  = \frac{\sqrt{2}}{12} \, L^3
 
-.. figure:: img/tetrahedron_regular.png
+.. figure:: img/tetra_truncation.png
 
-    Regular tetrahedron in its reference orientation.
+    Regular tetrahedron with circumradius :math:`R` and edge length :math:`L`. After truncation, the true edge length is :math:`(1-2t)L`.
 
 The four vertices of the tetrahedron, with :math:`\mathbf{v}_0` at the origin,
 are defined as:
@@ -37,7 +39,7 @@ are defined as:
 
 .. math::
 
-    \mathbf{v}_1 =  (\frac{L}{\sqrt{2}},\ \frac{L}{\sqrt{2}},\ 0\right)
+    \mathbf{v}_1 =  (\frac{L}{\sqrt{2}},\ \frac{L}{\sqrt{2}},\ 0)
 
 .. math::
 
@@ -77,7 +79,7 @@ general tetrahedral form factor is given by:
 
     F_\mathrm{T}(\mathbf{q}) = |\det(\mathbf{T})| \left\{
         \frac{i}{Q_1 (Q_1 - Q_2)(Q_1 - Q_3)} \exp(i Q_1)
-      + \frac{i}{Q_2 (Q_2 - Q_1)(Q_2 - Q_3)} \exp(i Q_2)
+      + \frac{i}{Q_2 (Q_2 - Q_1)(Q_2 - Q_3)} \exp(i Q_2) \\
       + \frac{i}{Q_3 (Q_3 - Q_2)(Q_3 - Q_1)} \exp(i Q_3)
       - \frac{i}{Q_1 Q_2 Q_3}
     \right\}
@@ -86,7 +88,6 @@ general tetrahedral form factor is given by:
 The truncated tetrahedron is a polyhedron obtained by truncating the vertices of a regular tetrahedron.
 
 .. figure:: img/truncated_tetrahedron.png
-.. figure:: img/tetra-octa-center-V1V2V3.png
 
     Tetrahedron with different truncatures.
 
@@ -96,7 +97,7 @@ The volume of the truncated tetrahedron is given by:
 
     V_{T_{truncated}}  = V_{T}  (1 - 4t^3)
 
-The parameter :math:`t` represents the truncation level. At the maximum value :math:`t=1/2`,
+:math:`t` represents the truncation level. At the maximum value :math:`t=1/2`,
 the corresponding shape is a regular octahedron. At the minimum value :math:`t=0`, 
 the shape is a regular tetrahedron. At :math:`t=1/3`, the corresponding shape is the
 Friauf polyhedron, in which all edges are equal.
@@ -105,8 +106,12 @@ smaller tetrahedrons at its vertices. It is expressed as:
 
 .. math::
 
-    F_{T_{truncated}} (\vec{q},t, \vec{v_1},\vec{v_2},\vec{v_3}) 
-    = F_{T} (\vec{q},\vec{v_1},\vec{v_2},\vec{v_3})-F_{T} (\vec{q},t\vec{v_1},t\vec{v_2},t\vec{v_3})(1+e^{i(1-t)\vec{q} \cdot \vec{v_1}}+e^{i(1-t)\vec{q} \cdot \vec{v_2}}+\ e^{i(1-t)\vec{q} \cdot \vec{v_3}})\
+    F_{T_{\text{truncated}}} (\mathbf{q},t, \mathbf{v_1},\mathbf{v_2},\mathbf{v_3}) 
+    = F_{T} (\mathbf{q},\mathbf{v_1},\mathbf{v_2},\mathbf{v_3})
+    - F_{T} (\mathbf{q},t\mathbf{v_1},t\mathbf{v_2},t\mathbf{v_3})
+    \left(1 + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_1}}
+            + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_2}}
+            + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_3}}\right)
 
 where the phase terms correspond to four translations inside the shape. 
 
@@ -164,9 +169,9 @@ of radius q with the shape in its reference orientation.
 
 The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform
 distribution of points on the unit sphere.
-The repartition of the N points is computed using the golden ratio
+The distribution of the N points is computed using the golden ratio
 (see fibonacci.py). Each point of the quadrature on the unit sphere
-correspond to a vector :math:`\mathbf{u}_{j}`. In the sum,
+corresponds to a vector :math:`\mathbf{u}_{j}`. In the sum,
 all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
 .. math::
@@ -196,29 +201,24 @@ The model has been tested against experimental data obtained on gold
 tetrahedrons at synchrotron Soleil.
 Moreover, comparisons with Debye formula calculations were made using
 DebyeCalculator library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
-Good agreement was found at q < 1 1/Angstrom.
+Good agreement was found at q < 1 1/Å.
 
 References
 ----------
 
-1. Patterson, A. L. (1939)
-   "The Diffraction of X-Rays by Small Crystalline Particles". 
-   In: Phys. Rev. 56 (1939), pp. 972–977. 
-   https://link.aps.org/doi/10.1103/PhysRev.56.972.
+1. Patterson, A. L. (1939). The Diffraction of X-Rays by Small Crystalline Particles.
+   *Physical Review*, 56(10), 972‑977. https://doi.org/10.1103/physrev.56.972
 
-2. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
-   In: Journal of Applied Crystallography - J APPL CRYST 44 (June 2011).
-   DOI: 10.1107/S0021889811011691
+2. Li, X., Shew, C., He, L., Meilleur, F., Myles, D. A. A., Liu, E., Zhang, Y., Smith, G. S.,
+   Herwig, K. W., Pynn, R., & Chen, W. (2011). Scattering functions of Platonic solids.
+   *Journal Of Applied Crystallography*, 44(3), 545‑557. https://doi.org/10.1107/s0021889811011691
 
-3. Croset, B. (2017) 
-   Form factor of any polyhedron: a general compact formula and its singularities. 
-   Journal of Applied Crystallography, 50(5), 1245-1255. 
-   https://doi.org/10.1107/s1600576717010147.
+3. Croset, B. (2017). Form factor of any polyhedron : a general compact formula and its singularities.
+   *Journal Of Applied Crystallography*, 50(5), 1245‑1255. https://doi.org/10.1107/s1600576717010147
 
 4. Yang, T., Chen, X., Zhang, J., Ma, J., & Liu, S. (2023).
-   Form factor of any polyhedron and its singularities derived from a projection method. 
-   Journal of Applied Crystallography, 56(1), 167–177.
-   DOI:  https://doi.org/10.1107/s160057672201130x
+   Form factor of any polyhedron and its singularities derived from a projection method.
+   *Journal of Applied Crystallography*, 56(1), 167–177. https://doi.org/10.1107/s160057672201130x
 
 
 Authorship and Verification
