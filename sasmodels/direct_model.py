@@ -275,8 +275,8 @@ class DataMixin:
 
             res = resolution2d.Slit2D(
                 data.x[index],
-                qx_width=data.dxw[index],
-                qy_width=data.dxl[index])
+                q_width=data.dxw[index],
+                q_length=data.dxl[index])
         else:
             raise ValueError("Unknown data type") # never gets here
 
@@ -453,14 +453,18 @@ def test_reparameterize():
     except Exception:
         pass
 
-def _direct_calculate(model, data, pars):
+def _direct_calculate(model, data, pars, ngauss=0):
     from .core import build_model, load_model_info
+    from .generate import set_integration_size
+
     model_info = load_model_info(model)
+    if ngauss != 0:
+        set_integration_size(model_info, ngauss)
     kernel = build_model(model_info)
     calculator = DirectModel(data, kernel)
     return calculator(**pars)
 
-def Iq(model, q, dq=None, ql=None, qw=None, **pars):
+def Iq(model, q, dq=None, ql=None, qw=None, ngauss=0, **pars):
     """
     Compute I(q) for *model*. Resolution is *dq* for pinhole or *ql* and *qw*
     for slit geometry. Use 0 or None for infinite slits.
@@ -498,16 +502,16 @@ def Iq(model, q, dq=None, ql=None, qw=None, **pars):
             else np.full(len(q), v) if np.isscalar(v)
             else _as_numpy(v))
     data.dxl, data.dxw = broadcast(ql), broadcast(qw)
-    return _direct_calculate(model, data, pars)
+    return _direct_calculate(model, data, pars, ngauss=ngauss)
 
-def Iqxy(model, qx, qy, dqx=None, dqy=None, **pars):
+def Iqxy(model, qx, qy, dqx=None, dqy=None, ngauss=0, **pars):
     """
     Compute I(qx, qy) for *model*. Resolution is *dqx* and *dqy*.
     See :func:`Iq` for details on model and parameters.
     """
     from .data import Data2D
     data = Data2D(x=qx, y=qy, dx=dqx, dy=dqy)
-    return _direct_calculate(model, data, pars)
+    return _direct_calculate(model, data, pars, ngauss=ngauss)
 
 def Gxi(model, xi, **pars):
     """
@@ -528,6 +532,8 @@ def main():
     if len(sys.argv) < 3:
         print("usage: python -m sasmodels.direct_model modelname (q|qx,qy) par=val ...")
         sys.exit(1)
+
+    ngauss = 0
     model = sys.argv[1]
     call = sys.argv[2].upper()
     pars = dict((k, (float(v) if not k.endswith("_pd_type") else v))
@@ -541,37 +547,41 @@ def main():
         q, = values
         dq = dqw = dql = None
         #dq = [q*0.05] # 5% pinhole resolution
-        #dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
-        print(Iq(model, [q], dq=dq, qw=dqw, ql=dql, **pars)[0])
+        dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
+        print(Iq(model, [q], dq=dq, qw=dqw, ql=dql, ngauss=ngauss, **pars)[0])
         #print(Gxi(model, [q], **pars)[0])
     elif len(values) == 2:
         qx, qy = values
         dq = None
         #dq = [0.005] # 5% pinhole resolution at q = 0.1
-        print(Iqxy(model, [qx], [qy], dqx=dq, dqy=dq, **pars)[0])
+        print(Iqxy(model, [qx], [qy], dqx=dq, dqy=dq, ngauss=ngauss, **pars)[0])
     else:
         print("use q or qx,qy")
         sys.exit(1)
 
 def test_simple_interface():
-    def near(value, target):
+    def assert_near(value: np.ndarray, target: list[float]):
         """Close enough in single precision"""
         #print(f"value: {value}, target: {target}")
-        return np.allclose(value, target, rtol=1e-6, atol=0, equal_nan=True)
-    # Note: target values taken from running main() on parameters.
+        if not np.allclose(value, target, rtol=1e-6, atol=0, equal_nan=True):
+            assert value.tolist() == target
+            #raise ValueError(f"Expected {value} but got {target}")
+    # Target values taken from adusting main() with target resolution then running with:
+    #  python -m sasmodels.direct_model sphere 0.1 radius=200 background=0
+    #  python -m sasmodels.direct_model sphere 0.1,0.1 radius=200 background=0
     # Resolution was 5% dq/q.
     pars = dict(radius=200, background=0)  # default background=1e-3, scale=1
     # simple sphere in 1D (perfect, pinhole, slit)
     perfect_target = 0.6190146273894904
-    assert near(Iq('sphere', [0.1], **pars), [perfect_target])
-    assert near(Iq('sphere', [0.1], dq=[0.005], **pars), [2.3009224683980215])
-    assert near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.3663431784535172])
+    assert_near(Iq('sphere', [0.1], **pars), [perfect_target])
+    assert_near(Iq('sphere', [0.1], dq=[0.005], **pars), [2.3009224683980215])
+    assert_near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.1650934496236075])
     # simple sphere in 2D (perfect, pinhole)
-    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
-    assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars),
+    assert_near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
+    assert_near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars),
         [0.8167780778578667])
     # sesans (no background or scale)
-    assert near(Gxi('sphere', [100], **pars), [-0.19146959126623486])
+    assert_near(Gxi('sphere', [100], **pars), [-0.19146959126623486])
     # Check that single point sesans matches value in an array
     xi = np.logspace(1, 3, 100)
     y = Gxi('sphere', xi, **pars)
@@ -581,16 +591,16 @@ def test_simple_interface():
         assert abs((ysingle-y[k])/y[k]) < 0.1, "SESANS point value not matching vector value within 10%"
     # magnetic 2D
     pars = dict(radius=200, sld_M0=3, sld_mtheta=30)
-    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.5577852226925908])
+    assert_near(Iqxy('sphere', [0.1], [0.1], **pars), [1.5577852226925908])
     # polydisperse 1D
     pars = dict(
         radius=200, radius_pd=0.1, radius_pd_n=15, radius_pd_nsigma=2.5,
         radius_pd_type="uniform")
-    assert near(Iq('sphere', [0.1], **pars), [2.703169824954617])
+    assert_near(Iq('sphere', [0.1], **pars), [2.703169824954617])
     # background and scale
     background, scale = 1e-4, 0.1
     pars = dict(radius=200, background=background, scale=scale)
-    assert near(Iq('sphere', [0.1], **pars), [perfect_target*scale + background])
+    assert_near(Iq('sphere', [0.1], **pars), [perfect_target*scale + background])
 
 
 if __name__ == "__main__":

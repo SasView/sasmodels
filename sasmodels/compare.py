@@ -25,16 +25,14 @@ and tell you which string to use for the SAS_OPENCL variable.
 On Windows you will need to remove the quotes.
 """
 
-
 import datetime
 import math
 import os
 import re
 import sys
 import traceback
-
-# pylint: disable=unused-import
-from typing import Callable
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np  # type: ignore
 
@@ -44,16 +42,13 @@ from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
 from .modelinfo import ModelInfo, ParameterSet
 
-try:
-    # With python 3.8+ we can indicate that calculator takes floats.
-    from typing import Protocol
-    class Calculator(Protocol):
-        """Kernel calculator takes *par=value* keyword arguments."""
-        def __call__(self, **par: float) -> np.ndarray: ...
-except ImportError:
-    #: Kernel calculator takes *par=value* keyword arguments.
-    Calculator = Callable[..., np.ndarray]
-# pylint: enable=unused-import
+# Only use optional bumps dependency for type checking
+if TYPE_CHECKING:
+    from bumps.names import Parameter
+
+class Calculator(Protocol):
+    """Kernel calculator takes *par=value* keyword arguments."""
+    def __call__(self, **par: float) -> np.ndarray: ...
 
 USAGE = """
 usage: sascomp model [options...] [key=val]
@@ -79,8 +74,8 @@ Options (* for default):
     -zero indicates that q=0 should be included
 
     === model parameters ===
-    -preset*/-random[=seed] preset or random parameters
-    -sets=n generates n random datasets with the seed given by -random=seed
+    -preset*/-random/-seed=k preset or random parameters
+    -sets=n generates n random datasets
     -pars/-nopars* prints the parameter set or not
     -sphere[=150] set up spherical integration over theta/phi using n points
     -mono*/-poly suppress or allow polydispersity on generated parameters
@@ -94,9 +89,9 @@ Options (* for default):
     -ngauss=0 overrides the number of points in the 1-D gaussian quadrature
 
     === precision options ===
-    -engine=default uses the default calcution precision
-    -single/-double/-half/-fast sets an OpenCL calculation engine
-    -single!/-double!/-quad! sets an OpenMP calculation engine
+    -single/-double/-half/-fast sets a GPU calculation engine
+    -single!/-double!/-quad! sets a CPU calculation engine
+    -engine=a,b compare I(q) calculated with engine a and b
 
     === plotting ===
     -plot*/-noplot plots or suppress the plot of the model
@@ -108,7 +103,8 @@ Options (* for default):
     -profile shows the sld profile if the model has a plottable sld profile
 
     === output options ===
-    -edit starts the parameter explorer
+    -edit starts the parameter explorer (bumps webview)
+    -wxedit starts the parameter explore (bumps wxgui)
     -help/-html shows the model docs instead of running the model
 
     === help ===
@@ -543,10 +539,6 @@ def constrain_pars(model_info, pars):
     if '*' in name:
         name = name.split('*')[0]
 
-    # Suppress magnetism for python models (not yet implemented)
-    if callable(model_info.Iq):
-        pars.update(suppress_magnetism(pars))
-
     if name == 'barbell':
         if pars['radius_bell'] < pars['radius']:
             _swap_pars(pars, 'radius_bell', 'radius')
@@ -854,6 +846,14 @@ def run_models(opts, verbose=False):
 
     base_time = comp_time = None
     base_value = comp_value = resid = relerr = None
+    base_name = comp_name = None
+    def name_pair(base_test, comp_test):
+        """
+        iterate over name pairs in reverse order, keeping the first that are different
+        """
+        nonlocal base_name, comp_name
+        if base_test != comp_test:
+            base_name, comp_name = base_test, comp_test
 
     # Base calculation
     try:
@@ -879,21 +879,35 @@ def run_models(opts, verbose=False):
         except ImportError:
             traceback.print_exc()
 
+        # Find a string pair that describes the difference between base and comp.
+        # Go from least interesting to most interesting, updating if different.
+        name_pair("base", "comp")
+        name_pair(
+            " ".join(f"{k}={v}" for k, v in base_pars.items() if comp_pars.get(k, v) != v),
+            " ".join(f"{k}={v}" for k, v in comp_pars.items() if base_pars.get(k, v) != v),
+        )
+        name_pair(base.engine, comp.engine)
+        name_pair(base.model.info.name, comp.model.info.name)
+    else:
+        name_pair(f"{base.model.info.name}:{base.engine}", None)
+
     # Compare, but only if computing both forms
     if comparison:
         resid = (base_value - comp_value)
         relerr = resid/np.where(comp_value != 0., abs(comp_value), 1.0)
         if verbose:
             _print_stats("|%s-%s|"
-                         % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
+                         % (base_name, comp_name) + (" "*(3+len(comp_name))),
                          resid)
             _print_stats("|(%s-%s)/%s|"
-                         % (base.engine, comp.engine, comp.engine),
+                         % (base_name, comp_name, comp_name),
                          relerr)
 
-    return dict(base_value=base_value, comp_value=comp_value,
-                base_time=base_time, comp_time=comp_time,
-                resid=resid, relerr=relerr)
+    return dict(
+        base_name=base_name, comp_name=comp_name,
+        base_value=base_value, comp_value=comp_value,
+        base_time=base_time, comp_time=comp_time,
+        resid=resid, relerr=relerr)
 
 
 def _print_stats(label, err):
@@ -923,6 +937,7 @@ def plot_models(opts, result, limits=None, setnum=0):
     """
     import matplotlib.pyplot as plt
 
+    base_name, comp_name = result['base_name'], result['comp_name']
     base_value, comp_value = result['base_value'], result['comp_value']
     base_time, comp_time = result['base_time'], result['comp_time']
     resid, relerr = result['resid'], result['relerr']
@@ -947,22 +962,30 @@ def plot_models(opts, result, limits=None, setnum=0):
 
     if have_base:
         if have_comp:
-            plt.subplot(131)
-        plot_theory(base_data, base_value, view=view, use_data=use_data, limits=limits)
+            plt.subplot(221)
+        plot_theory(base_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits, backend='matplotlib')
         if setnum > 0:
             plt.legend([f"Set {k+1}" for k in range(setnum+1)], loc='best')
-        plt.title("%s t=%.2f ms"%(base.engine, base_time))
+        plt.title("%s t=%.2f ms"%(base.model.info.name, base_time))
+        if have_comp:
+            plt.gca().tick_params(labelbottom=False)
+            plt.gca().set_xticks([])
+            plt.xlabel('')
+
         #cbar_title = "log I"
     if have_comp:
         if have_base:
-            plt.subplot(132)
+            plt.subplot(223)
         if not opts['is2d'] and have_base:
-            plot_theory(comp_data, base_value, view=view, use_data=use_data, limits=limits)
-        plot_theory(comp_data, comp_value, view=view, use_data=use_data, limits=limits)
-        plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
+            plot_theory(comp_data, base_value, label=base_name, view=view, use_data=use_data, limits=limits, backend='matplotlib')
+        plot_theory(comp_data, comp_value, label=comp_name, view=view, use_data=use_data, limits=limits, backend='matplotlib')
+        plt.title("%s t=%.2f ms"%(comp.model.info.name, comp_time))
+        #plt.gca().tick_params(labelbottom=False, labelleft=False)
+        #plt.gca().set_yticks([])
+        #plt.ylabel('')
         #cbar_title = "log I"
     if have_base and have_comp:
-        plt.subplot(133)
+        plt.subplot(222)
         if not opts['rel_err']:
             err, errstr, errview = resid, "abs err", "linear"
         else:
@@ -977,16 +1000,15 @@ def plot_models(opts, result, limits=None, setnum=0):
         # Note: base_data only since base and comp have same q values (though
         # perhaps different resolution), and we are plotting the difference
         # at each q
-        plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
+        plot_theory(base_data, err, view=errview, label=errstr, use_data=use_data, backend='matplotlib')
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
-        #cbar_title = errstr if errview=="linear" else "log "+errstr
-    #if is2D:
-    #    h = plt.colorbar()
-    #    h.ax.set_title(cbar_title)
-    fig = plt.gcf()
-    extra_title = ' '+opts['title'] if opts['title'] else ''
-    fig.suptitle(":".join(opts['name']) + extra_title)
+        if opts['is2d']:
+            plt.gca().tick_params(labelleft=False)
+            plt.gca().set_yticks([])
+            plt.ylabel('')
+        else:
+            plt.ylabel(errstr)
 
     if have_base and have_comp and opts['show_hist']:
         plt.figure()
@@ -1023,7 +1045,7 @@ OPTIONS = [
     '2d', '1d', 'sesans',
 
     # Parameter set
-    'preset', 'random', 'random=', 'sets=',
+    'preset', 'random', 'random=', 'sets=', 'seed=',
     'nopars', 'pars',
     'sphere', 'sphere=', # integrate over a sphere in 2d with n points
     'poly', 'mono',
@@ -1039,7 +1061,7 @@ OPTIONS = [
     'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
 
     # Output options
-    'help', 'html', 'edit',
+    'help', 'html', 'edit', 'wxedit',
 
     # Help options
     'h', '?', 'models', 'models='
@@ -1194,7 +1216,7 @@ def parse_opts(argv):
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
-        'explore'   : False,
+        'explore'   : None,
         'zero'      : False,
         'html'      : False,
         'title'     : None,
@@ -1227,6 +1249,7 @@ def parse_opts(argv):
         elif arg.startswith('-res='):      opts['res'] = arg[5:]
         elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
+        elif arg.startswith('-seed='):     opts['seed'] = int(arg[6:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = arg[8:]
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
@@ -1263,7 +1286,8 @@ def parse_opts(argv):
         elif arg == '-single!':     opts['engine'] = 'single!'
         elif arg == '-double!':     opts['engine'] = 'double!'
         elif arg == '-quad!':       opts['engine'] = 'quad!'
-        elif arg == '-edit':        opts['explore'] = True
+        elif arg == '-edit':        opts['explore'] = 'web'
+        elif arg == '-wxedit':      opts['explore'] = 'wx'
         elif arg == '-weights':     opts['show_weights'] = True
         elif arg == '-profile':     opts['show_profile'] = True
         elif arg == '-html':        opts['html'] = True
@@ -1303,6 +1327,10 @@ def parse_opts(argv):
 
     if PAR_SPLIT in opts['ngauss']:
         opts['ngauss'] = [int(k) for k in opts['ngauss'].split(PAR_SPLIT, 2)]
+        # TODO: change set_integration to be non-stateful so we can put adaptive after fixed
+        if opts['ngauss'][1] == 0:
+            a, b = opts['ngauss']
+            raise ValueError(f"Use -ngauss={b},{a} rather than -ngauss={a},{b}")
         comparison = True
     else:
         opts['ngauss'] = [int(opts['ngauss'])]*2
@@ -1568,23 +1596,58 @@ def explore(opts):
     """
     explore the model using the bumps gui.
     """
+    from bumps.names import FitProblem  # type: ignore
+
+    model = Explore(opts)
+    problem = FitProblem(model)
+    name = ":".join(opts['name']) if opts['name'][0] == opts['name'][1] else opts['name'][0]
+    problem.name = name
+
+    if opts['explore'] == 'wx':
+        wx_explore(problem)
+    else:
+        webview_explore(problem)
+
+def webview_explore(problem):
+    import logging
+
+    from aiohttp import web
+    try:
+        from bumps import api
+        from bumps.cli import BumpsOptions
+        from bumps.webview import webserver as server
+    except ImportError: # CRUFT: bumps 1.1 rearranged internal structure
+        from bumps.webview.server import api
+        from bumps.webview.server import webserver as server
+        from bumps.webview.server.cli import BumpsOptions
+    logging.getLogger("webview").setLevel(logging.WARNING)
+
+    server.init_web_app()
+    server.app.on_startup.append(lambda App: api.set_problem(problem))
+    options = BumpsOptions()
+    # CRUFT: options.threads does not have a default value
+    if not hasattr(options, 'threads'):
+        options.threads = False
+    sock = server.setup_app(options=options)
+    web.run_app(server.app, sock=sock)
+
+def wx_explore(problem):
     import wx  # type: ignore
     from bumps.gui import signal
     from bumps.gui.app_frame import AppFrame  # type: ignore
-    from bumps.names import FitProblem  # type: ignore
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
     app = wx.App() if wx.GetApp() is None else None
-    model = Explore(opts)
-    problem = FitProblem(model)
     frame = AppFrame(parent=None, title="explore", size=(1000, 700))
     if not is_mac:
         frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
+    # Hack to revert parameters to initial values: override the reload model tool
     def _reset_parameters(event):
+        model = next(problem.models)
         model.revert_values()
         signal.update_parameters(problem)
     frame.Bind(wx.EVT_TOOL, _reset_parameters, frame.ToolBar.GetToolByPos(1))
@@ -1594,6 +1657,7 @@ def explore(opts):
     if app:
         app.MainLoop()
 
+@dataclass
 class Explore:
     """
     Bumps wrapper for a SAS model comparison.
@@ -1601,11 +1665,18 @@ class Explore:
     The resulting object can be used as a Bumps fit problem so that
     parameters can be adjusted in the GUI, with plots updated on the fly.
     """
+    pars: dict[str, "Parameter"]
+    name = "sasmodels"
+
     def __init__(self, opts):
         # type: (Dict[str, Any]) -> None
-        from bumps.cli import config_matplotlib  # type: ignore
+        try:
+            from bumps.plotutil import config_matplotlib  # type: ignore
+        except ImportError: # CRUFT: bumps 1.1 rearranged internal structure
+            from bumps.cli import config_matplotlib
 
         from . import bumps_model
+
         config_matplotlib()
         self.opts = opts
         opts['pars'] = list(opts['pars'])
@@ -1673,19 +1744,36 @@ class Explore:
         """
         Plot the data and residuals.
         """
+        import matplotlib.pyplot as plt
+
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'][0] = pars
         if not self.fix_p2:
             self.opts['pars'][1] = pars
-        result = run_models(self.opts)
+        try:
+            result = run_models(self.opts)
+        except Exception as exc:
+            print("Exception %s while evaluating"%(exc.__class__.__name__))
+            import traceback
+            traceback.print_exc()
+            plt.clf()
+            return
         limits = plot_models(self.opts, result, limits=self.limits)
-        if self.limits is None:
-            vmin, vmax = limits
-            self.limits = vmax*1e-7, 1.3*vmax
-            import pylab
-            pylab.clf()
+
+        is_sf = self.opts['info'][0].structure_factor
+        if 0 and self.limits is None:
+            # Set limits based on first plot
+            if is_sf:
+                self.limits = 0.01, 4
+            else:
+                vmin, vmax = limits
+                self.limits = vmax*1e-7, 1.3*vmax
+            plt.clf()
             plot_models(self.opts, result, limits=self.limits)
+        if is_sf:
+            plt.xscale('linear')
+            plt.yscale('linear')
 
 
 def main(*argv):

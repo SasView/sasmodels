@@ -59,8 +59,8 @@ assert (len(COMMON_PARAMETERS) == NUM_COMMON_PARS
         and COMMON_PARAMETERS[1][0] == "background"), "don't change common parameters"
 
 
-def make_parameter_table(pars):
-    # type: (list[ParameterDef]) -> ParameterTable
+def make_parameter_table(pars, allow_magnetic=True):
+    # type: (list[ParameterDef], bool) -> ParameterTable
     """
     Construct a parameter table from a list of parameter definitions.
 
@@ -73,7 +73,7 @@ def make_parameter_table(pars):
             raise ValueError("Parameter should be [name, units, default, limits, type, desc], but got %r"
                              %str(p))
         processed.append(parse_parameter(*p))
-    partable = ParameterTable(processed)
+    partable = ParameterTable(processed, allow_magnetic=allow_magnetic)
     partable.check_angles(strict=True)
     return partable
 
@@ -140,6 +140,15 @@ def parse_parameter(name, units='', default=np.nan,
         ref = ref.strip()
     else:
         pid, ref = name, None
+
+    # TODO: remove code to identify type=sld based on "sld" in the parameter name
+    # Suppressing the following will remove magnetic parameters from models
+    # with implicitly defined sld types. Since this will change the behaviour
+    # on user-defined plugin models this should not happen except for during
+    # a major version update. We may, however, generate a deprecation warning
+    # when such a model is loaded. Note that this removes magnetism attributes
+    # from the parameter, so it is unlikely that it is being used, but saved
+    # models may fail when they try to set the M0 attribute on load.
 
     # automatically identify sld types
     if ptype == '' and (pid.startswith('sld') or pid.endswith('sld')):
@@ -434,8 +443,8 @@ class ParameterTable:
     the scale and background parameters that the kernel does not see.  User
     parameters don't use vector notation, and instead use p1, p2, ...
     """
-    def __init__(self, parameters):
-        # type: (list[Parameter]) -> None
+    def __init__(self, parameters, allow_magnetic=True):
+        # type: (list[Parameter], bool) -> None
 
         # scale and background are implicit parameters
         # Need them to be unique to each model in case they have different
@@ -444,8 +453,11 @@ class ParameterTable:
         self.kernel_parameters = parameters
         self._set_vector_lengths()
         self.npars = sum(p.length for p in self.kernel_parameters)
-        self.nmagnetic = sum(p.length for p in self.kernel_parameters
-                             if p.type == 'sld')
+        if allow_magnetic:
+            self.nmagnetic = sum(
+                p.length for p in self.kernel_parameters if p.type == 'sld')
+        else:
+            self.nmagnetic = 0
         self.nvalues = NUM_COMMON_PARS + self.npars
         if self.nmagnetic:
             self.nvalues += NUM_MAGFIELD_PARS + NUM_MAGNETIC_PARS*self.nmagnetic
@@ -641,9 +653,9 @@ class ParameterTable:
                           'magnetic', 'fraction of spin up incident'),
                 Parameter('up_frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
-                Parameter('up_theta', 'degrees', 90., [0., 360.],
+                Parameter('up_theta', 'degrees', 90., [-180., 180.],
                           'magnetic', 'polarization axis rotation angle'),
-                Parameter('up_phi', 'degrees', 0., [0., 180.],
+                Parameter('up_phi', 'degrees', 0., [-360., 360.],
                           'magnetic', 'polarization axis inclination angle'),
             ])
             slds = [p for p in full_list if p.type == 'sld']
@@ -651,9 +663,9 @@ class ParameterTable:
                 full_list.extend([
                     Parameter(p.id+'_M0', '1e-6/Ang^2', 0., [-np.inf, np.inf],
                               'magnetic', 'magnetic amplitude for '+p.description),
-                    Parameter(p.id+'_mtheta', 'degrees', 0., [-90., 90.],
+                    Parameter(p.id+'_mtheta', 'degrees', 0., [-180., 180.],
                               'magnetic', 'magnetic latitude for '+p.description),
-                    Parameter(p.id+'_mphi', 'degrees', 0., [-180., 180.],
+                    Parameter(p.id+'_mphi', 'degrees', 0., [-360., 360.],
                               'magnetic', 'magnetic longitude for '+p.description),
                 ])
         #print("call parameters", full_list)
@@ -860,6 +872,7 @@ def isstr(x):
     return isinstance(x, str)
 
 
+# Note: adding 'Fq' even though we can't yet use it to define C code in python.
 #: Set of variables defined in the model that might contain C code
 C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc',
              'form_volume', 'shell_volume', 'c_code', 'valid']
@@ -880,8 +893,7 @@ def _find_source_lines(model_info, kernel_module):
     """
     # Only need line numbers if we are creating a C module and the C symbols
     # are defined.
-    if (callable(model_info.Iq)
-            or not any(hasattr(model_info, s) for s in C_SYMBOLS)):
+    if not model_info.compiled:
         return
 
     # load the module source if we can
@@ -913,37 +925,44 @@ def make_model_info(kernel_module):
         # Custom sum/multi models
         return kernel_module.model_info
 
-    info = ModelInfo()
-
-    # Build the parameter table
-    #print("make parameter table", kernel_module.parameters)
-    parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
-
-    # background defaults to zero for structure factor models
-    structure_factor = getattr(kernel_module, 'structure_factor', False)
-    if structure_factor:
-        parameters.set_zero_background()
-
     filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
 
+    parameters = getattr(kernel_module, 'parameters', None)
+    if parameters is None:
+        raise ValueError("no parameter table specified for {filename}")
+
+    info = ModelInfo()
     info.id = kernel_id  # string used to load the kernel
-    info.basefile = info.filename = filename
     info.name = name
+    info.basefile = info.filename = filename
+
+    info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
+    info.Fq = getattr(kernel_module, 'Fq', None) # type: ignore
+    info.compiled = not callable(info.Iq) and not callable(info.Fq)
+
+    # TODO: enable magnetism for pure python models
+    # Build the parameter table
+    # print("make parameter table", parameters)
+    parameter_table = make_parameter_table(parameters, allow_magnetic=info.compiled)
+
+    # background defaults to zero for structure factor models
+    structure_factor = getattr(kernel_module, 'structure_factor', False)
+    if structure_factor:
+        parameter_table.set_zero_background()
+    info.base = info.parameters = parameter_table
+
     info.title = getattr(kernel_module, 'title', name+" model")
     info.description = getattr(kernel_module, 'description', 'no description')
-    info.base = info.parameters = parameters
     info.translation = None
     info.composition = None
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
-    # TODO: find Fq by inspection
     info.radius_effective_modes = getattr(kernel_module, 'radius_effective_modes', None)
-    info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     # Note: custom.load_custom_kernel_module assumes the C sources are defined
     # by this attribute.
@@ -955,7 +974,8 @@ def make_model_info(kernel_module):
     info.valid = getattr(kernel_module, 'valid', '')
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
-    info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
+    # TODO: We should be able to find Fq in C code by inspection.
+    info.have_Fq = getattr(kernel_module, 'have_Fq', (info.Fq is not None))
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
     info.Iqabc = getattr(kernel_module, 'Iqabc', None) # type: ignore
@@ -963,17 +983,17 @@ def make_model_info(kernel_module):
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
     # Default single and opencl to True for C models.  Python models have callable Iq.
-    info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
-    info.single = getattr(kernel_module, 'single', not callable(info.Iq))
+    info.opencl = getattr(kernel_module, 'opencl', info.compiled)
+    info.single = getattr(kernel_module, 'single', info.compiled)
     info.random = getattr(kernel_module, 'random', None)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
     # Set control flag for explicitly set parameters, e.g., in the RPA model.
     control = getattr(kernel_module, 'control', None)
     if control is not None:
-        parameters[control].is_control = True
+        parameter_table[control].is_control = True
 
-    if callable(info.Iq) and parameters.has_2d:
+    if not info.compiled and parameter_table.has_2d:
         raise ValueError("oriented python models not supported")
 
     # CRUFT: support old-style ER() for effective radius
@@ -987,7 +1007,7 @@ def make_model_info(kernel_module):
     # so just issue a warning if we see ER in a C model.
     ER = getattr(kernel_module, 'ER', None)
     if ER is not None:
-        if callable(info.Iq) and info.radius_effective is None:
+        if not info.compiled and info.radius_effective is None:
             info.radius_effective_modes = ['ER']
             info.radius_effective = lambda mode, *args: ER(*args)
             # TODO: uncomment the following for the sasview 4.3 release
@@ -1090,13 +1110,12 @@ class ModelInfo:
     #: the model cannot be run in opencl (e.g., because the model passes
     #: functions by reference), then set this to false.
     opencl = None           # type: bool
+    #: True if the model is compiled with C or OpenCL
+    compiled = None         # type: bool
     #: True if the model is a structure factor used to model the interaction
     #: between form factor models.  This will default to False if it is not
     #: provided in the file.
     structure_factor = None # type: bool
-    #: True if the model defines an Fq function with signature
-    #: ``void Fq(double q, double *F1, double *F2, ...)``
-    have_Fq = False
     #: List of options for computing the effective radius of the shape,
     #: or None if the model is not usable as a form factor model.
     radius_effective_modes = None   # type: list[str]
@@ -1134,20 +1153,16 @@ class ModelInfo:
     #: monodisperse approximation for non-dilute solutions, P@S.  The first
     #: argument is the integer effective radius mode, with default 0.
     radius_effective = None  # type: Union[None, Callable[[int, np.ndarray], float]]
-    #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
-    #: by the parameter table.  *Iq* can be defined as a python function, or
-    #: as a C function.  If it is defined in C, then set *Iq* to the body of
-    #: the C function, including the return statement.  This function takes
-    #: values for *q* and each of the parameters as separate *double* values
-    #: (which may be converted to float or long double by sasmodels).  All
-    #: source code files listed in :attr:`source` will be loaded before the
-    #: *Iq* function is defined.  If *Iq* is not present, then sources should
-    #: define *static double Iq(double q, double a, double b, ...)* which
-    #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
-    #: pointers to doubles.  Constants in floating point expressions should
-    #: include the decimal point. See :mod:`.generate` for more details. If
-    #: *have_Fq* is True, then Iq should return an interleaved array of
-    #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
+    #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined by the
+    #: parameter table. Multiplicity parameters such as the number of shells are
+    #: sent as floating point values. If the function can operate with a vector
+    #: of *q* values (that is, you aren't doing simple comparisons such as
+    #: *q > 0*), then set *Iq.vectorized = True* to make your code run faster.
+    #: You can also set *Iq* to a string containing the body of a C function.
+    #: For example, ``Iq = return (a*q + b)*q + c;`` will generate a quadratic.
+    #: All source code files listed in :attr:`source` will be loaded before the
+    #: C function is defined. Constants in floating point expressions should
+    #: include the decimal point. See :mod:`.generate` for more details.
     Iq = None               # type: Union[None, str, Callable[[...], np.ndarray]]
     #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
     Iqxy = None             # type: Union[None, str, Callable[[...], np.ndarray]]
@@ -1157,6 +1172,13 @@ class ModelInfo:
     Iqabc = None            # type: Union[None, str, Callable[[...], np.ndarray]]
     #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
     Imagnetic = None        # type: Union[None, str, Callable[[...], np.ndarray]]
+    #: Returns *F(q, a, b, ...), F^2(q, a, b, c, ...)*. Note: you cannot assign
+    #: a C source code body to *Fq*.
+    Fq = None               # type: Union[None, Callable[[...], Tuple[np.ndarray,np.ndarray]]]
+    #: True if the model defines an Fq function in C with signature
+    #: ``void Fq(double q, double *F1, double *F2, ...)``
+    #: or in python as ``Fq(q, ...) -> (fq, fq^2)``.
+    have_Fq = False
     #: Returns a model profile curve *x, y*.  If *profile* is defined, this
     #: curve will appear in response to the *Show* button in SasView.  Use
     #: :attr:`profile_axes` to set the axis labels.  Note that *y* values

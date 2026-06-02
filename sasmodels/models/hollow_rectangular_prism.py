@@ -138,7 +138,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Ratio sides c/a"],
               ["thickness", "Ang", 1, [0, inf], "volume",
                "Thickness of parallelepiped"],
-              ["theta", "degrees", 0, [-360, 360], "orientation",
+              ["theta", "degrees", 0, [-180, 180], "orientation",
                "c axis to beam angle"],
               ["phi", "degrees", 0, [-360, 360], "orientation",
                "rotation about beam"],
@@ -146,7 +146,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "rotation about c axis"],
              ]
 
-source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
+source = ["lib/adaptive.c", "hollow_rectangular_prism.c"]
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent outer volume sphere",

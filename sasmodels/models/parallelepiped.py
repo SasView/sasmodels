@@ -223,7 +223,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Second side of the parallelepiped"],
               ["length_c", "Ang", 400, [0, inf], "volume",
                "Larger side of the parallelepiped"],
-              ["theta", "degrees", 60, [-360, 360], "orientation",
+              ["theta", "degrees", 60, [-180, 180], "orientation",
                "c axis to beam angle"],
               ["phi", "degrees", 60, [-360, 360], "orientation",
                "rotation about beam"],
@@ -231,7 +231,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "rotation about c axis"],
              ]
 
-source = ["lib/gauss76.c", "parallelepiped.c"]
+source = ["lib/adaptive.c", "parallelepiped.c"]
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",

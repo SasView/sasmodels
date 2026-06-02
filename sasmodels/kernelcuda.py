@@ -274,8 +274,8 @@ class GpuEnvironment:
         """
         return has_type(dtype)
 
-    def compile_program(self, name, source, dtype, fast, timestamp):
-        # type: (str, str, np.dtype, bool, float) -> SourceModule
+    def compile_program(self, name, source, dtype, fast, timestamp, kernel_names):
+        # type: (str, str, np.dtype, bool, float, list[str]) -> SourceModule
         """
         Compile the program for the device in the given context.
         """
@@ -284,14 +284,15 @@ class GpuEnvironment:
         tag = generate.tag_source(source)
         key = "%s-%s-%s%s"%(name, dtype, tag, ("-fast" if fast else ""))
         # Check timestamp on program.
-        program, program_timestamp = self.compiled.get(key, (None, np.inf))
-        if program_timestamp < timestamp:
+        program, compile_timestamp, kernels = self.compiled.get(key, (None, np.inf, []))
+        if compile_timestamp < timestamp:
             del self.compiled[key]
         if key not in self.compiled:
             logging.info("building %s for CUDA", key)
             program = compile_model(str(source), dtype, fast)
-            self.compiled[key] = (program, timestamp)
-        return program
+            kernels = [getattr(program, k) for k in kernel_names]
+            self.compiled[key] = (program, timestamp, kernels)
+        return kernels
 
 
 class GpuModel(KernelModel):
@@ -349,19 +350,17 @@ class GpuModel(KernelModel):
     def _prepare_program(self):
         # type: (str) -> None
         env = environment()
+        variants = ['Iq', 'Iqxy', 'Imagnetic']
+        kernel_names = [generate.kernel_name(self.info, k) for k in variants]
         timestamp = generate.ocl_timestamp(self.info)
-        program = env.compile_program(
+        kernels = env.compile_program(
             self.info.name,
             self.source['opencl'],
             self.dtype,
             self.fast,
-            timestamp)
-        variants = ['Iq', 'Iqxy', 'Imagnetic']
-        names = [generate.kernel_name(self.info, k) for k in variants]
-        functions = [program.get_function(k) for k in names]
-        self._kernels = {k: v for k, v in zip(variants, functions)}
-        # Keep a handle to program so GC doesn't collect.
-        self._program = program
+            timestamp,
+            kernel_names)
+        self._kernels = {k: v for k, v in zip(variants, kernels)}
 
 
 # TODO: Check that we don't need a destructor for buffers which go out of scope.

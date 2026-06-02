@@ -28,6 +28,8 @@ same directory).  You probably need a command such as::
 
 from bumps.names import FitProblem
 
+from sasdata import data_path
+
 from sasmodels.bumps_model import Experiment, Model
 from sasmodels.core import load_model
 from sasmodels.data import load_data
@@ -36,7 +38,7 @@ from sasmodels.multiscat import MultipleScattering
 ## Load the data
 #data = load_data('DEC07267.DAT')
 #set_beam_stop(data, 0.003, outer=0.025)
-data = load_data('latex_smeared.xml', index=0)
+data = load_data(str(data_path / '1d_data' / 'latex_smeared.xml'), index=0)
 
 ## Define the model
 kernel = load_model("ellipsoid")
@@ -78,5 +80,5 @@ problem = FitProblem(M)
 if __name__ == "__main__":
     #M.theory()
     M.plot()
-    import pylab
-    pylab.show()
+    import matplotlib.pyplot as plt
+    plt.show()

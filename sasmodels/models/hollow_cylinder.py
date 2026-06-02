@@ -93,12 +93,12 @@ parameters = [
     ["length",      "Ang",    400.0, [0, inf],    "volume",      "Cylinder total length"],
     ["sld",         "1e-6/Ang^2",  6.3, [-inf, inf], "sld",      "Cylinder sld"],
     ["sld_solvent", "1e-6/Ang^2",  1,   [-inf, inf], "sld",      "Solvent sld"],
-    ["theta",       "degrees", 90,   [-360, 360], "orientation", "Cylinder axis to beam angle"],
+    ["theta",       "degrees", 90,   [-180, 180], "orientation", "Cylinder axis to beam angle"],
     ["phi",         "degrees",  0,   [-360, 360], "orientation", "Rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c", "hollow_cylinder.c"]
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent outer volume sphere",

@@ -147,13 +147,13 @@ parameters = [
     ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "sld",         "Solvent scattering length density"],
     ["radius_polar",       "Ang",  20, [0, inf],    "volume",      "Polar radius"],
     ["radius_equatorial",  "Ang", 400, [0, inf],    "volume",      "Equatorial radius"],
-    ["theta",          "degrees",  60, [-360, 360], "orientation", "ellipsoid axis to beam angle"],
+    ["theta",          "degrees",  60, [-180, 180], "orientation", "ellipsoid axis to beam angle"],
     ["phi",            "degrees",  60, [-360, 360], "orientation", "rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
 
-source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/adaptive.c", "ellipsoid.c"]
 have_Fq = True
 radius_effective_modes = [
     "average curvature", "equivalent volume sphere", "min radius", "max radius",

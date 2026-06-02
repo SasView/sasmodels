@@ -91,7 +91,7 @@ def _matches(name, kind):
     info = load_model_info(name)
     pars = info.parameters.kernel_parameters
     # TODO: may be adding Fq to the list at some point
-    is_pure_py = callable(info.Iq)
+    is_pure_py = not info.compiled
     if kind == "py":
         return is_pure_py
     elif kind == "c":
@@ -322,7 +322,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
             raise ValueError('unknown mixture type %s'%composition_type)
 
     # If it is a python model, return it immediately
-    if callable(model_info.Iq):
+    if not model_info.compiled:
         from . import kernelpy
         return kernelpy.PyModel(model_info)
 
@@ -359,7 +359,7 @@ def precompile_dlls(path, dtype="double"):
     compiled_dlls = []
     for model_name in list_models():
         model_info = load_model_info(model_name)
-        if not callable(model_info.Iq):
+        if model_info.compiled:
             source = generate.make_source(model_info)['dll']
             old_path = kerneldll.SAS_DLL_PATH
             try:

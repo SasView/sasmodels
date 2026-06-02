@@ -127,13 +127,13 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder shell thickness"],
               ["length", "Ang", 400, [0, inf], "volume",
                "Cylinder length"],
-              ["theta", "degrees", 60, [-360, 360], "orientation",
+              ["theta", "degrees", 60, [-180, 180], "orientation",
                "cylinder axis to beam angle"],
               ["phi", "degrees", 60, [-360, 360], "orientation",
                "rotation about beam"],
              ]
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c", "core_shell_cylinder.c"]
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "outer radius", "half outer length",

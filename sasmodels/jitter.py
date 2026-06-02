@@ -46,6 +46,7 @@ From a jupyter cell::
 """
 
 import argparse
+import warnings
 
 import numpy as np
 from numpy import arccos, arctan2, cos, degrees, exp, log, pi, radians, sin, sqrt
@@ -569,8 +570,7 @@ def draw_labels(axes, view, jitter, text):
 
     # TODO: zdir for labels is broken, and labels aren't appearing.
     for label, p, zdir in zip(labels, zip(px, py, pz), zip(dx, dy, dz)):
-        zdir = np.asarray(zdir).flatten()
-        axes.text(p[0], p[1], p[2], label, zdir=zdir)
+        axes.text(p[0], p[1], p[2], label, zdir=tuple(zdir))
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
@@ -615,15 +615,17 @@ def apply_jitter(jitter, points):
     Apply the jitter transform to a set of points.
 
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
+
+    Jitter is (dtheta, dphi, dpsi, convention) where convention is "zyz" or "xyz".
+    If convention is missing it defaults to "xyz".
     """
     if jitter is None:
         return points
-    # Hack to deal with the fact that azimuthal_equidistance uses euler angles
-    if len(jitter) == 4:
-        dtheta, dphi, dpsi, _ = jitter
+    convention = jitter[3] if len(jitter) == 4 else "xyz"
+    dtheta, dphi, dpsi = jitter[:3]
+    if convention == "zyz":
         points = Rz(dphi)@Ry(dtheta)@Rz(dpsi)@points
     else:
-        dtheta, dphi, dpsi = jitter
         points = Rx(dphi)@Ry(dtheta)@Rz(dpsi)@points
     return points
 
@@ -808,12 +810,15 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     ## increase pd_n for testing jitter integration rather than simple viz
     #theta_pd_n, phi_pd_n, psi_pd_n = [5*v for v in (theta_pd_n, phi_pd_n, psi_pd_n)]
 
-    pars = dict(
-        theta=theta, theta_pd=theta_pd, theta_pd_type=dist, theta_pd_n=theta_pd_n,
-        phi=phi, phi_pd=phi_pd, phi_pd_type=dist, phi_pd_n=phi_pd_n,
-        psi=psi, psi_pd=psi_pd, psi_pd_type=dist, psi_pd_n=psi_pd_n,
-    )
-    pars.update(calculator.pars)
+    # Some models do not accept theta, phi or psi
+    pars = calculator.pars.copy()
+    if 'theta' in pars:
+        pars.update(theta=theta, theta_pd=theta_pd, theta_pd_type=dist, theta_pd_n=theta_pd_n)
+    if 'phi' in pars:
+        pars.update(phi=phi, phi_pd=phi_pd, phi_pd_type=dist, phi_pd_n=phi_pd_n)
+    if 'psi' in pars:
+        pars.update(psi=psi, psi_pd=psi_pd, psi_pd_type=dist, psi_pd_n=psi_pd_n)
+
 
     # compute the pattern
     qx, qy = calculator.qxqy
@@ -849,7 +854,7 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     else:
         axes.pcolormesh(qx, qy, Iqxy)
 
-def build_model(model_name, n=150, qmax=0.5, **pars):
+def build_model(model_name, n=150, num_angles=3, qmax=0.5, **pars):
     """
     Build a calculator for the given shape.
 
@@ -881,10 +886,15 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     # stuff the values for non-orientation parameters into the calculator
     calculator.pars = pars.copy()
     calculator.pars.setdefault('background', 1e-3)
+    if num_angles > 0:
+        calculator.pars.update(theta=0, phi=0)
+    if num_angles == 3:
+        calculator.pars.update(psi=0)
+
 
     # fix the data limits so that we can see if the pattern fades
     # under rotation or angular dispersion
-    Iqxy = calculator(theta=0, phi=0, psi=0, **calculator.pars)
+    Iqxy = calculator(**calculator.pars)
     Iqxy = log(Iqxy)
     vmin, vmax = clipped_range(Iqxy, 0.95, mode='top')
     calculator.limits = vmin, vmax+1
@@ -908,52 +918,54 @@ def select_calculator(model_name, n=150, size=(10, 40, 100)):
     d_factor = 0.06  # for paracrystal models
     if model_name == 'sphere':
         calculator = build_model(
-            'sphere', n=n, radius=c)
+            'sphere', n=n, num_angles=0, radius=c)
         a = b = c
     elif model_name == 'sc_paracrystal':
         a = b = c
         dnn = c
         radius = 0.5*c
         calculator = build_model(
-            'sc_paracrystal', n=n,
+            'sc_paracrystal', n=n, num_angles=0,
             dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
             background=0)
     elif model_name == 'fcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
         # model uses lattice spacing rather than dnn in its calculations
+        warnings.warn("nearest neighbour distance may be wrong here")
         dnn = 0.5*c
         radius = sqrt(2)/4 * c
         calculator = build_model(
-            'fcc_paracrystal', n=n,
+            'fcc_paracrystal', n=n, num_angles=0,
             dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
             background=0)
     elif model_name == 'bcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
         # model uses lattice spacing rather than dnn in its calculations
+        warnings.warn("nearest neighbour distance may be wrong here")
         dnn = 0.5*c
         radius = sqrt(3)/2 * c
         calculator = build_model(
-            'bcc_paracrystal', n=n,
+            'bcc_paracrystal', n=n, num_angles=0,
             dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
             background=0)
     elif model_name == 'cylinder':
         calculator = build_model(
-            'cylinder', n=n, qmax=0.3, radius=b, length=c)
+            'cylinder', n=n, num_angles=2, qmax=0.3, radius=b, length=c)
         a = b
     elif model_name == 'ellipsoid':
         calculator = build_model(
-            'ellipsoid', n=n, qmax=1.0,
+            'ellipsoid', n=n, num_angles=2, qmax=1.0,
             radius_polar=c, radius_equatorial=b)
         a = b
     elif model_name == 'triaxial_ellipsoid':
         calculator = build_model(
-            'triaxial_ellipsoid', n=n, qmax=0.5,
+            'triaxial_ellipsoid', n=n, num_angles=3, qmax=0.5,
             radius_equat_minor=a, radius_equat_major=b, radius_polar=c)
     elif model_name == 'parallelepiped':
         calculator = build_model(
-            'parallelepiped', n=n, length_a=a, length_b=b, length_c=c)
+            'parallelepiped', n=n, num_angles=3, length_a=a, length_b=b, length_c=c)
     else:
         raise ValueError("unknown model %s"%model_name)
 
@@ -1092,6 +1104,9 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
         limit = [0, 0.5, 5, 5][dims]
         jitter = [0 if v < limit else v for v in jitter]
         axes.cla()
+        axes.set_xlabel('x axis')
+        axes.set_ylabel('y axis')
+        axes.set_zlabel('z axis')
 
         ## Visualize as person on globe
         #draw_sphere(axes, radius=0.5)

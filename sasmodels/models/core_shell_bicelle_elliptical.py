@@ -137,14 +137,14 @@ parameters = [
     ["sld_face",       "1e-6/Ang^2", 7, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 6, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",       "degrees",    90.0, [-360, 360], "orientation", "Cylinder axis to beam angle"],
+    ["theta",       "degrees",    90.0, [-180, 180], "orientation", "Cylinder axis to beam angle"],
     ["phi",         "degrees",    0,    [-360, 360], "orientation", "Rotation about beam"],
     ["psi",         "degrees",    0,    [-360, 360], "orientation", "Rotation about cylinder axis"]
     ]
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
+source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c",
           "core_shell_bicelle_elliptical.c"]
 have_Fq = True
 radius_effective_modes = [

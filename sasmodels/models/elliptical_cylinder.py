@@ -117,13 +117,13 @@ parameters = [["radius_minor",     "Ang",        20.0,  [0, inf],    "volume",  
               ["length",      "Ang",        400.0, [1, inf],    "volume",      "Length of the cylinder"],
               ["sld",         "1e-6/Ang^2", 4.0,   [-inf, inf], "sld",         "Cylinder scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1.0,   [-inf, inf], "sld",         "Solvent scattering length density"],
-              ["theta",       "degrees",    90.0,  [-360, 360], "orientation", "cylinder axis to beam angle"],
+              ["theta",       "degrees",    90.0,  [-180, 180], "orientation", "cylinder axis to beam angle"],
               ["phi",         "degrees",    0,     [-360, 360], "orientation", "rotation about beam"],
               ["psi",         "degrees",    0,     [-360, 360], "orientation", "rotation about cylinder axis"]]
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "elliptical_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c", "elliptical_cylinder.c"]
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume",

@@ -103,6 +103,14 @@ to understand the 2d patterns fully. A number of different shapes of
 distribution are available, as described for size dispersity, see
 :ref:`polydispersityhelp`.
 
+The parameter limits for the orientation parameters are generous, with
+$\theta \in [-180, 180]$ and $\phi, \Psi \in [-360, 360]$. Although
+there will be multiple equivalent solutions in the space, these limits
+allow you to set bounds around the solution even when it is near a pole.
+For example, if the solution is within 4 degrees of $\phi = 179 \pm 4$,
+having strict bounds would force you to search both in $[175, 180]$ and
+in $[-180, -177]$ instead of searching within $[175, 183]$.
+
 Given that the angular dispersion distribution is defined in cartesian space,
 over a cube defined by
 
@@ -130,9 +138,9 @@ will be the case for $\theta=90$ and $\Psi=90$) the scattering pattern
 should be circularly symmetric, but it will go to zero at $q_x = 0$ due to the
 $\sin(\Delta\theta)$ correction. This problem does not appear for a shape
 that is tumbling freely around the $a$ axis, with $\Delta\phi$ uniform in
-$[-180, 180]$, so swap the $a$ and $b$ axes so $\Delta\theta < \Delta\phi$
-and adjust $\Psi$ by 90. This works with the current sasmodels shapes due to
-symmetry.
+$[-180, 180]$. For shapes such as parallelepiped or triaxial ellipsoid where
+the choice of a, b and c is arbitrary, you can minimize the problem by
+relabelling the axes and adjusting the orientation.
 
 Alternative projections were considered.
 The `sinusoidal projection <https://en.wikipedia.org/wiki/Sinusoidal_projection>`_
