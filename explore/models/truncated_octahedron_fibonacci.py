@@ -1,4 +1,4 @@
-# octahedron_truncated model
+# truncated octahedron model
 # Note: model title and parameter table are inserted automatically
 r"""
 This model provides the form factor P(q) for a general octahedron with orientational averaging (Fibonacci quadrature).
@@ -215,9 +215,9 @@ Authorship and Verification
 import numpy as np
 from numpy import inf
 
-from sasmodels.quadratures.fibonacci import fibonacci_sphere
+from sasmodels.special.fibonacci import fibonacci_sphere
 
-name = "octahedron_truncated_fibonacci"
+name = "truncated_octahedron_fibonacci"
 title = "General octahedron pure python model using Fibonacci quadrature"
 description = """
 The amplitude AP is defined as follows.
