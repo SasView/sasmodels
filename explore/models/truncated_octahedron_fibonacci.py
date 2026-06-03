@@ -1,4 +1,5 @@
 # truncated octahedron model
+# pure python version using Fibonacci integration.
 # Note: model title and parameter table are inserted automatically
 r"""
 This model provides the form factor P(q) for a general octahedron.
@@ -8,7 +9,7 @@ It includes the possibility to add an adjustable square truncation at each of th
 This model includes the general cuboctahedron shape for the maximum value of truncation.
 The form factor expression is obtained by analytical integration over the volume of the shape.
 This model is constructed in a similar way as the rectangular prism model.
-It contains both the form factor for a reference orientation and the 1D form factor after orientation average (Gauss-Legendre).
+It contains both the form factor for a reference orientation and the 1D form factor after orientation average (Fibonacci integration).
 
 Definition
 ----------
