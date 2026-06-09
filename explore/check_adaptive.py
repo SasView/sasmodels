@@ -26,18 +26,6 @@ Check speed and accuracy via explore/check_adaptive.py (this file).
 There are multiple control parameters for running this program, but you need
 to change the code to set them. Search for "runtime control flags" below.
 
-speed_target=2 warns if adaptive is 2x slower than gauss-76.
-
-speed_only only compares the calculation speed, not the accuracy
-
-speed_check is what to compare adaptive against: "gauss-76" fixed grid
-or adaptive running on the "gpu", or None for no speed check
-
-In the code UNNESTED are 1D integrals and NESTED are 2d integrals.
-
-big_n is the grid size for the target value. Time scales as n² for NESTED models,
-so only a few q values are tested.
-
 I've checked a couple of models using big_n=15000 by listing them on the command line:
 
     $ python explore/check_adaptive.py capped_cylinder barbell
@@ -424,6 +412,22 @@ def check(models=[]):
 
 
     # === runtime control flags ===
+    # speed_target=n warns if adaptive is n times slower than gauss-76
+    # speed_only only compares the calculation speed, not the accuracy
+    # speed_check is what to compare adaptive against:
+    #     "gauss-76" fixed grid,
+    #     "gpu" adaptive running on the GPU, or
+    #     None for no speed check
+    # big_n is the grid size for large shapes. Time scales as n²
+    #     for NESTED models, so only a few q values are tested,
+    #     ranging over USANS values 5e-4 to 1e-1. The high q is
+    #     large so we can look at the cost of computing resolution
+    #     effects in slit geometry
+    # small_n is the grid size for small shapes.
+    # n_per_decade=n is the number of q points per decade unsed for
+    #     small shapes. With three decades, n=1 means four q points,
+    #     which is fewer than the number used for big_n
+
     speed_target = 2
     speed_only = False
     speed_check = "gauss-76"  # None | "" | "gpu" | "gauss-76"
@@ -458,7 +462,7 @@ def check(models=[]):
 
         print(f"\n\n=== {'big' if big else 'small'} {aspect}: {a=} {b=} {c=} ===")
         ab = max(a, b)
-        for name, fn in UNNESTED.items():
+        for name, fn in UNNESTED.items():  # 1D integrals
             # skip models not listed
             if models and name not in models:
                 continue
@@ -466,7 +470,7 @@ def check(models=[]):
             run_test(name, pars, q, n_gauss, test_q, test_tol)
 
         ab = max(a, b)
-        for name, fn in NESTED.items():
+        for name, fn in NESTED.items():  # 2D integrals
             # skip models not listed
             if models and name not in models:
                 continue
