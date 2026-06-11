@@ -59,8 +59,8 @@ assert (len(COMMON_PARAMETERS) == NUM_COMMON_PARS
         and COMMON_PARAMETERS[1][0] == "background"), "don't change common parameters"
 
 
-def make_parameter_table(pars):
-    # type: (list[ParameterDef]) -> ParameterTable
+def make_parameter_table(pars, allow_magnetic=True):
+    # type: (list[ParameterDef], bool) -> ParameterTable
     """
     Construct a parameter table from a list of parameter definitions.
 
@@ -73,7 +73,7 @@ def make_parameter_table(pars):
             raise ValueError("Parameter should be [name, units, default, limits, type, desc], but got %r"
                              %str(p))
         processed.append(parse_parameter(*p))
-    partable = ParameterTable(processed)
+    partable = ParameterTable(processed, allow_magnetic=allow_magnetic)
     partable.check_angles(strict=True)
     return partable
 
@@ -140,6 +140,15 @@ def parse_parameter(name, units='', default=np.nan,
         ref = ref.strip()
     else:
         pid, ref = name, None
+
+    # TODO: remove code to identify type=sld based on "sld" in the parameter name
+    # Suppressing the following will remove magnetic parameters from models
+    # with implicitly defined sld types. Since this will change the behaviour
+    # on user-defined plugin models this should not happen except for during
+    # a major version update. We may, however, generate a deprecation warning
+    # when such a model is loaded. Note that this removes magnetism attributes
+    # from the parameter, so it is unlikely that it is being used, but saved
+    # models may fail when they try to set the M0 attribute on load.
 
     # automatically identify sld types
     if ptype == '' and (pid.startswith('sld') or pid.endswith('sld')):
@@ -434,8 +443,8 @@ class ParameterTable:
     the scale and background parameters that the kernel does not see.  User
     parameters don't use vector notation, and instead use p1, p2, ...
     """
-    def __init__(self, parameters):
-        # type: (list[Parameter]) -> None
+    def __init__(self, parameters, allow_magnetic=True):
+        # type: (list[Parameter], bool) -> None
 
         # scale and background are implicit parameters
         # Need them to be unique to each model in case they have different
@@ -444,8 +453,11 @@ class ParameterTable:
         self.kernel_parameters = parameters
         self._set_vector_lengths()
         self.npars = sum(p.length for p in self.kernel_parameters)
-        self.nmagnetic = sum(p.length for p in self.kernel_parameters
-                             if p.type == 'sld')
+        if allow_magnetic:
+            self.nmagnetic = sum(
+                p.length for p in self.kernel_parameters if p.type == 'sld')
+        else:
+            self.nmagnetic = 0
         self.nvalues = NUM_COMMON_PARS + self.npars
         if self.nmagnetic:
             self.nvalues += NUM_MAGFIELD_PARS + NUM_MAGNETIC_PARS*self.nmagnetic
@@ -913,29 +925,38 @@ def make_model_info(kernel_module):
         # Custom sum/multi models
         return kernel_module.model_info
 
-    info = ModelInfo()
-
-    # Build the parameter table
-    #print("make parameter table", kernel_module.parameters)
-    parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
-
-    # background defaults to zero for structure factor models
-    structure_factor = getattr(kernel_module, 'structure_factor', False)
-    if structure_factor:
-        parameters.set_zero_background()
-
     filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
 
+    parameters = getattr(kernel_module, 'parameters', None)
+    if parameters is None:
+        raise ValueError("no parameter table specified for {filename}")
+
+    info = ModelInfo()
     info.id = kernel_id  # string used to load the kernel
-    info.basefile = info.filename = filename
     info.name = name
+    info.basefile = info.filename = filename
+
+    info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
+    info.Fq = getattr(kernel_module, 'Fq', None) # type: ignore
+    info.compiled = not callable(info.Iq) and not callable(info.Fq)
+
+    # TODO: enable magnetism for pure python models
+    # Build the parameter table
+    # print("make parameter table", parameters)
+    parameter_table = make_parameter_table(parameters, allow_magnetic=info.compiled)
+
+    # background defaults to zero for structure factor models
+    structure_factor = getattr(kernel_module, 'structure_factor', False)
+    if structure_factor:
+        parameter_table.set_zero_background()
+    info.base = info.parameters = parameter_table
+
     info.title = getattr(kernel_module, 'title', name+" model")
     info.description = getattr(kernel_module, 'description', 'no description')
-    info.base = info.parameters = parameters
     info.translation = None
     info.composition = None
     info.docs = kernel_module.__doc__
@@ -953,8 +974,6 @@ def make_model_info(kernel_module):
     info.valid = getattr(kernel_module, 'valid', '')
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
-    info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
-    info.Fq = getattr(kernel_module, 'Fq', None) # type: ignore
     # TODO: We should be able to find Fq in C code by inspection.
     info.have_Fq = getattr(kernel_module, 'have_Fq', (info.Fq is not None))
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
@@ -964,7 +983,6 @@ def make_model_info(kernel_module):
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
     # Default single and opencl to True for C models.  Python models have callable Iq.
-    info.compiled = not callable(info.Iq) and not callable(info.Fq)
     info.opencl = getattr(kernel_module, 'opencl', info.compiled)
     info.single = getattr(kernel_module, 'single', info.compiled)
     info.random = getattr(kernel_module, 'random', None)
@@ -973,9 +991,9 @@ def make_model_info(kernel_module):
     # Set control flag for explicitly set parameters, e.g., in the RPA model.
     control = getattr(kernel_module, 'control', None)
     if control is not None:
-        parameters[control].is_control = True
+        parameter_table[control].is_control = True
 
-    if not info.compiled and parameters.has_2d:
+    if not info.compiled and parameter_table.has_2d:
         raise ValueError("oriented python models not supported")
 
     # CRUFT: support old-style ER() for effective radius

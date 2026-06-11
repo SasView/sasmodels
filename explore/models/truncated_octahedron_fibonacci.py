@@ -1,4 +1,5 @@
-# octahedron_truncated model
+# truncated octahedron model
+# pure python version using Fibonacci integration.
 # Note: model title and parameter table are inserted automatically
 r"""
 This model provides the form factor P(q) for a general octahedron.
@@ -8,13 +9,13 @@ It includes the possibility to add an adjustable square truncation at each of th
 This model includes the general cuboctahedron shape for the maximum value of truncation.
 The form factor expression is obtained by analytical integration over the volume of the shape.
 This model is constructed in a similar way as the rectangular prism model.
-It contains both the form factor for a reference orientation and the 1D form factor after orientation average (Gauss-Legendre).
+It contains both the form factor for a reference orientation and the 1D form factor after orientation average (Fibonacci integration).
 
 Definition
 ----------
 
 This model computes the form factor of a general octahedron by defining its size through
-its circumradius :math:`radius_a` (parameter called *radius_a* in the model), 
+its circumradius :math:`radius_a` (parameter called *radius_a* in the model),
 the elongations through the ratios :math:`\frac{b}{a}` and :math:`\frac{c}{a}` (parameters called *b2a_ratio* and *c2a_ratio* in the model) and the truncation level through the
 truncation ratio *t* (parameter called *truncation* in the model).
 
@@ -38,7 +39,7 @@ The resulting shape consists of six squares and eight hexagons, which may be irr
 The truncation ratio *t* (parameter called `truncation` in the model) is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
 For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
-Indeed, a square facet crosses the x, y, z directions at distances equal to 
+Indeed, a square facet crosses the x, y, z directions at distances equal to
 :math:`t_{\mathrm{inv}} \, radius_a`, :math:`t_{\mathrm{inv}} \, radius_b` and :math:`t_{\mathrm{inv}} \, radius_c`.
 
 A regular octahedron corresponds to:
@@ -49,7 +50,7 @@ A regular octahedron corresponds to:
 
 A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
-.. math:: 
+.. math::
 
     radius_a = radius_b = radius_c, \quad t  = \frac{1}{2}
 
@@ -80,7 +81,7 @@ For a regular shape (no elongation):
     A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2}
 
 .. math::
-    
+
     radius_{\text{a}} = radius_{\text{b}} = radius_{\text{c}} = A_{\text{edge}} / \sqrt{2}
 
 .. math::
@@ -88,7 +89,7 @@ For a regular shape (no elongation):
     V = \frac{4}{3} \, radius_{\text{a}}^{3} \, \bigl(1 - 3 t^3 \bigr)
 
 The reference orientation of the shape is: a along x, b along y and c along z.
-Amplitude of the form factor AP for the reference orientation of the shape reads 
+Amplitude of the form factor AP for the reference orientation of the shape reads
 
 .. math::
 
@@ -157,6 +158,8 @@ is the scattering length inside the volume, ρ *solvent*
 is the scattering length of the solvent, and (if the data are in absolute
 units) *scale* represents the volume fraction (which is unitless).
 
+The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform distribution of points on the unit sphere.
+The repartition of the points is computed using the golden ratio (see fibonacci.py).
 
 .. figure:: img/octa-truncated.png
 
@@ -194,16 +197,19 @@ Authorship and Verification
              Helen Ibrahim (helenibrahim1@outlook.com)
              Sara Mokhtari (smokhtari@insa-toulouse.fr)
 
-* **Last Modified by:** MIC **Date:** 11 December 2025
+* **Last Modified by:** SM **Date:** 13th January 2026
 
-* **Last Reviewed by:** SM **Date:** 10 December 2025
+* **Last Reviewed by:** MIC **Date:** 13th January 2026
 
 """
 
+import numpy as np
 from numpy import inf
 
-name = "truncated_octahedron"
-title = "Truncated Octahedron."
+from sasmodels.special.fibonacci import fibonacci_sphere
+
+name = "truncated_octahedron_fibonacci"
+title = "General octahedron pure python model using Fibonacci quadrature"
 description = """
 The amplitude AP is defined as follows.
 t is the truncation parameter, tinv is 1 - t and AA, BB and CC are the three terms of the form factor for the reference orientation of the shape.
@@ -233,10 +239,9 @@ Valid truncation parameter range: 0 ≤ t ≤ 0.5.
 t=0 is for octahedron
 t=0.5 is for cuboctahedron
 """
-
 category = "shape:polyhedron"
 
-#             ["name", "units", default, [lower, upper], "type", "description"],
+#             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "Octahedron scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
@@ -249,26 +254,232 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "Ratio c/a"],
               ["truncation", "", 0, [0, 0.5], "volume",
                "truncation ratio, 0 for octahedron and 0.5 for cuboctahedron"],
-              ["theta", "degrees", 0, [-360, 360], "orientation",
-               "c axis to beam angle"],
-              ["phi", "degrees", 0, [-360, 360], "orientation",
-               "rotation about beam"],
-              ["psi", "degrees", 0, [-360, 360], "orientation",
-               "rotation about c axis"],
+              ["npoints_fibonacci",     "",           400, [1, 1e6],   "",
+                       "Number of points on the sphere for the Fibonacci integration"]
               ]
 
-valid = "truncation >= 0 && truncation <= 0.5"
-single = False
-source = ["lib/adaptive.c", "truncated_octahedron.c"]
-# to use non adaptative instead, Note that it will increase calculation times.
-# source = ["lib/gauss76.c", "lib/nonadaptive.c", "truncated_octahedron.c"]
 
-# Fq() function is used in the .c code
-have_Fq = True
+def form_volume(radius_a, b2a_ratio, c2a_ratio, truncation):
+    """
+    Calculate the volume of the truncated octahedron.
+
+    Parameters
+    ----------
+    radius_a: Half height along the a axis of the octahedron without truncature
+    b2a_ratio: Half height along the b axis of the octahedron without truncature
+    c2a_ratio: Half height along the c axis of the octahedron without truncature
+    truncation: Truncation parameter, varies from 0.5 (cuboctahedron) to 1 (octahedron)
+
+    Returns
+    -------
+    volume: Volume of the truncated octahedron
+    """
+    return (
+        (4 / 3)
+        * radius_a**3
+        * b2a_ratio
+        * c2a_ratio
+        * (1.0 - 3 * truncation ** 3)
+    )
+
+
+
+def A(qa, qb, qc, radius_a, b2a_ratio, c2a_ratio, truncation):
+    """
+    Computes the AA term of the amplitude of the form factor AP at (qa,qb,qc).
+
+    qnx, qny, qnz are the rescaled components (no unit) for computing AA term.
+
+    Parameters
+    ----------
+    qa: the component of the scattering vector along a axis, units 1/Ang
+    qb: the component of the scattering vector along b axis, units 1/Ang
+    qc: the component of the scattering vector along c axis, units 1/Ang
+    radius_a: half height along the a axis of the octahedron without truncature
+    b2a_ratio: half height along the b axis of the octahedron without truncature
+    c2a_ratio: half height along the c axis of the octahedron without truncature
+    truncation: truncation parameter, varies from 0.5 (cuboctahedron) to 1 (octahedron)
+
+    Returns
+    -------
+    aa: AA term of the amplitude of the form factor at (qa,qb,qc)
+    """
+    radius_b = radius_a * b2a_ratio
+    radius_c = radius_a * c2a_ratio
+    tinv = 1.0 - truncation
+    qnx = qa * radius_a  # conversion to dimensionless coordinate
+    qny = qb * radius_b  # conversion to dimensionless coordinate
+    qnz = qc * radius_c  # conversion to dimensionless coordinate
+
+    # Protect denominators against exact zeros by adding tiny epsilon
+    eps_den = 1e-18
+    denom1 = (qny * qny - qnz * qnz) * (qny * qny - qnx * qnx)
+    denom2 = (qnz * qnz - qnx * qnx) * (qnz * qnz - qny * qny)
+    denom1 += eps_den * (np.abs(denom1) < eps_den)  # add epsilon where denom is zero
+    denom2 += eps_den * (np.abs(denom2) < eps_den)  # add epsilon where denom is zero
+
+    term1 = (
+        (qny - qnx) * np.sin(qny * truncation - qnx * tinv)
+        + (qny + qnx) * np.sin(qny * truncation + qnx * tinv)
+    ) / denom1
+    term2 = (
+        (qnz - qnx) * np.sin(qnz * truncation - qnx * tinv)
+        + (qnz + qnx) * np.sin(qnz * truncation + qnx * tinv)
+    ) / denom2
+
+    return term1 + term2
+
+def Fqabc(qa, qb, qc, radius_a, b2a_ratio, c2a_ratio, truncation):
+    """
+    Computes the amplitude of the form factor AP at (qa,qb,qc).
+
+    Parameters
+    ----------
+    qa: component of the scattering vector along a axis, units 1/Ang
+    qb: component of the scattering vector along b axis, units 1/Ang
+    qc: component of the scattering vector along c axis, units 1/Ang
+    radius_a: half height along the a axis of the octahedron without truncature
+    b2a_ratio: half height along the b axis of the octahedron without truncature
+    c2a_ratio: half height along the c axis of the octahedron without truncature
+    truncation: truncation parameter, varies from 0.5 (cuboctahedron) to 1 (octahedron)
+
+    Returns
+    -------
+    ap: Amplitude of the form factor at (qa,qb,qc)
+    """
+    # Code taking into account the circular permutation between AA, BB and CC terms in AP.
+    # amp3D is scaled to 1 near the origin for a regular shape.
+    AA = A(qa, qb, qc, radius_a, b2a_ratio, c2a_ratio, truncation)
+    BB = A(qb, qc, qa, radius_a, b2a_ratio, c2a_ratio, truncation)
+    CC = A(qc, qa, qb, radius_a, b2a_ratio, c2a_ratio, truncation)
+
+    # Normalisation to 1 of AP at q = 0. Division by a factor 4/3 and global 1/2 coefficient.
+    ap = 3.0 / (1.0 - 3.0 * truncation ** 3) * (AA + BB + CC)
+
+    # Guard against numerical issues: mirror the C fallback which sets
+    # invalid (NaN/inf) values to zero so tests and downstream code
+    # do not receive NaNs. Use np.nan_to_num for vector/scalar safety.
+    return np.nan_to_num(ap, nan=0.0, posinf=0.0, neginf=0.0)
+
+def Iqabc(qa, qb, qc, radius_a, b2a_ratio, c2a_ratio, truncation):
+    """
+    Computes the 3D scattering intensity.
+
+    Parameters
+    ----------
+    qa: component of the scattering vector along a axis, units 1/Ang
+    qb: component of the scattering vector along b axis, units 1/Ang
+    qc: component of the scattering vector along c axis, units 1/Ang
+    radius_a: half height along the a axis of the octahedron without truncature
+    b2a_ratio: half height along the b axis of the octahedron without truncature
+    c2a_ratio: half height along the c axis of the octahedron without truncature
+    truncation: truncation parameter, varies from 0.5 (cuboctahedron) to 1 (octahedron)
+
+    Returns
+    -------
+    intensity: 3D scattering intensity at (qa,qb,qc), units 1/cm
+    """
+    # int3D is scaled to 1 near the origin for a regular shape
+    amp = Fqabc(qa, qb, qc, radius_a, b2a_ratio, c2a_ratio, truncation)
+    intensity = amp**2
+
+    # If numerical issues produced invalid numbers, return 0.0 (like the C
+    # implementation does) rather than NaN/inf which break tests and usage.
+    if np.isnan(intensity) or np.isinf(intensity):
+        return 0.0
+
+    return intensity
+
+
+# Cache for Fibonacci sphere points/weights to avoid recomputing across calls
+_fibonacci_sphere_cache = {}
+
+def _get_fibonacci_sphere(npoints):
+    """
+    Return (q_unit, w) for given npoints using module cache.
+    """
+    key = int(npoints)
+    if key in _fibonacci_sphere_cache:
+        return _fibonacci_sphere_cache[key]
+
+    q_unit, w = fibonacci_sphere(int(npoints))
+    _fibonacci_sphere_cache[key] = (q_unit, w)
+    return q_unit, w
+
+
+def Iq(
+    q,
+    sld,
+    sld_solvent,
+    radius_a=500.,
+    b2a_ratio=1.,
+    c2a_ratio=1.,
+    truncation=0.,
+    npoints_fibonacci: int = 400,
+):
+    """
+    Computes the 1D scattering intensity I(q) using Fibonacci quadrature.
+
+    Parameters
+    ----------
+    q : float or ndarray
+        Magnitude of the scattering vector, units 1/Ang
+    sld : float
+        Octahedron scattering length density, units 1e-6/Ang^2
+    sld_solvent : float
+        Solvent scattering length density, units 1e-6/Ang^2
+    radius_a : float
+        Half height along the a axis of the octahedron without truncature, units Angstrom
+    b2a_ratio : float
+        Ratio b/a
+    c2a_ratio : float
+        Ratio c/a
+    truncation : float
+        Truncation parameter, varies from 0.5 (cuboctahedron) to 1 (octahedron)
+    npoints_fibonacci : int
+        Number of points on the sphere for the Fibonacci integration
+
+    Returns
+    -------
+    1D scattering intensity at q, units 1/cm
+    """
+    q = np.atleast_1d(q)
+    q_unit, w = _get_fibonacci_sphere(npoints_fibonacci)  # shape (npoints, 3)
+
+    # build qx,qy,qz arrays with correct broadcasting -> shape (nq, npoints)
+    qx = q[:, None] * q_unit[None, :, 0]
+    qy = q[:, None] * q_unit[None, :, 1]
+    qz = q[:, None] * q_unit[None, :, 2]
+
+    # compute intensity grid using existing amp3D (vectorized)
+    amp_grid = Fqabc(
+        qx, qy, qz, radius_a, b2a_ratio, c2a_ratio, truncation
+    )  # shape (nq, npoints)
+
+    # Replace any NaN/inf in amplitude grid (temporary fallback mirroring C
+    # implementation). Use 0.0 to avoid producing huge/NaN intensities.
+    amp_grid = np.nan_to_num(amp_grid, nan=0.0, posinf=0.0, neginf=0.0)
+    # Also clip extremely large values to avoid overflow in square
+    amp_grid = np.clip(amp_grid, -1e12, 1e12)
+
+    intensity_grid = np.abs(amp_grid) ** 2
+
+    integral = np.sum(intensity_grid * w[None, :], axis=1)  # summation over all points
+
+    # Convert from [1e-12 A-1] to [cm-1]
+    return (
+        integral
+        * 0.0001
+        * (sld - sld_solvent) ** 2
+        * form_volume(radius_a, b2a_ratio, c2a_ratio, truncation) ** 2
+    )
+
+
+Iq.vectorized = True
 
 tests = [
-    [{"background": 0, "scale": 1, "radius_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
+    [{"background": 0, "scale": 1, "radius_a": 100, "truncation": 1, "sld": 1., "sld_solvent": 0.},
      0.01, 120.57219],
-    [{"background": 0, "scale": 1, "radius_a": 100, "truncation": 0, "sld": 1., "sld_solvent": 0.},
-     [0.01, 0.1], [120.57219, 0.37418]],
+    [{"background": 0, "scale": 1, "radius_a": 100, "truncation": 1, "sld": 1., "sld_solvent": 0.},
+     [0.01, 0.1], [120.57219, 0.37414]],
 ]

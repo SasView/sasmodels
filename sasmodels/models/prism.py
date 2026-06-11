@@ -1,5 +1,5 @@
 r"""
-This model provides the form factor for a right prism which cross-section is a regular polygon. 
+This model provides the form factor for a right prism whose cross-section is a regular polygon. 
 Orientation averaging is done by using the Fibonacci quadrature.
 This quadrature provides a quasi-uniform distribution of points on the unit sphere
 using the golden ratio. The number of points to generate on the unit sphere is set to 500 points, it usually provides
@@ -8,7 +8,8 @@ a good balance between accuracy and computational efficiency.
 Definition
 ----------
 
-We consider particles having the shape of a right prism of length L and a cross section made of a regular polygon with n sides as illustrated in the figure below.
+We consider particles having the shape of a right prism of length *L* (parameter called *length* in the model) and a cross section made of 
+a regular polygon with a certain number of sides *n* (parameter called *n_sides* in the model) as illustrated in the figure below.
 
 .. figure:: img/nanoprisms_geometry.jpg
 
@@ -25,7 +26,7 @@ The apothem is the radius of the dashed circle, it is defined as:
 
     R\cos(\pi/n)
 
-For comparison purposes, it is convenient to introduce an average radius R_ave (shown in red in the figure).
+For comparison purposes, it is convenient to introduce an average radius :math:`R_ave` (parameter called *radius_average* in the model). It is shown in red in the figure.
 The area of the n-sided regular polygon is given by :
 
 .. math::
@@ -39,7 +40,7 @@ and the volume of the nanoprism is therefore given by:
 
     V = L \times {A}
 
-where R_ave is the radius of the equivalent disc having the same area as the n-sided polygon.
+where :math:`R_ave` is the radius of the equivalent disc having the same area as the n-sided polygon.
 It is also the squared average of the distance from the center of the polygon to any point of its perimeter. It is related to the circumradius R by :
 
 .. math::
@@ -99,8 +100,8 @@ Instead of rotating the shape through all the possible orientations,
 it is equivalent to integrate the 3D scattering vector over a sphere of radius q with the shape in its reference orientation.
 
 The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform distribution of points on the unit sphere.
-The repartition of the N points is computed using the golden ratio (see fibonacci.py). 
-Each point of the quadrature on the unit sphere correspond to a vector :math:`\mathbf{u}_{j}`.
+The distribution of the N points is computed using the golden ratio (see fibonacci.py). 
+Each point of the quadrature on the unit sphere corresponds to a vector :math:`\mathbf{u}_{j}`.
 In the sum, all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
 .. math::
@@ -121,21 +122,19 @@ Good agreement was found at q < 0.1 1/Angstrom.
 References
 ----------
 
-1. Jules Marcone et al. "Form factor of prismatic particles for small-angle scattering analysis".
-   In:  J. Appl. Cryst. (2025) 58, 543-552
-   DOI: https://doi.org/10.1107/S1600576725000676
+1. Marcone, J., Trazo, J. G., Nag, R., Goldmann, C., Ratel-Ramond, N., Hamon, C., & Impéror-Clerc, M. (2025).
+   Form factor of prismatic particles for small-angle scattering analysis.
+   *Journal of Applied Crystallography*, 58(2), 543‑552. https://doi.org/10.1107/S1600576725000676
 
-2. Wei-Ren Chen et al. "Scattering functions of Platonic solids".
-   In: Journal of Applied Crystallography - J. Appl. Cryst. (June 2011).
-   DOI: https://doi.org/10.1107/S0021889811011691
+2. Li, X., Shew, C., He, L., Meilleur, F., Myles, D. A. A., Liu, E., Zhang, Y., Smith, G. S.,
+   Herwig, K. W., Pynn, R., & Chen, W. (2011). Scattering functions of Platonic solids.
+   *Journal Of Applied Crystallography*, 44(3), 545‑557. https://doi.org/10.1107/s0021889811011691
 
-3. Croset, Bernard, "Form factor of any polyhedron: a general compact
-   formula and its singularities" In: J. Appl. Cryst. (2017). 50, 1245–1255
-   DOI: https://doi.org/10.1107/S1600576717010147
+3. Croset, B. (2017). Form factor of any polyhedron : a general compact formula and its singularities.
+   *Journal Of Applied Crystallography*, 50(5), 1245‑1255. https://doi.org/10.1107/s1600576717010147
 
-4. Wuttke, J. Numerically stable form factor of any polygon and polyhedron
-   J Appl Cryst 54, 580-587 (2021)
-   DOI: https://doi.org/10.1107/S1600576721001710
+4. Wuttke, J. (2021). Numerically stable form factor of any polygon and polyhedron.
+   *Journal Of Applied Crystallography*, 54(2), 580‑587. https://doi.org/10.1107/s1600576721001710
 
 Authorship and Verification
 ----------------------------
