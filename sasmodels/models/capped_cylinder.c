@@ -7,8 +7,8 @@
 //   length is the cylinder length, or the separation between the lens halves
 //   theta is the angle of the cylinder wrt q.
 static double
-_cap_kernel(double qab, double qc, double h, double radius_cap,
-    double half_length)
+_cap_kernel(double qab, double qc, double h, double radius_cap, double radius,
+    double half_length, int outer_n)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
@@ -26,13 +26,25 @@ _cap_kernel(double qab, double qc, double h, double radius_cap,
     const double m = radius_cap*qc; // cos argument slope
     const double b = (half_length+h)*qc; // cos argument intercept
     const double qab_r = radius_cap*qab; // Q*R*sin(theta)
+
+    // m+b = qc*(half_length + radius_cap + h). With h in [-radius_cap, 0] depending
+    // on cylinder radius, that means m+b is in qc*[length/2, length_2 + radius_cap].
+    // The qab_r term will be very large for mostly flat caps. Since the bj term will
+    // oscillate at this frequency, it seems like we should increase the number of
+    // gauss points to accomodate. However, if we use the radius of the cylinder
+    // we seem to get good results, so use that to set the number of integration points.
+    //const double qr_max = fmax(qab_r, m+b);
+    const double qr_max = fmax(qab*radius, m+b);
+    constant double *w, *z;
+    int n = gauss_weights(qr_max, outer_n, &w, &z);
+
     double total = 0.0;
-    for (int i=0; i<GAUSS_N; i++) {
-        const double t = GAUSS_Z[i]*zm + zb;
+    for (int i=0; i<n; i++) {
+        const double t = z[i]*zm + zb;
         const double radical = 1.0 - t*t;
         const double bj = sas_2J1x_x(qab_r*sqrt(radical));
         const double Fq = cos(m*t + b) * radical * bj;
-        total += GAUSS_W[i] * Fq;
+        total += w[i] * Fq;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double integral = total*zm;
@@ -41,9 +53,9 @@ _cap_kernel(double qab, double qc, double h, double radius_cap,
 }
 
 static double
-_fq(double qab, double qc, double h, double radius_cap, double radius, double half_length)
+_fq(double qab, double qc, double h, double radius_cap, double radius, double half_length, int n_outer)
 {
-    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, half_length);
+    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, radius, half_length, n_outer);
     const double bj = sas_2J1x_x(radius*qab);
     const double si = sas_sinx_x(half_length*qc);
     const double cyl_Fq = 2.0*M_PI*radius*radius*half_length*bj*si;
@@ -114,21 +126,36 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     const double h = -sqrt(square(radius_cap) - square(radius));
     const double half_length = 0.5*length;
 
+    // The term h comes from solving the right triangle with diagonal
+    // equal to the cap radius and horizontal equal to the bar radius.
+    // The result is the (negative) height of the equator above the end of the rod.
+    // To get the total length of bar+cap use bar length + 2*(cap radius + h).
+    // We want the radius, so divide that by two.
+    // For a lentil with length=0, the radius will be the dominant term, hence
+    // the fmax in the calculation below. This isn't needed for the barbell shape
+    // since the bell length is always greater than the bar radius.
+    const double qr_max = q*fmax(half_length + radius_cap + h, radius);
+    //const double qr_max = q*(half_length + radius_cap + h);
+    constant double *w_outer, *z_outer;
+    // Keep outer loop to 76 or less
+    int n_outer = gauss_weights(qr_max, ADAPTIVE_MAX_76, &w_outer, &z_outer);
+
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
     const double zb = M_PI_4;
     double total_F1 = 0.0;
     double total_F2 = 0.0;
-    for (int i=0; i<GAUSS_N ;i++) {
-        const double theta = GAUSS_Z[i]*zm + zb;
+    for (int i=0; i<n_outer ;i++) {
+        const double theta = z_outer[i]*zm + zb;
         double sin_theta, cos_theta; // slots to hold sincos function output
         SINCOS(theta, sin_theta, cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
-        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length);
+        // Don't constrain size of inner loop to n_outer
+        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length, 1);
         // scale by sin_theta for spherical coord integration
-        total_F1 += GAUSS_W[i] * Aq * sin_theta;
-        total_F2 += GAUSS_W[i] * Aq * Aq * sin_theta;
+        total_F1 += w_outer[i] * Aq * sin_theta;
+        total_F2 += w_outer[i] * Aq * Aq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double form_avg = total_F1 * zm;
@@ -146,8 +173,10 @@ Iqac(double qab, double qc,
     double sld, double solvent_sld, double radius,
     double radius_cap, double length)
 {
+    // TODO: For 2D data we may also want to limit the size of the integral at each (qx, qy)
+    const int n_outer = 1; // No limits on inner integral
     const double h = -sqrt(square(radius_cap) - square(radius));
-    const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length);
+    const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length, n_outer);
 
     // Multiply by contrast^2 and convert to cm-1
     const double s = (sld - solvent_sld);
