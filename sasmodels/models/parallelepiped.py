@@ -231,7 +231,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "rotation about c axis"],
              ]
 
-source = ["lib/gauss76.c", "parallelepiped.c"]
+source = ["lib/adaptive.c", "parallelepiped.c"]
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",

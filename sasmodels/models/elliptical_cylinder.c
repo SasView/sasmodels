@@ -82,22 +82,31 @@ Fq(double q, double *F1, double *F2, double radius_minor, double r_ratio, double
     const double rA = 0.5*(square(radius_major) + square(radius_minor));
     const double rB = 0.5*(square(radius_major) - square(radius_minor));
 
+    constant double *w_outer, *z_outer;
+    const double qr_max_outer = q*fmax(0.5*length, fmax(radius_minor, radius_minor*r_ratio));
+    int n_outer = gauss_weights(qr_max_outer, ADAPTIVE_MAX_OUTER, &w_outer, &z_outer);
+
+    constant double *w_inner, *z_inner;
+    const double qr_max_inner = q*fmax(radius_minor, radius_major);
+    int n_inner = gauss_weights(qr_max_inner, n_outer, &w_inner, &z_inner);
+
     //initialize integral
     double outer_sum_F1 = 0.0;
     double outer_sum_F2 = 0.0;
-    for(int i=0;i<GAUSS_N;i++) {
+    for(int i=0;i<n_outer;i++) {
         //setup inner integral over the ellipsoidal cross-section
-        const double cos_val = ( GAUSS_Z[i]*(vb-va) + va + vb )/2.0;
+        const double cos_val = ( z_outer[i]*(vb-va) + va + vb )/2.0;
         const double sin_val = sqrt(1.0 - cos_val*cos_val);
+
         //const double arg = radius_minor*sin_val;
         double inner_sum_F1 = 0.0;
         double inner_sum_F2 = 0.0;
-        for(int j=0;j<GAUSS_N;j++) {
-            const double theta = ( GAUSS_Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
+        for(int j=0;j<n_inner;j++) {
+            const double theta = ( z_inner[j]*(vbj-vaj) + vaj + vbj )/2.0;
             const double r = sin_val*sqrt(rA - rB*cos(theta));
             const double be = sas_2J1x_x(q*r);
-            inner_sum_F1 += GAUSS_W[j] * be;
-            inner_sum_F2 += GAUSS_W[j] * be * be;
+            inner_sum_F1 += w_inner[j] * be;
+            inner_sum_F2 += w_inner[j] * be * be;
         }
         //now calculate the value of the inner integral
         inner_sum_F1 *= 0.5*(vbj-vaj);
@@ -105,8 +114,8 @@ Fq(double q, double *F1, double *F2, double radius_minor, double r_ratio, double
 
         //now calculate outer integral
         const double si = sas_sinx_x(q*0.5*length*cos_val);
-        outer_sum_F1 += GAUSS_W[i] * inner_sum_F1 * si;
-        outer_sum_F2 += GAUSS_W[i] * inner_sum_F2 * si * si;
+        outer_sum_F1 += w_outer[i] * inner_sum_F1 * si;
+        outer_sum_F2 += w_outer[i] * inner_sum_F2 * si * si;
     }
     // correct limits and divide integral by pi
     outer_sum_F1 *= 0.5*(vb-va)/M_PI;

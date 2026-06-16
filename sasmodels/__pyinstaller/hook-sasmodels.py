@@ -24,6 +24,7 @@ try:
         "sasmodels.list_pars",
         "sasmodels.multiscat",
         "sasmodels.special",
+        "sasmodels.special.fibonacci",
         "sasmodels.models.two_yukawa",
     ]
     module_collection_mode = "py"
