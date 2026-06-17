@@ -107,7 +107,7 @@ source = [
     "torus_elliptical_shell.c",
 ]  # compiled together with default libs
 
-radius_effective_models = ["outer_radius", "equivalent_volume_sphere", "max_distance_from_center", "maijor_radius"]
+radius_effective_models = ["outer radius", "equivalent volume sphere", "max distance from center", "radius"]
 have_Fq = True
 
 tests = [
