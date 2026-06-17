@@ -34,8 +34,8 @@ static double max_radius(double radius_core, double thickness, double nu_core,
     if (fabs(cos_theta) <= 1.0) {
       double nu = r_p / r_e;
 
-      double r_max_sq = square(torus_radius) + square(r_e) +
-                        square(r_p) * ((square(nu) - 1.0) / square(nu));
+      double r_max_sq =
+          square(r_p) + square(torus_radius * nu) / (square(nu) - 1.0);
 
       return sqrt(r_max_sq);
     }
