@@ -79,12 +79,19 @@ category = "shape:cylinder"
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["length", "Ang", 400, [0, inf], "volume", "Cylindrical arm length"],
-    ["radius", "Ang", 30, [0, inf], "volume", "Cylindrical arm radius"],
-    ["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld", "Tetrapod scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld", "Solvent scattering length density"],
+    ["length", "Ang", 1000, [0, inf], "volume", "Cylindrical arm length"],
+    ["radius", "Ang", 50, [0, inf], "volume", "Cylindrical arm radius"],
+    ["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld", "Tetrapod scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2", 0, [-inf, inf], "sld", "Solvent scattering length density"],
 ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "tetrapod.c"]
 have_Fq = False
 opencl = True
+
+
+test = [
+    [{}, 1.099643429303014e-03, 2.746377685546875e03],
+    [{}, 1.033727919136565e-01, 4.374285638332367e-01],
+    [{}, 3.145051218117226e-01, 3.527995198965073e-03],
+]

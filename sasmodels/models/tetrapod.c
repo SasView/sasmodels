@@ -1,11 +1,11 @@
-// half of the angle between arms in radians
-const double A = acos(-1 / 3) / 2.0 * M_PI / 180.0;
+// acos(-1.0/3.0)/2.0 = half of tetrahedral angle ~54.7356 deg
+#define TETRAHEDRAL_HALF_ANGLE acos(-1.0 / 3.0) / 2.0
 
 static double u_n(int n, double theta, double alpha) {
   const double phi[4] = {0.0, M_PI_2, M_PI, 3.0 * M_PI_2};
   const double sign[4] = {1.0, -1.0, 1.0, -1.0};
-  return sign[n] * cos(A) * cos(theta) +
-         sin(A) * sin(theta) * cos(alpha - phi[n]);
+  return sign[n] * cos(TETRAHEDRAL_HALF_ANGLE) * cos(theta) +
+         sin(TETRAHEDRAL_HALF_ANGLE) * sin(theta) * cos(alpha - phi[n]);
 }
 
 static double Fq_n(double q, double u, double L, double R) {
@@ -25,6 +25,7 @@ static double form_volume(double L, double R) {
 static double Iq(double q, double L, double R, double sld_particle,
                  double sld_solvent) {
   double contrast = sld_particle - sld_solvent;
+  const double V_arm = M_PI * R * R * L;
   double total = 0.0;
 
   for (int dtheta = 0; dtheta < GAUSS_N; dtheta++) {
@@ -45,13 +46,14 @@ static double Iq(double q, double L, double R, double sld_particle,
         for (int m = 0; m < 4; m++) {
           double u = u_n(n, theta, alpha);
           double v = u_n(m, theta, alpha);
-          sum_arms += Fq_n(q, u, L, R) * Fq_n(q, v, L, R) *
-                      cos(q * (u - v) * L / 2.0) * sin(theta);
+          double arm = Fq_n(q, u, L, R) * Fq_n(q, v, L, R) *
+                       cos(q * (u - v) * L / 2.0) * sin(theta);
+          sum_arms += arm;
         }
       }
       integral_alpha += sum_arms * w_alpha;
     }
     total += integral_alpha * w_theta;
   }
-  return 1e-4 * contrast * contrast * total * 2 / M_PI;
+  return 1e-4 * contrast * contrast * V_arm * V_arm * total / (4.0 * M_PI);
 }
