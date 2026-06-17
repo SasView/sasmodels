@@ -43,7 +43,7 @@ Geometry
 --------
 
 The four arms are oriented along tetrahedral directions.  With
-$A = 109.5°/2$ (the half-angle between arms), the arm unit vectors and the
+$A = 109.5 /2$ (the half-angle between arms), the arm unit vectors and the
 corresponding projections $u_n$ are
 
 .. math::
