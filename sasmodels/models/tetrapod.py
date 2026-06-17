@@ -97,13 +97,19 @@ have_Fq = False
 opencl = True
 
 
+radius_effective_modes = [
+    "equivalent volume sphere",
+    "length of tetrapod arms (L)",
+]
+
+
 test = [
     # thickness=0 reduces to uniform cylinder: contrast = sld_core - sld_solvent = 1
-    [{"thickness": 0}, 1.099643429303014e-03, 2.746377685546875e+03],
+    [{"thickness": 0}, 1.099643429303014e-03, 2.746377685546875e03],
     [{"thickness": 0}, 1.033727919136565e-01, 4.374285638332367e-01],
     [{"thickness": 0}, 3.145051218117226e-01, 3.527995198965073e-03],
     # default core-shell parameters
-    [{}, 1.099643429303014e-03, 1.846798618097820e+03],
+    [{}, 1.099643429303014e-03, 1.846798618097820e03],
     [{}, 1.033727919136565e-01, 1.811197691988146e-01],
     [{}, 3.145051218117226e-01, 1.080396557066592e-03],
 ]

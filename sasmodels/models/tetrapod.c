@@ -16,18 +16,27 @@ static double Fq_n(double q, double u, double L, double R, double t,
   double mu = sqrt(fmax(0.0, 1.0 - u * u));
   double V_c = M_PI * R_c * R_c * L;
   double V = M_PI * R * R * L;
-  return sas_sinx_x(quL2) *
-         (contrast_core * V_c * sas_2J1x_x(q * mu * R_c) +
-          contrast_shell * V * sas_2J1x_x(q * mu * R));
+  return sas_sinx_x(quL2) * (contrast_core * V_c * sas_2J1x_x(q * mu * R_c) +
+                             contrast_shell * V * sas_2J1x_x(q * mu * R));
 }
 
 static double form_volume(double L, double R, double t) {
-  // V = 4 * pi * R^2 * L  (outer volume of 4 arms)
-  return 4.0 * M_PI * R * R * L;
+  // V = 4 * pi * (R + t)^2 * L  (outer volume of 4 arms)
+  return 4.0 * M_PI * (R + t) * (R + t) * L;
 }
 
-static double Iq(double q, double L, double R, double t,
-                 double sld_core, double sld_shell, double sld_solvent) {
+static double radius_effective(int mode, double L, double R, double t) {
+  switch (mode) {
+    default:
+    case 1:  // equivalent volume sphere
+      return cbrt(form_volume(L, R, t) / M_4PI_3);
+    case 2:  // length of tetrapod arms (L)
+      return L;
+  }
+}
+
+static double Iq(double q, double L, double R, double t, double sld_core,
+                 double sld_shell, double sld_solvent) {
   double contrast_core = sld_core - sld_shell;
   double contrast_shell = sld_shell - sld_solvent;
   double total = 0.0;
@@ -45,16 +54,19 @@ static double Iq(double q, double L, double R, double t,
       double w_alpha =
           GAUSS_W[dalpha] * M_PI;  // adjust weight for the new range
 
+      double u[4], F[4];
+      for (int n = 0; n < 4; n++) {
+        u[n] = u_n(n, theta, alpha);
+        F[n] = Fq_n(q, u[n], L, R, t, contrast_core, contrast_shell);
+      }
       double sum_arms = 0.0;
       for (int n = 0; n < 4; n++) {
-        for (int m = 0; m < 4; m++) {
-          double u = u_n(n, theta, alpha);
-          double v = u_n(m, theta, alpha);
-          double Fn = Fq_n(q, u, L, R, t, contrast_core, contrast_shell);
-          double Fm = Fq_n(q, v, L, R, t, contrast_core, contrast_shell);
-          sum_arms += Fn * Fm * cos(q * (u - v) * L / 2.0) * sin(theta);
+        sum_arms += F[n] * F[n];
+        for (int m = n + 1; m < 4; m++) {
+          sum_arms += 2.0 * F[n] * F[m] * cos(q * (u[n] - u[m]) * L / 2.0);
         }
       }
+      sum_arms *= sin(theta);
       integral_alpha += sum_arms * w_alpha;
     }
     total += integral_alpha * w_theta;
