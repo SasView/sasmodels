@@ -803,6 +803,21 @@ add_function(
     ocl_function=make_ocl("return sas_2J1x_x(q);", "sas_2J1x_x", ["lib/polevl.c", "lib/sas_J1.c"]),
 )
 
+add_function(
+    name="sin_arccos",
+    mp_function=lambda x: (mp.sin(mp.acos(x))),
+    np_function=lambda x: (np.sin(np.arccos(x))),
+    ocl_function=make_ocl("return sin(acos(q));", "sas_sin_arccos"),
+    limits=(0, 1),
+)
+add_function(
+    name="sin_from_cos",
+    mp_function=lambda x: (mp.sqrt(1 - x*x)),
+    np_function=lambda x: (np.sqrt(1-x*x)),
+    ocl_function=make_ocl("return sqrt(1.-q*q);", "sas_sin_from_cos"),
+    limits=(0, 1),
+)
+
 ALL_FUNCTIONS = set(FUNCTIONS.keys())
 ALL_FUNCTIONS.discard("loggamma")  # use cephes-based gammaln instead
 ALL_FUNCTIONS.discard("3j1/x:taylor")

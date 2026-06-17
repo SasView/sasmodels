@@ -281,7 +281,13 @@ DOC_HEADER = """.. _%(id)s:
 %(docs)s
 """
 
-
+# TODO: set_integration_size should return a copy of info
+# For now it is set up so that the first call converts adaptive to non-adaptive
+# and subsequent calls convert number of gauss points for the non-adaptive.
+# There is currently no way to go back to adaptive after call set_integration_size.
+# If model_info is cached this will cause problems for a GUI or a notebook where the
+# user specifies n_gauss=0 for adaptive. This shows up with sasmodels.compare where
+# -n_gauss=0,76 shows differences but -n_gauss=76,0 shows none.
 def set_integration_size(info, n):
     # type: (ModelInfo, int) -> None
     """
@@ -291,13 +297,27 @@ def set_integration_size(info, n):
     Note: this really ought to be a method in modelinfo, but that leads to
     import loops.
     """
-    if info.source and any(lib.startswith('lib/gauss') for lib in info.source):
-        from .gengauss import gengauss
-        path = joinpath(MODEL_PATH, "lib", "gauss%d.c"%n)
-        if not exists(path):
-            gengauss(n, path)
-        info.source = ["lib/gauss%d.c"%n if lib.startswith('lib/gauss')
-                       else lib for lib in info.source]
+    from .gengauss import gengauss
+
+    if not info.source:
+        return
+
+    # Generate the integration points
+    path = joinpath(MODEL_PATH, "lib", f"gauss{n}.c")
+    if not exists(path):
+        # print(f"building Gaussian integration points of size {n} in {str(path)}")
+        gengauss(n, path)
+
+    # Replace adaptive.c or lib/gauss<n>.c
+    try:
+        index = info.source.index("lib/adaptive.c")
+        info.source[index:index+1] = [f"lib/gauss{n}.c", "lib/nonadaptive.c"]
+    except ValueError:
+        for index in range(len(info.source)-1, -1, -1):
+            if info.source[index].startswith("lib/gauss"):
+                info.source[index] = f"lib/gauss{n}.c"
+                break
+    # print("info.source is now", info.source)
 
 def format_units(units):
     # type: (str) -> str

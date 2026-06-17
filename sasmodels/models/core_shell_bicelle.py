@@ -152,7 +152,7 @@ parameters = [
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
+source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/adaptive.c",
           "core_shell_bicelle.c"]
 have_Fq = True
 radius_effective_modes = [
