@@ -62,7 +62,7 @@ Each arm has length $L$, outer radius $R$, and shell thickness $t$.
 References
 ----------
 
-#. Seoki Kyoo Seo *Korean J. Chem. Eng.* 34(2017) 1192-1198
+#. Seoki Kyoo Seo *Korean J. Chem. Eng.* 34(2017) 1192-1198 DOI:10.1007/s11814-016-0341-x
 
 Authorship and Verification
 ----------------------------
@@ -85,7 +85,7 @@ category = "shape:cylinder"
 #             [ "name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["length", "Ang", 1000, [0, inf], "volume", "Arm length"],
-    ["radius", "Ang", 50, [0, inf], "volume", "Arm outer radius"],
+    ["core_radius", "Ang", 50, [0, inf], "volume", "Arm core radius"],
     ["thickness", "Ang", 10, [0, inf], "volume", "Arm shell thickness"],
     ["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld", "Arm core scattering length density"],
     ["sld_shell", "1e-6/Ang^2", 0.5, [-inf, inf], "sld", "Arm shell scattering length density"],
