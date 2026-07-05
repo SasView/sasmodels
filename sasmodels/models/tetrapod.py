@@ -59,6 +59,21 @@ for $n = 1, 2, 3, 4$ respectively.
 
 Each arm has length $L$, outer radius $R$, and shell thickness $t$.
 
+.. note::
+
+    Each of the four arms is modelled as a complete cylinder of length $L$
+    extending from the central junction, so the arms overlap near the origin.
+    This overlap is neglected in two ways, following the treatment used in the
+    reference. First, the particle volume is overestimated (the effect being
+    largest when the arms are short and wide), which affects the calculated
+    intensity through the volume normalisation. Second, the scattering amplitude
+    is the plain sum of the four cylinder amplitudes, so the overlapping region
+    near the origin is counted more than once; because this region is small
+    compared with the arms, the resulting artefacts are expected to appear
+    mainly in the high-$q$ range. Consequently the model is only valid for
+    long-arm tetrapods, i.e. for arm lengths much larger than the arm width,
+    $L \gg R = R_\text{core} + t$.
+
 References
 ----------
 
