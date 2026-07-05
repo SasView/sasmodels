@@ -23,14 +23,14 @@ where $F_n$ is the core-shell form factor amplitude of the $n$-th arm:
     F_n(q, \theta, \varphi) = \text{sinc}\!\left(\frac{q u_n L}{2}\right)
         \left[
             (\rho_\text{core} - \rho_\text{shell})\, V_\text{core}\,
-            \frac{2 J_1(q \mu_n R_\text{core})}{q \mu_n R_\text{core}}
-          + (\rho_\text{shell} - \rho_\text{solvent})\, V_\text{shell}\,
             \frac{2 J_1(q \mu_n R)}{q \mu_n R}
+          + (\rho_\text{shell} - \rho_\text{solvent})\, V_\text{outer}\,
+            \frac{2 J_1(q \mu_n (R+t))}{q \mu_n (R+t)}
         \right]
 
 with $u_n = \hat{q} \cdot \hat{a}_n$, $\mu_n = \sqrt{1 - u_n^2}$, $L$ the arm
-length, $R$ the arm outer radius, $R_\text{core} = R - t$ the core radius
-($t$ = shell thickness), and $V = \pi R^2 L$, $V_\text{core} = \pi R_\text{core}^2 L$.
+length, $R$ the arm core radius, $R + t$ the outer radius ($t$ = shell
+thickness), and $V_\text{core} = \pi R^2 L$, $V_\text{outer} = \pi (R+t)^2 L$.
 Expanding the squared modulus into a double sum gives:
 
 .. math::
@@ -57,7 +57,8 @@ corresponding projections $u_n$ are
 where $(s_n, \varphi_n) = (+1,\ 0),\ (-1,\ \pi/2),\ (+1,\ \pi),\ (-1,\ 3\pi/2)$
 for $n = 1, 2, 3, 4$ respectively.
 
-Each arm has length $L$, outer radius $R$, and shell thickness $t$.
+Each arm has length $L$, core radius $R$, shell thickness $t$, and hence outer
+radius $R + t$.
 
 .. note::
 
@@ -72,7 +73,7 @@ Each arm has length $L$, outer radius $R$, and shell thickness $t$.
     compared with the arms, the resulting artefacts are expected to appear
     mainly in the high-$q$ range. Consequently the model is only valid for
     long-arm tetrapods, i.e. for arm lengths much larger than the arm width,
-    $L \gg R = R_\text{core} + t$.
+    $L \gg R + t$.
 
 References
 ----------
@@ -100,7 +101,7 @@ category = "shape:cylinder"
 #             [ "name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["length", "Ang", 1000, [0, inf], "volume", "Arm length"],
-    ["core_radius", "Ang", 50, [0, inf], "volume", "Arm core radius"],
+    ["radius", "Ang", 50, [0, inf], "volume", "Arm core radius"],
     ["thickness", "Ang", 10, [0, inf], "volume", "Arm shell thickness"],
     ["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld", "Arm core scattering length density"],
     ["sld_shell", "1e-6/Ang^2", 0.5, [-inf, inf], "sld", "Arm shell scattering length density"],

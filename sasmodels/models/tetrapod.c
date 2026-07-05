@@ -1,23 +1,25 @@
-// acos(-1.0/3.0)/2.0 = half of tetrahedral angle ~54.7356 deg
-#define TETRAHEDRAL_HALF_ANGLE acos(-1.0 / 3.0) / 2.0
+// Half of the tetrahedral angle acos(-1/3)/2 ~54.7356 deg.
+// Precompute its cosine and sine: cos = sqrt(1/3), sin = sqrt(2/3).
+#define COS_HALF_ANGLE 0.57735026918962573  // sqrt(1/3)
+#define SIN_HALF_ANGLE 0.81649658092772603  // sqrt(2/3)
 
 static double u_n(int n, double theta, double alpha) {
   const double phi[4] = {0.0, M_PI_2, M_PI, 3.0 * M_PI_2};
   const double sign[4] = {1.0, -1.0, 1.0, -1.0};
-  return sign[n] * cos(TETRAHEDRAL_HALF_ANGLE) * cos(theta) +
-         sin(TETRAHEDRAL_HALF_ANGLE) * sin(theta) * cos(alpha - phi[n]);
+  return sign[n] * COS_HALF_ANGLE * cos(theta) +
+         SIN_HALF_ANGLE * sin(theta) * cos(alpha - phi[n]);
 }
 
-// L: arm length, R: outer radius, t: shell thickness, R_c = R - t: core radius
+// L: arm length, R: core radius, t: shell thickness, R_o = R + t: outer radius
 static double Fq_n(double q, double u, double L, double R, double t,
                    double contrast_core, double contrast_shell) {
-  double R_c = R - t;
+  double R_o = R + t;
   double quL2 = q * u * L * 0.5;
   double mu = sqrt(fmax(0.0, 1.0 - u * u));
-  double V_c = M_PI * R_c * R_c * L;
-  double V = M_PI * R * R * L;
-  return sas_sinx_x(quL2) * (contrast_core * V_c * sas_2J1x_x(q * mu * R_c) +
-                             contrast_shell * V * sas_2J1x_x(q * mu * R));
+  double V_c = M_PI * R * R * L;
+  double V_o = M_PI * R_o * R_o * L;
+  return sas_sinx_x(quL2) * (contrast_core * V_c * sas_2J1x_x(q * mu * R) +
+                             contrast_shell * V_o * sas_2J1x_x(q * mu * R_o));
 }
 
 static double form_volume(double L, double R, double t) {
