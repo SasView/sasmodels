@@ -6,6 +6,13 @@ Calculates the scattering from a tetrapod-shaped structure. A tetrapod consists
 of four cylindrical arms radiating from a central point, oriented along the
 (1,1,1), (-1,-1,1), (-1,1,-1), and (1,-1,-1) directions.
 
+.. figure:: img/tetrapod.png
+
+    Tetrapod schematic.  Each of the four arms is a core--shell cylinder of
+    length $L$, core radius $R$ and shell thickness $t$;
+    the arm cross-section is shown in the inset.  The arms radiate from a
+    central junction along tetrahedral directions.
+
 The scattering intensity is calculated as an average over all
 orientations:
 
