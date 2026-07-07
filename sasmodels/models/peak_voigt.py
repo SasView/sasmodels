@@ -81,7 +81,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import inf, errstate
+from numpy import errstate, inf
 
 name = "peak_voigt"
 title = "Single pseudo-Voigt peak"
