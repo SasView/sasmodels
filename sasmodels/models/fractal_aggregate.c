@@ -6,7 +6,7 @@
  *
  * Parameters:
  *   q  : scattering vector
- *   radius_effective : distance between scatterers
+ *   radius_effective : effective scatterer radius (half center-to-center distance)
  *   volfraction      : unused (required for P@S parameter order)
  *   D_fract          : fractal dimension
  *   N_agg            : number of particles in cluster
@@ -57,6 +57,5 @@ double Iq(double q, double radius_effective, double volfraction,
           double D_fract, double N_agg)
 {
     (void)volfraction;
-    double r = 0.5 * radius_effective;
-    return fractal_sq_N(q, r, D_fract, N_agg);
+    return fractal_sq_N(q, radius_effective, D_fract, N_agg);
 }

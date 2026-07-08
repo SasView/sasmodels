@@ -34,7 +34,7 @@ and :math:`S_N(Q)` is the Debye sum for a free‑rotating chain.
 
 Parameters
 ----------
-radius_effective : separation between chain points :math:`d` (Å).
+radius_effective : effective scatterer radius (Å), half the center-to-center separation :math:`d` between chain points.
 volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products.
 N_agg : aggregation number :math:`RN`.
 
@@ -68,7 +68,8 @@ structure_factor = True
 
 # Must match C: Iq(Q, radius_effective, volfraction, N_agg)
 parameters = [
-    ["radius_effective", "Ang", 20.0, [0.0, np.inf], "", "Separation between points"],
+    ["radius_effective", "Ang", 10.0, [0.0, np.inf], "",
+     "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
     ["N_agg", "", 20.0, [1.0, np.inf], "", "Aggregation number"],
@@ -81,7 +82,7 @@ def random():
     import random
 
     return {
-        "radius_effective": random.uniform(10.0, 50.0),
+        "radius_effective": random.uniform(5.0, 25.0),
         "volfraction": random.uniform(0.01, 0.3),
         "N_agg": random.uniform(1.0, 100.0),
     }

@@ -15,8 +15,8 @@ It uses the equation:
 where *amp* is the scale of the power law and *pow* is the exponent.
 
 The first two parameters follow sasmodels structure-factor conventions for
-:math:`P@S` products: *radius_effective* and *volfraction* are **not** used in
-the formula above.
+:math:`P@S` products: *radius_effective* (effective scatterer radius, unused
+here) and *volfraction* are **not** used in the formula above.
 
 See also
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
@@ -56,7 +56,7 @@ structure_factor = True
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["radius_effective", "Ang", 50.0, [0.0, inf], "",
-     "unused in S(q); required for P@S products"],
+     "effective scatterer radius; unused in S(q), required for P@S products"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
     ["amp", "", 100, [0, inf], "", "scale of power law"],

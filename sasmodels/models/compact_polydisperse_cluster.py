@@ -26,7 +26,7 @@ desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 Parameters
 ----------
-radius_effective : minimum distance between scatterers (Å); first parameter for :math:`P@S` wiring (see sasmodels structure-factor conventions)
+radius_effective : effective scatterer radius (Å), half the minimum center-to-center distance; first parameter for :math:`P@S` wiring (see sasmodels structure-factor conventions)
 volfraction : unused in this :math:`S(q)`; required as second parameter for :math:`P@S` products
 R_clust : mean radius of large clusters
 sig_rel_R : relative polydispersity of R_cluster
@@ -62,8 +62,8 @@ structure_factor = True
 
 # Must match C: Iq(Q, radius_effective, volfraction, R_clust, sig_rel_R, N_agg)
 parameters = [
-    ["radius_effective", "Ang", 20.0, [0.0, np.inf], "",
-     "Minimum distance between scatterers"],
+    ["radius_effective", "Ang", 10.0, [0.0, np.inf], "",
+     "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
     ["R_clust", "Ang", 40.0, [0.0, np.inf], "", "Average cluster radius"],
@@ -77,7 +77,7 @@ def random():
     import random
 
     return {
-        "radius_effective": random.uniform(5, 30),
+        "radius_effective": random.uniform(2.5, 15.0),
         "volfraction": random.uniform(0.01, 0.3),
         "R_clust": random.uniform(50, 200),
         "sig_rel_R": random.uniform(0.01, 0.3),

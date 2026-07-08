@@ -43,7 +43,7 @@ The low-q crossover constant is :math:`C = 5.2`.
 
 Parameters
 ----------
-radius_effective : inter-scatterer distance :math:`d` (Å); see *radius_effective_mode* when combining with a form factor
+radius_effective : effective scatterer radius (Å), half the center-to-center distance :math:`d`; see *radius_effective_mode* when combining with a form factor
 volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products
 D_fract : fractal dimension :math:`D_f`
 N_agg : number of particles in the fractal cluster
@@ -73,8 +73,7 @@ Authorship and Verification
 * **Last Reviewed by:** Reviewer Name Here (Date)
 """
 
-# fractal_aggregate_discrete_chain.py
-# Sasmodels plugin wrapper for fractal S(q) using inter-scatterer distance d.
+# Sasmodels plugin wrapper for fractal S(q) with discrete-chain baseline.
 
 import numpy as np
 
@@ -89,7 +88,8 @@ structure_factor = True
 
 # Must match C: Iq(q, radius_effective, volfraction, D_fract, N_agg)
 parameters = [
-    ["radius_effective", "Ang", 20.0, [0.0, np.inf], "", "Inter-scatterer distance"],
+    ["radius_effective", "Ang", 10.0, [0.0, np.inf], "",
+     "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
     ["D_fract", "", 2.0, [1.0, 3.0], "", "Fractal dimension"],
@@ -102,7 +102,7 @@ def random():
     import random
 
     return {
-        "radius_effective": random.uniform(10.0, 80.0),
+        "radius_effective": random.uniform(5.0, 40.0),
         "volfraction": random.uniform(0.01, 0.3),
         "D_fract": random.uniform(1.1, 2.9),
         "N_agg": random.uniform(5.0, 300.0),

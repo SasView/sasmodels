@@ -111,7 +111,7 @@ double PSCHULZ(double Q, double RAV, double SIGMA)
 double P_POLY(double Q, double RL, double SIGL, double d, double N_agg)
 {
     double PI43 = 4.1887892;
-    double RS = 0.5 * d;
+    double RS = d;
     double RDIF = RL - RS;
 
     double Z = 1.0/(SIGL*SIGL) - 1.0;

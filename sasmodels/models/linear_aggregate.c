@@ -19,7 +19,7 @@ static inline double sinx(double x)
  *
  * Parameters:
  *   Q      - momentum transfer
- *   radius_effective - separation between points (fit parameter)
+ *   radius_effective - effective scatterer radius (half center-to-center distance)
  *   volfraction - unused (required for P@S parameter order)
  *   N_agg  - effective number of points (may be non-integer)
  *
@@ -65,7 +65,7 @@ static double sq_linN(double Q, int N_agg, double sep)
  *
  * Parameters:
  *   Q   - momentum transfer
- *   radius_effective - separation between points
+ *   radius_effective - effective scatterer radius (half center-to-center distance)
  *   volfraction - unused
  *   N_agg - real (non-integer) number of points
  *
@@ -86,9 +86,11 @@ double Iq(double Q, double radius_effective, double volfraction, double N_agg)
     N = (int)N_agg;
     w = N_agg - (double)N;
 
+    double sep = 2.0 * radius_effective;
+
     intensity =
-        (1.0 - w) * sq_linN(Q, N, radius_effective)
-      +        w  * sq_linN(Q, N + 1, radius_effective);
+        (1.0 - w) * sq_linN(Q, N, sep)
+      +        w  * sq_linN(Q, N + 1, sep);
 
     return intensity;
 }

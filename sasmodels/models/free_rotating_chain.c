@@ -12,7 +12,7 @@
  *
  * Sasmodels interface:
  *   Q   - momentum transfer
- *   radius_effective - separation d between points
+ *   radius_effective - effective scatterer radius (half center-to-center distance)
  *   volfraction - unused (required for P@S parameter order)
  *   N_agg - real number of rotating points (RN)
  */
@@ -27,7 +27,7 @@ double Iq(double Q, double radius_effective, double volfraction, double N_agg)
     double intensity;
 
     double RN = N_agg;
-    double d = radius_effective;
+    double d = 2.0 * radius_effective;
 
     (void)volfraction;
 

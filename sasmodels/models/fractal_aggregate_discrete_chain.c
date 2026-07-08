@@ -14,7 +14,7 @@
  *
  * Parameters:
  *    q : scattering vector
- *    d : distance between scatterers
+ *    d : center-to-center distance between scatterers (= 2 * radius_effective)
  *    D : fractal dimension
  *    N : number of particles
  */
@@ -79,5 +79,5 @@ double Iq(double q, double radius_effective, double volfraction,
           double D_fract, double N_agg)
 {
     (void)volfraction;
-    return fractal_sq_N(q, radius_effective, D_fract, N_agg);
+    return fractal_sq_N(q, 2.0 * radius_effective, D_fract, N_agg);
 }
