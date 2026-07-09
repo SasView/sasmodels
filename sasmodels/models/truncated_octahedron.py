@@ -1,4 +1,4 @@
-# octahedron_truncated model
+# truncated_octahedron model
 # Note: model title and parameter table are inserted automatically
 r"""
 This model provides the form factor P(q) for a general octahedron.
