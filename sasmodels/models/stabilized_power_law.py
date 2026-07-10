@@ -10,9 +10,9 @@ It uses the equation:
 
 .. math::
 
-    S(q) = 1.0 + \mathrm{amp}\,(0.01/q)^{\mathrm{pow}}
+    S(q) = 1.0 + \mathrm{power_law_scale}\,(0.01/q)^{\mathrm{power}}
 
-where *amp* is the scale of the power law and *pow* is the exponent.
+where *power_law_scale* is the scale of the power law and *power* is the exponent.
 
 The first two parameters follow sasmodels structure-factor conventions for
 :math:`P@S` products: *radius_effective* (effective scatterer radius, unused
@@ -46,9 +46,9 @@ from numpy import inf
 name = "stabilized_power_law"
 title = "Stabilized power-law structure factor"
 description = """\
-S(q) = 1 + amp *(0.01/q)^pow
-    amp: scale of power law
-    pow: exponent of power law
+S(q) = 1 + power_law_scale *(0.01/q)^power
+    power_law_scale: scale of power law
+    power: exponent of power law
 """
 category = "structure-factor"
 structure_factor = True
@@ -59,12 +59,12 @@ parameters = [
      "effective scatterer radius; unused in S(q), required for P@S products"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
-    ["amp", "", 100, [0, inf], "", "scale of power law"],
-    ["pow", "", 2, [0, 6], "", "exponent of power law "],
+    ["power_law_scale", "", 100, [0, inf], "", "scale of power law"],
+    ["power", "", 2, [0, 6], "", "exponent of power law "],
 ]
 
 
-def Iq(q, radius_effective, volfraction, amp, pow):
+def Iq(q, radius_effective, volfraction, power_law_scale, power):
     """Return S(q); *radius_effective* and *volfraction* are unused."""
     _ = (radius_effective, volfraction)
-    return 1.0 + amp * (0.01 / q) ** pow
+    return 1.0 + power_law_scale * (0.01 / q) ** power

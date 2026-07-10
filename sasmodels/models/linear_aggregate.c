@@ -7,40 +7,40 @@
  *   Q      - momentum transfer
  *   radius_effective - effective scatterer radius (half center-to-center distance)
  *   volfraction - unused (required for P@S parameter order)
- *   N_agg  - effective number of points (may be non-integer)
+ *   n_aggreg  - effective number of points (may be non-integer)
  *
  * Returns:
  *   linear_aggregate(Q)
  *
  * Notes:
- *   Exits with warning if N_agg > 100
+ *   Exits with warning if n_aggreg > 100
  */
-static double sq_linN(double Q, int N_agg, double sep)
+static double sq_linN(double Q, int n_aggreg, double sep)
 {
     int k;
     double SUM, SN;
 
     double d = sep;
     
-    if (N_agg <= 1)
+    if (n_aggreg <= 1)
         return 1.0;
 
 /*
-    if (N_agg > 100) {
+    if (n_aggreg > 100) {
         fprintf(stderr,
-                "WARNING (linear_aggregate): N_agg = %d exceeds maximum allowed value (100).\n",
-                N_agg);
+                "WARNING (linear_aggregate): n_aggreg = %d exceeds maximum allowed value (100).\n",
+                n_aggreg);
         exit(EXIT_FAILURE);
     }
 */
 
     SUM = 0.0;
 
-    for (k = 1; k <= N_agg - 1; k++) {
-        SUM += (double)(N_agg - k) * sas_sinx_x(Q * d * (double)k);
+    for (k = 1; k <= n_aggreg - 1; k++) {
+        SUM += (double)(n_aggreg - k) * sas_sinx_x(Q * d * (double)k);
     }
 
-    SN = 1.0 + 2.0 * SUM / (double)N_agg;
+    SN = 1.0 + 2.0 * SUM / (double)n_aggreg;
 
     return SN;
 }
@@ -55,12 +55,12 @@ static double sq_linN(double Q, int N_agg, double sep)
  *   Q   - momentum transfer
  *   radius_effective - effective scatterer radius (half center-to-center distance)
  *   volfraction - unused
- *   N_agg - real (non-integer) number of points
+ *   n_aggreg - real (non-integer) number of points
  *
  * Returns:
  *   linear_aggregate(Q)
  */
-double Iq(double Q, double radius_effective, double volfraction, double N_agg)
+double Iq(double Q, double radius_effective, double volfraction, double n_aggreg)
 {
     int N;
     double w;
@@ -68,11 +68,11 @@ double Iq(double Q, double radius_effective, double volfraction, double N_agg)
 
     (void)volfraction;
 
-    if (N_agg <= 1.0)
+    if (n_aggreg <= 1.0)
         return 1.0;
 
-    N = (int)N_agg;
-    w = N_agg - (double)N;
+    N = (int)n_aggreg;
+    w = n_aggreg - (double)N;
 
     double sep = 2.0 * radius_effective;
 

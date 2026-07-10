@@ -33,7 +33,7 @@ Parameters
 ----------
 radius_effective : effective scatterer radius (Å), half the center-to-center distance between scatterers on the chain.
 volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products.
-N_agg : aggregation number.
+n_aggreg : aggregation number.
 
 Validation
 ----------
@@ -70,10 +70,10 @@ parameters = [
      "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
-    ["N_agg", "", 50.0, [0.0, 100.0], "", "Aggregation number"],
+    ["n_aggreg", "", 50.0, [0.0, 100.0], "", "Aggregation number"],
 ]
 
-valid = "N_agg <= 100"
+valid = "n_aggreg <= 100"
 
 source = ["linear_aggregate.c"]
 
@@ -83,7 +83,7 @@ def random():
     return {
         "radius_effective": random.uniform(5, 25),
         "volfraction": random.uniform(0.01, 0.3),
-        "N_agg": random.uniform(1, 100),
+        "n_aggreg": random.uniform(1, 100),
     }
 
 def test():

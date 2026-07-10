@@ -6,8 +6,8 @@
  *   q  : scattering vector
  *   radius_effective : effective scatterer radius (half center-to-center distance)
  *   volfraction      : unused (required for P@S parameter order)
- *   D_fract          : fractal dimension
- *   N_agg            : number of particles in cluster
+ *   fractal_dim          : fractal dimension
+ *   n_aggreg            : number of particles in cluster
  */
 
 static double fractal_sq_N(double q, double r, double D, double N)
@@ -52,8 +52,8 @@ static double fractal_sq_N(double q, double r, double D, double N)
 
 /* ========== Sasmodels interface ========== */
 double Iq(double q, double radius_effective, double volfraction,
-          double D_fract, double N_agg)
+          double fractal_dim, double n_aggreg)
 {
     (void)volfraction;
-    return fractal_sq_N(q, radius_effective, D_fract, N_agg);
+    return fractal_sq_N(q, radius_effective, fractal_dim, n_aggreg);
 }

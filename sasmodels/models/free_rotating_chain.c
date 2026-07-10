@@ -12,10 +12,10 @@
  *   Q   - momentum transfer
  *   radius_effective - effective scatterer radius (half center-to-center distance)
  *   volfraction - unused (required for P@S parameter order)
- *   N_agg - real number of rotating points (RN)
+ *   n_aggreg - real number of rotating points (RN)
  */
 
-double Iq(double Q, double radius_effective, double volfraction, double N_agg)
+double Iq(double Q, double radius_effective, double volfraction, double n_aggreg)
 {
     int N_SPH, N_SPH1;
     double W;
@@ -24,7 +24,7 @@ double Iq(double Q, double radius_effective, double volfraction, double N_agg)
     double x;
     double intensity;
 
-    double RN = N_agg;
+    double RN = n_aggreg;
     double d = 2.0 * radius_effective;
 
     (void)volfraction;

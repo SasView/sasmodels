@@ -45,8 +45,8 @@ Parameters
 ----------
 radius_effective : effective scatterer radius (Å), half the center-to-center distance :math:`d`; see *radius_effective_mode* when combining with a form factor
 volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products
-D_fract : fractal dimension :math:`D_f`
-N_agg : number of particles in the fractal cluster
+fractal_dim : fractal dimension :math:`D_f`
+n_aggreg : number of particles in the fractal cluster
 
 See also
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
@@ -86,14 +86,14 @@ Fractal Structure Factor S(q) with local correlation between points
 category = "structure-factor"
 structure_factor = True
 
-# Must match C: Iq(q, radius_effective, volfraction, D_fract, N_agg)
+# Must match C: Iq(q, radius_effective, volfraction, fractal_dim, n_aggreg)
 parameters = [
     ["radius_effective", "Ang", 10.0, [0.0, np.inf], "",
      "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
-    ["D_fract", "", 2.0, [1.0, 3.0], "", "Fractal dimension"],
-    ["N_agg", "", 50.0, [1.0, np.inf], "", "Number of particles in cluster"],
+    ["fractal_dim", "", 2.0, [1.0, 3.0], "", "Fractal dimension"],
+    ["n_aggreg", "", 50.0, [1.0, np.inf], "", "Number of particles in cluster"],
 ]
 
 source = ["fractal_aggregate_discrete_chain.c"]
@@ -104,8 +104,8 @@ def random():
     return {
         "radius_effective": random.uniform(5.0, 40.0),
         "volfraction": random.uniform(0.01, 0.3),
-        "D_fract": random.uniform(1.1, 2.9),
-        "N_agg": random.uniform(5.0, 300.0),
+        "fractal_dim": random.uniform(1.1, 2.9),
+        "n_aggreg": random.uniform(5.0, 300.0),
     }
 
 def test():

@@ -28,9 +28,9 @@ Parameters
 ----------
 radius_effective : effective scatterer radius (Å), half the minimum center-to-center distance; first parameter for :math:`P@S` wiring (see sasmodels structure-factor conventions)
 volfraction : unused in this :math:`S(q)`; required as second parameter for :math:`P@S` products
-R_clust : mean radius of large clusters
-sig_rel_R : relative polydispersity of R_cluster
-N_agg : weight-average aggregation number
+radius_cluster : mean radius of large clusters
+radius_cluster_sigma_relative : relative polydispersity of radius_cluster
+n_aggreg : weight-average aggregation number
 
 References
 ----------
@@ -61,15 +61,15 @@ category = "structure-factor"
 structure_factor = True
 single = False
 
-# Must match C: Iq(Q, radius_effective, volfraction, R_clust, sig_rel_R, N_agg)
+# Must match C: Iq(Q, radius_effective, volfraction, radius_cluster, radius_cluster_sigma_relative, n_aggreg)
 parameters = [
     ["radius_effective", "Ang", 10.0, [0.0, np.inf], "",
      "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
-    ["R_clust", "Ang", 40.0, [0.0, np.inf], "", "Average cluster radius"],
-    ["sig_rel_R", "", 0.4, [0.0, 1.0], "", "Relative size polydispersity"],
-    ["N_agg", "", 50.0, [10.0, 100.0], "", "Weight-average aggregation number"],
+    ["radius_cluster", "Ang", 40.0, [0.0, np.inf], "", "Average cluster radius"],
+    ["radius_cluster_sigma_relative", "", 0.4, [0.0, 1.0], "", "Relative size polydispersity"],
+    ["n_aggreg", "", 50.0, [10.0, 100.0], "", "Weight-average aggregation number"],
 ]
 
 source = ["lib/sas_gammainc.c", "lib/sas_3j1x_x.c", "compact_polydisperse_cluster.c"]
@@ -80,9 +80,9 @@ def random():
     return {
         "radius_effective": random.uniform(2.5, 15.0),
         "volfraction": random.uniform(0.01, 0.3),
-        "R_clust": random.uniform(50, 200),
-        "sig_rel_R": random.uniform(0.01, 0.3),
-        "N_agg": random.uniform(10, 100),
+        "radius_cluster": random.uniform(50, 200),
+        "radius_cluster_sigma_relative": random.uniform(0.01, 0.3),
+        "n_aggreg": random.uniform(10, 100),
     }
 
 def test():

@@ -76,7 +76,7 @@ double PSCHULZ(double Q, double RAV, double SIGMA)
 }
 
 /* P_POLY ------------------------------------------------------------ */
-double P_POLY(double Q, double RL, double SIGL, double d, double N_agg)
+double P_POLY(double Q, double RL, double SIGL, double d, double n_aggreg)
 {
     double PI43 = 4.1887892;
     double RS = d;
@@ -90,7 +90,7 @@ double P_POLY(double Q, double RL, double SIGL, double d, double N_agg)
                   / pow(Z+1.0,5.0);
 
     double VS   = PI43*pow(RS,3.0);
-    double ETA = N_agg * (SVL * VS)/SVL2;
+    double ETA = n_aggreg * (SVL * VS)/SVL2;
     double ALPP = ETA/VS;
 
     
@@ -133,15 +133,15 @@ double P_POLY(double Q, double RL, double SIGL, double d, double N_agg)
 }
 
 /* ----------- SASVIEW ENTRY POINT ----------- */
-double SQ_COMPACT(double Q, double RL, double SIGL, double d, double N_agg)
+double SQ_COMPACT(double Q, double RL, double SIGL, double d, double n_aggreg)
 {
-    return P_POLY(Q, RL, SIGL, d, N_agg);
+    return P_POLY(Q, RL, SIGL, d, n_aggreg);
 }
 
 /* SasView required function */
 double Iq(double Q, double radius_effective, double volfraction,
-          double R_clust, double sig_rel_R, double N_agg)
+          double radius_cluster, double radius_cluster_sigma_relative, double n_aggreg)
 {
     (void)volfraction;
-    return SQ_COMPACT(Q, R_clust, sig_rel_R, radius_effective, N_agg);
+    return SQ_COMPACT(Q, radius_cluster, radius_cluster_sigma_relative, radius_effective, n_aggreg);
 }

@@ -74,8 +74,8 @@ static double fractal_sq_N(double q, double d, double D, double N)
 /* ---------------- sasmodels interface ---------------- */
 
 double Iq(double q, double radius_effective, double volfraction,
-          double D_fract, double N_agg)
+          double fractal_dim, double n_aggreg)
 {
     (void)volfraction;
-    return fractal_sq_N(q, 2.0 * radius_effective, D_fract, N_agg);
+    return fractal_sq_N(q, 2.0 * radius_effective, fractal_dim, n_aggreg);
 }

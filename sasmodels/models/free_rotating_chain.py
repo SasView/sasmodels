@@ -36,7 +36,7 @@ Parameters
 ----------
 radius_effective : effective scatterer radius (Å), half the center-to-center separation :math:`d` between chain points.
 volfraction : unused in this :math:`S(q)`; required for :math:`P@S` products.
-N_agg : aggregation number :math:`RN`.
+n_aggreg : aggregation number :math:`RN`.
 
 References
 ----------
@@ -67,13 +67,13 @@ category = "structure-factor"
 structure_factor = True
 single = False
 
-# Must match C: Iq(Q, radius_effective, volfraction, N_agg)
+# Must match C: Iq(Q, radius_effective, volfraction, n_aggreg)
 parameters = [
     ["radius_effective", "Ang", 10.0, [0.0, np.inf], "",
      "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
-    ["N_agg", "", 20.0, [1.0, np.inf], "", "Aggregation number"],
+    ["n_aggreg", "", 20.0, [1.0, np.inf], "", "Aggregation number"],
 ]
 
 # Kernel source
@@ -85,7 +85,7 @@ def random():
     return {
         "radius_effective": random.uniform(5.0, 25.0),
         "volfraction": random.uniform(0.01, 0.3),
-        "N_agg": random.uniform(1.0, 100.0),
+        "n_aggreg": random.uniform(1.0, 100.0),
     }
 
 def test():

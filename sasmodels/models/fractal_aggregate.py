@@ -32,8 +32,8 @@ Parameters
 ----------
 radius_effective : effective scatterer radius (Å), half the center-to-center distance; use unconstrained *radius_effective_mode* to fit independently of the form-factor radius
 volfraction : required for $P@S$ products; **not used** in this $S(q)$ (see ``sasmodels.product`` until optional structure-factor volfraction exists)
-D_fract : fractal dimension
-N_agg : number of particles in the fractal cluster
+fractal_dim : fractal dimension
+n_aggreg : number of particles in the fractal cluster
 
 See also
 Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
@@ -73,14 +73,14 @@ Fractal structure factor S(q)
 category = "structure-factor"
 structure_factor = True
 
-# Must match C kernel: Iq(q, radius_effective, volfraction, D_fract, N_agg)
+# Must match C kernel: Iq(q, radius_effective, volfraction, fractal_dim, n_aggreg)
 parameters = [
     ["radius_effective", "Ang", 10.0, [0.0, np.inf], "",
      "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required as second parameter for P@S products"],
-    ["D_fract", "", 2.0, [1.0, 3.0], "", "Fractal dimension"],
-    ["N_agg", "", 50.0, [1.0, np.inf], "", "Number of particles"],
+    ["fractal_dim", "", 2.0, [1.0, 3.0], "", "Fractal dimension"],
+    ["n_aggreg", "", 50.0, [1.0, np.inf], "", "Number of particles"],
 ]
 
 # Kernel source
@@ -92,8 +92,8 @@ def random():
     return {
         "radius_effective": random.uniform(2.5, 25.0),
         "volfraction": random.uniform(0.01, 0.3),
-        "D_fract": random.uniform(1.1, 2.9),
-        "N_agg": random.uniform(5.0, 300.0),
+        "fractal_dim": random.uniform(1.1, 2.9),
+        "n_aggreg": random.uniform(5.0, 300.0),
     }
 
 def test():
