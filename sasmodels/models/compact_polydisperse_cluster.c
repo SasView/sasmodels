@@ -1,26 +1,3 @@
-#include <math.h>
-#include <stdio.h>
-
-/* GAMMLN ------------------------------------------------------------ */
-double GAMMLN(double xx)
-{
-    static double cof[6] = {
-        76.18009173, -86.50532033, 24.01409822,
-        -1.231739516, 0.00120858003, -0.0000536382
-    };
-    double stp = 2.50662827465;
-    double half = 0.5, one = 1.0, fpf = 5.5;
-    double x = xx - one;
-    double tmp = x + fpf;
-    tmp = (x + half) * log(fabs(tmp)) - tmp;
-
-    double ser = one;
-    for(int j=0;j<6;j++){
-        x += one;
-        ser += cof[j]/x;
-    }
-    return tmp + log(stp * ser);
-}
 
 /* SCHULZ ------------------------------------------------------------ */
 double SCHULZ(double R, double RA, double Z)
@@ -29,18 +6,9 @@ double SCHULZ(double R, double RA, double Z)
         (Z+1.0)*log(fabs((Z+1.0)/RA))
       + Z*log(fabs(R))
       - (Z+1.0)*R/RA
-      - GAMMLN(Z+1.0);
+      - sas_gammaln(Z+1.0);
 
     return exp(dum);
-}
-
-/* FI ---------------------------------------------------------------- */
-double FI(double X)
-{
-    if(X > 0.05)
-        return 3.0*(sin(X)-X*cos(X)) / (X*X*X);
-    else
-        return 1.0 - 0.1*X*X;
 }
 
 /* S_HS -------------------------------------------------------------- */
@@ -155,7 +123,7 @@ double P_POLY(double Q, double RL, double SIGL, double d, double N_agg)
 
     SSQ = SSQ/SSQN;
 
-    double PS   = VS*VS * FI(Q*RS)*FI(Q*RS);
+    double PS   = square(VS * sas_3j1x_x(Q*RS));
     double PLAV = PSCHULZ(Q, RDIF, SIGL);
 
     double RN  = SVL  * ALPP;

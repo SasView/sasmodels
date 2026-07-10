@@ -1,5 +1,3 @@
-#include <math.h>
-
 /*
  * Fractal structure factor S(q)
  * Normalization: S(0) = N

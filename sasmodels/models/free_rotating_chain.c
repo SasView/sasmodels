@@ -1,5 +1,3 @@
-#include <math.h>
-
 /*
  * free_rotating_chain
  *
@@ -39,15 +37,12 @@ double Iq(double Q, double radius_effective, double volfraction, double N_agg)
     x = Q * d;
 
     /* sinc kernel */
-    if (fabs(x) < 1e-12)
-        ARG = 1.0;
-    else
-        ARG = sin(x) / x;
+    ARG = sas_sinx_x(x);
 
     /* FOR N */
     SN =  ((double)N_SPH) / (1.0 - ARG)
         - ((double)N_SPH) / 2.0
-        - (1.0 - pow(ARG, N_SPH)) / pow(1.0 - ARG, 2.0) * ARG;
+        - (1.0 - pow(ARG, N_SPH)) / square(1.0 - ARG) * ARG;
 
     SN = SN * 2.0 / (double)N_SPH;
 
@@ -56,7 +51,7 @@ double Iq(double Q, double radius_effective, double volfraction, double N_agg)
 
     SN1 = ((double)N_SPH1) / (1.0 - ARG)
         - ((double)N_SPH1) / 2.0
-        - (1.0 - pow(ARG, N_SPH1)) / pow(1.0 - ARG, 2.0) * ARG;
+        - (1.0 - pow(ARG, N_SPH1)) / square(1.0 - ARG) * ARG;
 
     SN1 = SN1 * 2.0 / (double)N_SPH1;
 

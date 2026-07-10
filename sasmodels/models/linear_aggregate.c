@@ -1,17 +1,3 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-/*
- * sinx(x) = sin(x)/x with safe x -> 0 limit
- */
-static inline double sinx(double x)
-{
-    if (fabs(x) < 1e-8)
-        return 1.0;
-    return sin(x) / x;
-}
-
 /*
  * linear_aggregate
  *
@@ -39,17 +25,19 @@ static double sq_linN(double Q, int N_agg, double sep)
     if (N_agg <= 1)
         return 1.0;
 
+/*
     if (N_agg > 100) {
         fprintf(stderr,
                 "WARNING (linear_aggregate): N_agg = %d exceeds maximum allowed value (100).\n",
                 N_agg);
         exit(EXIT_FAILURE);
     }
+*/
 
     SUM = 0.0;
 
     for (k = 1; k <= N_agg - 1; k++) {
-        SUM += (double)(N_agg - k) * sinx(Q * d * (double)k);
+        SUM += (double)(N_agg - k) * sas_sinx_x(Q * d * (double)k);
     }
 
     SN = 1.0 + 2.0 * SUM / (double)N_agg;

@@ -59,6 +59,7 @@ with internal correlations.
 
 category = "structure-factor"
 structure_factor = True
+single = False
 
 # Must match C: Iq(Q, radius_effective, volfraction, R_clust, sig_rel_R, N_agg)
 parameters = [
@@ -71,7 +72,7 @@ parameters = [
     ["N_agg", "", 50.0, [10.0, 100.0], "", "Weight-average aggregation number"],
 ]
 
-source = ["compact_polydisperse_cluster.c"]
+source = ["lib/sas_gammainc.c", "lib/sas_3j1x_x.c", "compact_polydisperse_cluster.c"]
 
 def random():
     import random

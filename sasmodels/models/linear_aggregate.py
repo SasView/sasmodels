@@ -70,8 +70,10 @@ parameters = [
      "effective scatterer radius (half center-to-center distance)"],
     ["volfraction", "", 0.2, [0.0, 1.0], "",
      "unused in S(q); required for P@S products"],
-    ["N_agg", "", 50.0, [0.0, np.inf], "", "Aggregation number"],
+    ["N_agg", "", 50.0, [0.0, 100.0], "", "Aggregation number"],
 ]
+
+valid = "N_agg <= 100"
 
 source = ["linear_aggregate.c"]
 

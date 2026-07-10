@@ -65,6 +65,7 @@ Structure factor of a free-rotating chain (random flight)
 
 category = "structure-factor"
 structure_factor = True
+single = False
 
 # Must match C: Iq(Q, radius_effective, volfraction, N_agg)
 parameters = [
