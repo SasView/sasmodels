@@ -1,4 +1,3 @@
-
 /* SCHULZ ------------------------------------------------------------ */
 double SCHULZ(double R, double RA, double Z)
 {
@@ -93,8 +92,6 @@ double P_POLY(double Q, double RL, double SIGL, double d, double n_aggreg)
     double ETA = n_aggreg * (SVL * VS)/SVL2;
     double ALPP = ETA/VS;
 
-    
-
     int NPOI = 100;
     double RMAX = RS + 6.0*RL*SIGL;
     double DELR = RMAX/NPOI;
@@ -107,10 +104,10 @@ double P_POLY(double Q, double RL, double SIGL, double d, double n_aggreg)
         double R  = RS + (i-0.5)*DELR;
         double RD = R - RS;
         double D  = SCHULZ(RD, RDIF, Z);
-        
-        double RH = R - 2.0*RS; 
+
+        double RH = R - 2.0*RS;
         if(RH < 0) RH = 0.0;
-        
+
         double FR = (pow(RD,3.0) - pow(RH,3.0))/pow(RD,3.0);
     if(FR < 0.0) FR = 0.0;
     if(FR > 1.0) FR = 1.0;
