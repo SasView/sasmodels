@@ -1,7 +1,7 @@
 Release notes
 =============
 
-v1.1.0 2026-24-07
+v1.1.0 2026-30-07
 ------------------
 
 * Add truncated octahedron model (Python and C)
@@ -27,6 +27,7 @@ v1.1.0 2026-24-07
 * Fix limits on angles and angular dispersity
 * Don't include magnetism parameters in pure python models
 * Fix doc polyhedrons
+* Add some docs to explore/check_adaptive.py
 
 v1.0.12 2025-12-02
 ------------------
