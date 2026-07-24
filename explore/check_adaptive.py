@@ -1,3 +1,63 @@
+"""
+Check the speed and accuracy of the 1-D model integration routines,
+comparing them to a fixed 76-point gaussian.
+
+You can look at the overall performance by fitting the latex_sphere
+sasdata example with a triaxial ellipsoid. This can be done in sasview
+for a real world check, but it includes the overhead of the sasview shim.
+You can skip over the shim by running a fit directly in bumps:
+
+    $ bumps example/simul_fit.py --fit=dream --pop=-100
+
+Modify simul_fit.py to choose SANS, USANS or both for
+triaxial_ellipsoid, ellipsoid or sphere.
+
+Sasmodels compare help:
+
+    $ python -m sasmodels.compare -?
+
+Environment variables are listed in the sasmodels.compare help. For example,
+to control use of the GPU in the execution engine:
+
+    SAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
+
+Check speed and accuracy via explore/check_adaptive.py (this file).
+
+There are multiple control parameters for running this program, but you need
+to change the code to set them. Search for "runtime control flags" below.
+
+I've checked a couple of models using big_n=15000 by listing them on the command line:
+
+    $ python explore/check_adaptive.py capped_cylinder barbell
+
+Target sizes are 20 μm diameter for big (USANS) and 20 nm diameter for small (SANS/SAXS).
+Small models are tested over the SANS q range, 1e-3/Ang to 1/Ang. USANS only tests to 0.1/Ang
+
+For each model the generic a,b,c dimensions are translated to model specific parameters.
+
+There are other model parameters such as "sld_core" for core-shell models, which is set to
+sld_solvent=0, and the thickness/core_size ratio "shell" which defaults to 0.1. Maybe a
+future version could take these parameters on the command line. The latter is relevant
+to USANS since large objects with thin shells have a 1/q rather than 1/q^4 falloff, and
+so slit resolution values will be higher.
+
+Three different aspect ratios are tested: rod-like, disk-like and cube-like
+
+You can check random parameter sets for a model using:
+
+    $ python -m sasmodels.compare background=0 -ngauss=0,1000 -sets=5 -double triaxial_ellipsoid
+
+This compares adaptive (ngauss=0) to a 1000x1000 fixed grid.
+
+If you find a dataset that is anomalous then look for the -random=n output on the console
+and add it to the command line. He will reproduce a model with the same parameters.
+
+You may want something like "-random=n -ngauss=0,12000 -nq=5 q=0.001:0.1" to look at
+five q values over two decades with 12000x12000 grid
+
+Really small models are faster on the CPU. Large models are faster on the GPU.
+"""
+
 from math import sqrt
 
 from sasmodels import core, data, generate
@@ -125,7 +185,7 @@ def capped_cylinder(a, b, c):
     return pars
 
 @register(2)
-def core_shell_bicelle_elliptical_belt_rough(a, b, c, shell=0.1, sld_core=0, roughness=0.1):
+def core_shell_bicelle_elliptical_belt_rough(a, b, c, shell=0.1, sld_core=0, roughness=0.02):
     thick_rim = thick_face = a*shell/2 if shell < 1 else shell
     length = c - 2*thick_face
     radius = a/2 - thick_rim
@@ -330,6 +390,10 @@ def check(models=[]):
 
         k_accurate = get_kernel(model_name, n_gauss=test_n_gauss, dtype="double", platform="dll")
         Iq_test_accurate = DirectModel(test_data, k_accurate)(**pars)
+        if not np.isfinite(Iq_test_accurate).any() or (Iq_test_accurate == 0).any():
+            print(f">>> Bad target values for\n    {model_name} {par_str}\n    q   : {test_q}\n    I(q): {Iq_test_accurate}")
+        if not np.isfinite(Iq_test_adaptive).any() or (Iq_test_adaptive == 0).any():
+            print(f">>> Bad target values for\n    {model_name} {par_str}\n    q   : {test_q}\n    I(q): {Iq_test_adaptive}")
         relerr = abs(Iq_test_adaptive - Iq_test_accurate)/Iq_test_accurate
         index = relerr > tol
         if index.any():
@@ -342,6 +406,8 @@ def check(models=[]):
         # Compare against 76-point gaussian
         k_76 = get_kernel(model_name, n_gauss=76, dtype="double", platform="dll")
         Iq_test_76 = DirectModel(test_data, k_76)(**pars)
+        if not np.isfinite(Iq_test_76).any() or (Iq_test_76 == 0).any():
+            print(f">>> Bad target values for\n    {model_name} {par_str}\n    q   : {test_q}\n    I(q): {Iq_test_76}")
         relerr_76 = abs(Iq_test_76 - Iq_test_accurate)/Iq_test_accurate
         index = (relerr_76 > tol) #& (relerr > tol) & (relerr > 10*relerr_76)
         if index.any():
@@ -352,11 +418,29 @@ def check(models=[]):
             print("  relerr", relerr[index])
             print("  rel-76", relerr_76[index])
 
+
+    # === runtime control flags ===
+    # speed_target=n warns if adaptive is n times slower than gauss-76
+    # speed_only only compares the calculation speed, not the accuracy
+    # speed_check is what to compare adaptive against:
+    #     "gauss-76" fixed grid,
+    #     "gpu" adaptive running on the GPU, or
+    #     None for no speed check
+    # big_n is the grid size for large shapes. Time scales as n²
+    #     for NESTED models, so only a few q values are tested,
+    #     ranging over USANS values 5e-4 to 1e-1. The high q is
+    #     large so we can look at the cost of computing resolution
+    #     effects in slit geometry
+    # small_n is the grid size for small shapes.
+    # n_per_decade=n is the number of q points per decade unsed for
+    #     small shapes. With three decades, n=1 means four q points,
+    #     which is fewer than the number used for big_n
+
     speed_target = 2
-    #speed_only = True
-    #speed_check = None
     speed_only = False
     speed_check = "gauss-76"  # None | "" | "gpu" | "gauss-76"
+    #speed_only = True
+    #speed_check = None
     big_n = 5000
     #small_n = 1000
     small_n = big_n
@@ -386,7 +470,7 @@ def check(models=[]):
 
         print(f"\n\n=== {'big' if big else 'small'} {aspect}: {a=} {b=} {c=} ===")
         ab = max(a, b)
-        for name, fn in UNNESTED.items():
+        for name, fn in UNNESTED.items():  # 1D integrals
             # skip models not listed
             if models and name not in models:
                 continue
@@ -394,7 +478,7 @@ def check(models=[]):
             run_test(name, pars, q, n_gauss, test_q, test_tol)
 
         ab = max(a, b)
-        for name, fn in NESTED.items():
+        for name, fn in NESTED.items():  # 2D integrals
             # skip models not listed
             if models and name not in models:
                 continue
