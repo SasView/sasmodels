@@ -666,15 +666,14 @@ After expansion, the loop struction will look like the following:
 // ====== construct the loops =======
 
 // Pointers to the start of the dispersity and weight vectors, if needed.
-#if MAX_PD>0
-  pglobal const double *pd_value = values + NUM_VALUES;
-  pglobal const double *pd_weight = pd_value + details->num_weights;
-#endif
-
 // The variable "step" is the current position in the dispersity loop.
 // It will be incremented each time a new point in the mesh is accumulated,
 // and used to test whether we have reached pd_stop.
-int step = pd_start;
+#if MAX_PD>0
+  pglobal const double *pd_value = values + NUM_VALUES;
+  pglobal const double *pd_weight = pd_value + details->num_weights;
+  int step = pd_start;
+#endif
 
 // *** define loops for each of 0, 1, 2, ..., modelinfo.MAX_PD-1 ***
 
@@ -805,8 +804,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
     }
   }
 // close nested loops
-++step;
 #if MAX_PD>0
+  ++step;
   PD_CLOSE(0)
 #endif
 #if MAX_PD>1
