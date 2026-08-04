@@ -1,6 +1,34 @@
 Release notes
 =============
 
+v1.1.0 2026-30-07
+------------------
+
+* Add truncated octahedron model (Python and C)
+* Add nanoprisms model (pure Python)
+* Add truncated tetrahedron model (pure Python)
+* Correct typo in docs variable description
+* Remove polydispersity from Sq models
+* Adjust limits for Guinier-Porod model
+* Update orientation viewer
+* Add paracrystalline model simulation
+* Allow pure python Fq for beta approximation
+* Allow `sasmodels.compare` to use bumps webview instead of wx
+* Add simple adaptive integration
+* Update examples and plotters for bumps webview
+* Add citation and contributors
+* Update fuzzy sphere documentation
+* Update truncated_octahedron before code freeze
+* Fix switched nomenclature for length and width
+* Fix inverse q-spacing in the geometric extrapolation function
+* Fix RepeatedKernelRetrieval error in OpenCL
+* Adaptive integration for truncated octahedron
+* Tell pyinstaller to include special/fibonacci.py
+* Fix limits on angles and angular dispersity
+* Don't include magnetism parameters in pure python models
+* Fix doc polyhedrons
+* Add some docs to explore/check_adaptive.py
+
 v1.0.12 2025-12-02
 ------------------
 
