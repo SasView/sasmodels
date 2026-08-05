@@ -14,7 +14,8 @@ import numpy as np
 
 # Functions to add to our standard set
 # C99 standard math library functions
-from numpy import cos, inf, nan, sin
+from numpy import acos, asin, atan, cos, inf, nan, pow, sin, tan
+from scipy.special import gamma as sas_gamma
 from scipy.special import j1 as sas_J1
 
 # erf, erfc, tgamma, lgamma  **do not use**
@@ -98,6 +99,24 @@ def sas_2J1x_x(x):
         retvalue[x == 0] = 1.
     return retvalue
 
+def fractal_sq(q, radius, fractal_dim, cor_length):
+    # Calculate S(q) using Eq(16) from Teixeira (1988), DOI:10.1107/S0021889888000263
+    # with terms rearranged so that limiting cases are easier to calculate.
+    # Values checked against 500 bit floating point using the original equations.
+    with np.errstate(all='ignore'):
+        if fractal_dim == 0:
+            term = np.ones_like(q)
+        elif fractal_dim == 1:
+            term = atan(q*cor_length)/(q*radius)
+            term[q == 0] = 1
+        else:
+            t1 = pow(cor_length/radius, fractal_dim) * sas_gamma(fractal_dim+1)
+            t2 = sin((fractal_dim-1)*atan(q*cor_length))/((fractal_dim-1)*q*cor_length)
+            t2[q == 0] = 1
+            t3 = pow(1 + square(q*cor_length), -(fractal_dim-1)/2)
+            term = t1*t2*t3
+
+    return 1 + term
 
 # Gaussians
 class Gauss:
