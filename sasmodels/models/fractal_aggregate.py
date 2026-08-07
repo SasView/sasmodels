@@ -5,28 +5,135 @@
 r"""
 Definition
 ----------
-This model calculates the structure factor of a fractal-like aggregates.
+Structure factor for fractal-like aggregates composed of globular primary
+particles.
 
-WARNING: Should not be used in combination with very anisotropic particle shapes.
+WARNING: This model assumes isotropic aggregates and should not be used in
+combination with strongly anisotropic particle shapes.
 
-It uses the following equation:
+The model is based on the mass-fractal structure factor originally derived by
+Teixeira (1988) and describes aggregates characterized by a fractal
+dimension :math:`D_f` and a correlation length :math:`\xi`. The fractal
+dimension governs the compactness of the aggregate, with larger values
+corresponding to denser structures, while :math:`\xi` represents the aggregate
+size.
+
+The original expression is
 
 .. math::
 
-    S(q) = 1 + \frac{D_f\, \Gamma(D_f-1)}{\left[1+1/(q\xi)^2\right]^{(D_f-1)/2}}
-    \frac{\sin\left[(D_f-1)\tan^{-1}(q\xi)\right]}{(q R_0)^{D_f}}
+    S(q)
+    =
+    1
+    +
+    \frac{D_f\Gamma(D_f-1)}
+         {\left[1+(q\xi)^{-2}\right]^{(D_f-1)/2}}
+    \frac{\sin\left[(D_f-1)\tan^{-1}(q\xi)\right]}
+         {(qR_0)^{D_f}},
 
-where $\xi$ is the correlation length representing the cluster size and $D_f$
-is the fractal dimension, representing the self similarity of the structure.
+where :math:`R_0` is the radius of the primary particle.
 
-The expression has been reformulated so that the aggregation number $N_{agg}$
-is a fit parameter instead of $\xi$.
+To allow better comparisons with the other aggregate structure factors, the model is reparameterized so that the
+weight-average aggregation number :math:`N_{\mathrm{agg}}`
+becomes a fitting parameter instead of the correlation length
+:math:`\xi`.
 
-When combined with a polydisperse form factor, simple $P(q)\,S(q)$ with
-$S(q)$ evaluated at an effective radius differs from averaging
-$P(q,r)\,S(q,r)$ over $r$. For polydisperse primary particles, the
-$\beta$-/decoupling approximation (*structure_factor_mode = 1*) is usually
-more appropriate.
+Assuming the aggregation number is related to the cutoff length by
+
+.. math::
+
+    N
+    =
+    \left(\frac{\xi}{R_0}\right)^{D_f},
+
+the correlation length may be written as
+
+.. math::
+
+    \xi
+    =
+    R_0 N^{1/D_f}.
+
+Defining
+
+.. math::
+
+    y
+    =
+    qR_0N^{1/D_f},
+
+the structure factor may be expressed as
+
+.. math::
+
+    S(q)
+    =
+    1+A\,K(q),
+
+with
+
+.. math::
+
+    K(q)
+    =
+    \sin[(D_f-1)\arctan(y)]
+    (qR_0)^{-D_f}
+    \left(1+\frac{1}{y^2}\right)^{-(D_f-1)/2}.
+
+In the limit :math:`q\rightarrow0`,
+
+.. math::
+
+    K(q)
+    \rightarrow
+    (D_f-1)N.
+
+The normalization constant :math:`A` is chosen so that
+
+.. math::
+
+    S(0)=N,
+
+yielding
+
+.. math::
+
+    A
+    =
+    \frac{N-1}
+         {N(D_f-1)}.
+
+The final expression implemented in the model is therefore
+
+.. math::
+
+    S(q)
+    =
+    1
+    +
+    \frac{N-1}{N(D_f-1)}
+    \sin[(D_f-1)\arctan(qR_0N^{1/D_f})]
+    (qR_0)^{-D_f}
+    \left(
+        1+\frac{1}
+                 {(qR_0N^{1/D_f})^2}
+    \right)^{-(D_f-1)/2},
+
+where :math:`N=N_{\mathrm{agg}}`.
+
+The model therefore fits the physically intuitive aggregation number directly
+while preserving the low- :math:`q` limit
+
+.. math::
+
+    S(0)=N_{\mathrm{agg}}.
+
+When combined with a polydisperse form factor, the simple
+:math:`P(q)S(q)` approximation evaluated at an effective particle size is not
+generally equivalent to averaging :math:`P(q,r)S(q,r)` over the particle-size
+distribution. For systems with substantial primary-particle polydispersity,
+the :math:`\beta` approximation (*structure_factor_mode = 1*) is often more
+appropriate.
 
 Parameters
 ----------
