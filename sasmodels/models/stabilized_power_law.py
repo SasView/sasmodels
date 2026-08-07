@@ -6,13 +6,74 @@ Stabilized power-law structure factor.
 
 WARNING: Should not be used in combination with very anisotropic particle shapes.
 
-It uses the equation:
+This structure factor is intended for describing large aggregates of glubular particles whose overall
+dimensions exceed the length scales accessible in the experiment. In such
+situations the aggregate size cannot be determined from the measured q-range,
+and fitting a specific aggregate model is generally not warranted. However,
+these large structures often give rise to a substantial increase in scattering
+towards low q.
+
+Over a limited q-range, the structure factor for such unresolved
+aggregates is frequently well approximated by a power law,
 
 .. math::
 
-    S(q) = 1.0 + \mathrm{power_law_scale}\,(0.01/q)^{\mathrm{power}}
+    S(q) = 1 + A q^{-p},
 
-where *power_law_scale* is the scale of the power law and *power* is the exponent.
+where :math:`p` is the power-law exponent and :math:`A` is a scale factor. The model therefore provides a
+simple phenomenological description of excess low-q scattering.
+
+The structure factor is implemented as
+
+.. math::
+
+    S(q)
+    =
+    1
+    +
+    A\left(\frac{q_0}{q}\right)^p,
+
+where :math:`A` is *power_law_scale*, :math:`p` is *power*, and
+
+.. math::
+
+    q_0 = 0.01\;\mathrm{\AA}^{-1}.
+
+The reference value :math:`q_0` has no physical significanc. It provides a more stable fit when it is chosen to
+lie within the q-range commonly encountered in small-angle scattering
+experiments so that the fitted amplitude has a direct interpretation. At the
+reference point,
+
+.. math::
+
+    S(q_0)=1+A,
+
+and therefore *power_law_scale* is simply the excess contribution from the
+unresolved aggregates at :math:`q=0.01\;\mathrm{\AA}^{-1}`.
+
+This parameterization is mathematically equivalent to
+
+.. math::
+
+    S(q)=1+Bq^{-p},
+
+but, as mentioned, offers a practical advantage during fitting. In the conventional form,
+the amplitude and exponent are often strongly correlated, since changing the
+exponent changes the magnitude of the power-law contribution throughout the
+entire fitted q-range. By introducing the reference value :math:`q_0`, the
+amplitude is effectively defined at a q-value inside the experimental range.
+The parameter *power_law_scale* is then determined primarily by the scattering
+level near :math:`q_0`, whereas *power* is determined primarily by the slope,
+which substantially reduces parameter covariance and improves fitting
+robustness.
+
+As :math:`q` increases, the unresolved aggregate contribution decreases and
+
+.. math::
+
+    S(q)\rightarrow 1,
+
+so that the scattering becomes dominated by the underlying form factor.
 
 The first two parameters follow sasmodels structure-factor conventions for
 :math:`P@S` products: *radius_effective* (effective scatterer radius, unused
