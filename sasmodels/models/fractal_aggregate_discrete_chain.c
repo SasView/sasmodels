@@ -4,9 +4,10 @@
  * Discrete?chain baseline using d directly.
  *
  * High?q limit:
- *     S(q) ? 1 + 2*sin(q d)/(q d) + 2*(sin(q d)/(q d))^2
+ *     S(q) ? 1 + 2*sin(q d)/(q d) + 2*(sin(q d)/(q d))^2 * f 
+ * where f = 1.0 - exp(-(q d/C)^4.0))
  *
- * Low?q crossover constant: C ? 4.2
+ * Low-q crossover constant: C = 4.2
  *
  * Normalization: S(0) = N
  *
