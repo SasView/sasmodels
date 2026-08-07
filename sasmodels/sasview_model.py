@@ -143,9 +143,12 @@ def load_custom_model(path):
         # with an instance variable that has the same value.
         if model.name == "":
             model.name = splitext(basename(path))[0]
-        if not hasattr(model, 'filename'):
+        # Composite models (sum/product) built with make_model_from_info have
+        # no file of their own, so filename is set but None; fall back to the
+        # plugin file that defines them.
+        if getattr(model, 'filename', None) is None:
             model.filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
-        if not hasattr(model, 'id'):
+        if getattr(model, 'id', None) is None:
             model.id = splitext(basename(model.filename))[0]
     else:
         model_info = modelinfo.make_model_info(kernel_module)
