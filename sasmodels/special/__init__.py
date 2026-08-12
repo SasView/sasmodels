@@ -107,13 +107,14 @@ def fractal_sq(q, radius, fractal_dim, cor_length):
         if fractal_dim == 0:
             term = np.ones_like(q)
         elif fractal_dim == 1:
-            term = atan(q*cor_length)/(q*radius)
-            term[q == 0] = 1
+            term = atan(q*cor_length) / (q*radius)
+            term[q == 0] = 1.
         else:
-            t1 = pow(cor_length/radius, fractal_dim) * sas_gamma(fractal_dim+1)
-            t2 = sin((fractal_dim-1)*atan(q*cor_length))/((fractal_dim-1)*q*cor_length)
-            t2[q == 0] = 1
-            t3 = pow(1 + square(q*cor_length), -(fractal_dim-1)/2)
+            Dm1 = fractal_dim - 1.
+            t1 = pow(cor_length/radius, fractal_dim) * sas_gamma(fractal_dim + 1.)
+            t2 = sin(Dm1*atan(q*cor_length)) / (Dm1*q*cor_length)
+            t2[q == 0] = 1.
+            t3 = pow(1. + square(q*cor_length), -0.5*Dm1)
             term = t1*t2*t3
 
     return 1 + term
