@@ -107,16 +107,16 @@ def plot_1d(q, n=300):
     pylab.xlabel("theta (degrees)")
     pylab.ylabel("Iq 1/cm")
 
-def Iq_trapz(q, n):
+def Iq_trapezoid(q, n):
     theta = np.linspace(THETA_LOW, THETA_HIGH, n)
     Zq = kernel_1d(q=q, theta=theta)
     Zq *= abs(sin(theta))
     dx = theta[1]-theta[0]
-    return np.trapz(Zq, dx=dx)*SCALE
+    return np.trapezoid(Zq, dx=dx)*SCALE
 
 def plot_Iq(q, n, form="trapz"):
     if form == "trapz":
-        Iq = np.array([Iq_trapz(qk, n) for qk in q])
+        Iq = np.array([Iq_trapezoid(qk, n) for qk in q])
     elif form == "gauss":
         Iq = np.array([gauss_quad_1d(qk, n) for qk in q])
     pylab.loglog(q, Iq, label="%s, n=%d"%(form, n))

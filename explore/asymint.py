@@ -416,7 +416,7 @@ def gridded_2d(q, n=300):
     Zq *= abs(sin(Atheta))
     dx, dy = theta[1]-theta[0], phi[1]-phi[0]
     print("rect-%d"%n, n**2, np.sum(Zq)*dx*dy*SCALE/(4*pi))
-    print("trapz-%d"%n, n**2, np.trapz(np.trapz(Zq, dx=dx), dx=dy)*SCALE/(4*pi))
+    print("trapz-%d"%n, n**2, np.trapezoid(np.trapezoid(Zq, dx=dx), dx=dy)*SCALE/(4*pi))
     print("simpson-%d"%n, n**2, simps(simps(Zq, dx=dx), dx=dy)*SCALE/(4*pi))
     print("romb-%d"%n, n**2, romb(romb(Zq, dx=dx), dx=dy)*SCALE/(4*pi))
 

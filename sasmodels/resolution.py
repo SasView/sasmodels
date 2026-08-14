@@ -618,7 +618,7 @@ def _quad_slit_1d(form, pars, q, *, q_width=0., q_length=0.):
             w_grid = np.linspace(-dw, dw, nw)[:, None]
             u_sub = sqrt((qi + w_grid)**2 + l_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
-            #print(np.trapz(Iu, w_grid, axis=1))
+            #print(np.trapezoid(Iu, w_grid, axis=1))
             total = np.trapezoid(np.trapezoid(f_at_u, l_grid, axis=1), w_grid[:, 0])
             result[i] = total / (4*dl*dw)
             # from scipy.integrate import dblquad
