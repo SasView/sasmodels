@@ -78,7 +78,7 @@ def gridded_1d(q, n=300):
     Zq *= abs(sin(theta))
     dx = theta[1]-theta[0]
     print("rect-%d"%n, np.sum(Zq)*dx*SCALE)
-    print("trapz-%d"%n, np.trapz(Zq, dx=dx)*SCALE)
+    print("trapz-%d"%n, np.trapezoid(Zq, dx=dx)*SCALE)
     print("simpson-%d"%n, simps(Zq, dx=dx)*SCALE)
     print("romb-%d"%n, romb(Zq, dx=dx)*SCALE)
 
