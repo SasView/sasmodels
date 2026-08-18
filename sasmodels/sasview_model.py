@@ -832,15 +832,16 @@ class SasviewModel:
         """
         Return dispersion weights for parameter
         """
+        if par.id == self.multiplicity_info.control:
+            return self.multiplicity, [self.multiplicity], [1.0]
+
         if par.name not in self.params:
-            if par.id == self.multiplicity_info.control:
-                return self.multiplicity, [self.multiplicity], [1.0]
-            else:
-                # For hidden parameters use default values.  This sets
-                # scale=1 and background=0 for structure factors
-                default = self._model_info.parameters.defaults.get(par.name, np.nan)
-                return default, [default], [1.0]
-        elif par.polydisperse:
+            # For hidden parameters use default values.  This sets
+            # scale=1 and background=0 for structure factors
+            default = self._model_info.parameters.defaults.get(par.name, np.nan)
+            return default, [default], [1.0]
+
+        if par.polydisperse:
             value = self.params[par.name]
             dis = self.dispersion[par.name]
             if dis['type'] == 'array':
@@ -850,9 +851,9 @@ class SasviewModel:
                     dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
                     value, par.limits, par.relative_pd)
             return value, dispersity, weight
-        else:
-            value = self.params[par.name]
-            return value, [value], [1.0]
+
+        value = self.params[par.name]
+        return value, [value], [1.0]
 
     @classmethod
     def runTests(cls):
