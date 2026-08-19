@@ -12,7 +12,6 @@ requires = [
   "scipy",
   "siphash24",
   "sphinx",
-  "tccbox",
 ]
 build-backend = "hatchling.build"
 
@@ -75,6 +74,7 @@ server = [ "build_tools/requirements-server.txt" ]
 OpenCL = [ "build_tools/requirements-opencl.txt" ]
 CUDA = [ "build_tools/requirements-cuda.txt" ]
 docs = [ "build_tools/requirements-docs.txt" ]
+tinycc = [ "build_tools/requirements-tinycc.txt" ]
 
 
 [tool.hatch.version]
