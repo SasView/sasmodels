@@ -235,7 +235,7 @@ class Slit2D(Resolution):
             raise ValueError("Slit2D fails with q_calc != q")
 
     def apply(self, theory):
-        Iq = np.trapz(theory.reshape(self.ny, self.nx), axis=0, x=self.qy_calc)
+        Iq = np.trapezoid(theory.reshape(self.ny, self.nx), axis=0, x=self.qy_calc)
         if self.weights is not None:
             Iq = resolution.apply_resolution_matrix(self.weights, Iq)
         return Iq
