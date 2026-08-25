@@ -920,7 +920,7 @@ def j0(x):
 
 def calc_Iq_from_Pr(q, r, Pr):
     Iq = np.array([simpson(Pr * j0(qk*r), x=r) for qk in q])
-    #Iq = np.array([np.trapz(Pr * j0(qk*r), r) for qk in q])
+    #Iq = np.array([np.trapezoid(Pr * j0(qk*r), r) for qk in q])
     #Iq /= Iq[0]
     return Iq
 
