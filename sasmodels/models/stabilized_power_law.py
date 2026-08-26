@@ -39,7 +39,7 @@ where :math:`A` is *power_law_scale*, :math:`p` is *power*, and
 
     q_0 = 0.01\;\mathrm{\AA}^{-1}.
 
-The reference value :math:`q_0` has no physical significanc. It provides a more stable fit when it is chosen to
+The reference value :math:`q_0` has no physical significance. It provides a more stable fit when it is chosen to
 lie within the q-range commonly encountered in small-angle scattering
 experiments so that the fitted amplitude has a direct interpretation. At the
 reference point,
