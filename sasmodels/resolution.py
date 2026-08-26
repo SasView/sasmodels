@@ -1220,7 +1220,7 @@ def demo():
     plt.subplot(222)
     demo_slit_1d(q_length=0.03)
     plt.subplot(223)
-    demo_slit_1d(dQoQ=0.05)
+    demo_slit_1d(q_length=0.03, dQoQ=0.01)
     plt.subplot(224)
     demo_slit_1d(q_length=0.03, dQoQ=0.05)
     #plt.yscale('linear')
