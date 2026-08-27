@@ -94,6 +94,9 @@ jobs:
         python -m pip install build hatchling
         python -m build --sdist --wheel
         python -m pip install dist/sasmodels*whl
+        python -m pip check
+        python -c "from importlib.metadata import requires; req = [r for r in requires('sasmodels') if r.startswith('tccbox')]; assert len(req) == 1 and \"sys_platform == 'win32'\" in req[0] and \"extra == 'tinycc'\" in req[0], req"
+        python -c "import sasmodels.kerneldll"
 
     - name: Publish sdist and wheel package
       if: env.BUILD_WHEEL
@@ -122,6 +125,11 @@ jobs:
       run: |
         python -m pip install -r build_tools/requirements.txt -r build_tools/requirements-test.txt -r build_tools/requirements-opencl.txt
 
+    - name: Install optional TinyCC compiler (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        python -m pip install -r build_tools/requirements-tinycc.txt
+
     ### Build and test sasmodels
 
     - name: Test with pytest
@@ -130,4 +138,3 @@ jobs:
         SAS_OPENCL: none
       run: |
         pytest -v
-

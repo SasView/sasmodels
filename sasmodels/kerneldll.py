@@ -6,14 +6,14 @@ will attempt to compile with OpenMP flags so that the model can use all
 available kernels.  This may or may not be available on your compiler
 toolchain.  Depending on operating system and environment.
 
-Windows does not have provide a compiler with the operating system.
-Instead, we assume that TinyCC is installed and available.  This can
-be done with a simple pip command if it is not already available::
+Windows does not provide a compiler with the operating system. TinyCC support
+is available as an optional dependency and can be installed with::
 
-    pip install tinycc
+    python -m pip install "sasmodels[tinycc]"
 
-If Microsoft Visual C++ is available (because VCINSTALLDIR is
-defined in the environment), then that will be used instead.
+If TinyCC is not installed and Microsoft Visual C++ is available (because
+VCINSTALLDIR is defined in the environment), then Microsoft Visual C++ will
+be used instead.
 Microsoft Visual C++ for Python is available from Microsoft:
 
     `<http://www.microsoft.com/en-us/download/details.aspx?id=44266>`_
@@ -26,7 +26,7 @@ difficulties on some systems, and may or may not work for you.
 You can control which compiler to use by setting SAS_COMPILER in the
 environment:
 
-  - tinycc (Windows): use the TinyCC compiler shipped with SasView
+  - tinycc (Windows): use TinyCC from the optional tccbox package
   - msvc (Windows): use the Microsoft Visual C++ compiler
   - mingw (Windows): use the MinGW GNU cc compiler
   - unix (Linux): use the system cc compiler.
@@ -168,6 +168,11 @@ elif COMPILER == "msvc":
         return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
 elif COMPILER == "tinycc":
     # TinyCC compiler.
+    if tccbox is None:
+        raise RuntimeError(
+            "SAS_COMPILER=tinycc requires the optional tccbox package. "
+            "Install it with: python -m pip install 'sasmodels[tinycc]'"
+        )
     CC = [
         tccbox.tcc_bin_path(),
         "-nostdinc",
