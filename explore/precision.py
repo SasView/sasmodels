@@ -183,6 +183,7 @@ class Comparator:
             pylab.semilogx(x, target, '-', label="true value")
         if linear:
             pylab.xscale('linear')
+        #pylab.yscale('linear')
 
 def plotdiff(x, target, actual, label, diff):
     """
@@ -192,10 +193,20 @@ def plotdiff(x, target, actual, label, diff):
     """
     if diff == "relative":
         err = np.array([(abs((t-a)/t) if t != 0 else a) for t, a in zip(target, actual)], 'd')
+        if (err == 0).any():
+            if (err > 0).any():
+                err[err == 0] = err[err > 0].min()/2
+            else:
+                err[err == 0] = 1e-20
         #err = np.clip(err, 0, 1)
         pylab.loglog(x, err, '-', label=label, alpha=0.7)
     elif diff == "absolute":
         err = np.array([abs(t-a) for t, a in zip(target, actual)], 'd')
+        if (err == 0).any():
+            if (err > 0).any():
+                err[err == 0] = err[err > 0].min()/2
+            else:
+                err[err == 0] = 1e-20
         pylab.loglog(x, err, '-', label=label, alpha=0.7)
     else:
         limits = np.min(target), np.max(target)
@@ -608,6 +619,37 @@ add_function(
     xaxis="$(Q R_g)^2$ (unitless)",
 )
 
+from sasmodels.special import fractal_sq
+
+
+def mp_fractal_sq(q, radius, fractal_dim, cor_length):
+    # Eq 16 from Texiera (1988), DOI:10.1107/S0021889888000263
+    D = fractal_dim
+    if D == 0:
+        term = 1
+    elif D == 1:
+        term = 1 if q == 0 else mp.atan(q*cor_length)/(q*radius)
+    elif q == 0:
+        term = mp.power(cor_length/radius, D)*mp.gamma(D+1)
+    else:
+        t1 = mp.power(q*radius, -D)
+        t2 = D*mp.gamma(D-1) / mp.power(1 + 1/(q*cor_length)**2, (D-1)/2)
+        t3 = mp.sin((D-1)*mp.atan(q*cor_length))
+        term = t1*t2*t3
+
+    return 1 + term
+
+FRACTAL_RADIUS=30
+FRACTAL_DIM=1.6
+FRACTAL_CORR=421
+add_function(
+    name="fractal",
+    mp_function=lambda x: mp_fractal_sq(x, FRACTAL_RADIUS, FRACTAL_DIM, FRACTAL_CORR),
+    np_function=lambda x: fractal_sq(x, FRACTAL_RADIUS, FRACTAL_DIM, FRACTAL_CORR),
+    ocl_function=make_ocl(f"return fractal_sq(q, {FRACTAL_RADIUS}, {FRACTAL_DIM}, {FRACTAL_CORR});",
+                          "fractal", source=["lib/sas_gamma.c", "lib/fractal_sq.c"]),
+)
+
 
 RADIUS=3000
 LENGTH=30
@@ -685,6 +727,7 @@ add_function(
     np_function=scipy.special.gammaln,
     ocl_function=make_ocl(lanczos_gamma, "lgamma"),
 )
+
 
 replacement_expm1 = """\
       double x = (double)q;  // go back to float for single precision kernels
