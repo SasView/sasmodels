@@ -143,9 +143,12 @@ def load_custom_model(path):
         # with an instance variable that has the same value.
         if model.name == "":
             model.name = splitext(basename(path))[0]
-        if not hasattr(model, 'filename'):
+        # Composite models (sum/product) built with make_model_from_info have
+        # no file of their own, so filename is set but None; fall back to the
+        # plugin file that defines them.
+        if getattr(model, 'filename', None) is None:
             model.filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
-        if not hasattr(model, 'id'):
+        if getattr(model, 'id', None) is None:
             model.id = splitext(basename(model.filename))[0]
     else:
         model_info = modelinfo.make_model_info(kernel_module)
@@ -832,15 +835,16 @@ class SasviewModel:
         """
         Return dispersion weights for parameter
         """
+        if par.id == self.multiplicity_info.control:
+            return self.multiplicity, [self.multiplicity], [1.0]
+
         if par.name not in self.params:
-            if par.id == self.multiplicity_info.control:
-                return self.multiplicity, [self.multiplicity], [1.0]
-            else:
-                # For hidden parameters use default values.  This sets
-                # scale=1 and background=0 for structure factors
-                default = self._model_info.parameters.defaults.get(par.name, np.nan)
-                return default, [default], [1.0]
-        elif par.polydisperse:
+            # For hidden parameters use default values.  This sets
+            # scale=1 and background=0 for structure factors
+            default = self._model_info.parameters.defaults.get(par.name, np.nan)
+            return default, [default], [1.0]
+
+        if par.polydisperse:
             value = self.params[par.name]
             dis = self.dispersion[par.name]
             if dis['type'] == 'array':
@@ -850,9 +854,9 @@ class SasviewModel:
                     dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
                     value, par.limits, par.relative_pd)
             return value, dispersity, weight
-        else:
-            value = self.params[par.name]
-            return value, [value], [1.0]
+
+        value = self.params[par.name]
+        return value, [value], [1.0]
 
     @classmethod
     def runTests(cls):
