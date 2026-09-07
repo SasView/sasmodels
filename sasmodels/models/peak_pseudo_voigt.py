@@ -67,8 +67,6 @@ Authorship and Verification
 
 * **Author:**  Steve King **Date:** 24 June 2020
 
-* **Authors:** Marianne Imperor-Clerc (marianne.imperor@cnrs.fr)
-
 * **Last Modified by:** Anirban Mandal (mandalanirban2023@gmail.com) **Date:** 06 July 2026
 
 * **Last Reviewed by:** Marianne Imperor-Clerc (marianne.imperor@cnrs.fr) **Date:** 07 September 2026
@@ -78,7 +76,7 @@ Authorship and Verification
 import numpy as np
 from numpy import errstate, inf
 
-name = "peak_voigt"
+name = "peak_pseudo_voigt"
 title = "Single pseudo-Voigt peak"
 description = """\
           I(q) = scale*peak + background
