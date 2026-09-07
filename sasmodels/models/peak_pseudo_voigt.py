@@ -57,11 +57,7 @@ of the same function and gives the same result.
 References
 ----------
 
-1. L A Feigin, D I Svergun, G W Taylor
-   Structure Analysis by Small-Angle X-ray and Neutron Scattering
-   Springer (1987)
-
-2. Aaron L. Stancik, Eric B. Brauns
+1. Aaron L. Stancik, Eric B. Brauns
    A simple asymmetric lineshape for fitting infrared absorption spectra
    Vibrational Spectroscopy 47 (2008) 66-69
 
@@ -72,11 +68,10 @@ Authorship and Verification
 * **Author:**  Steve King **Date:** 24 June 2020
 
 * **Authors:** Marianne Imperor-Clerc (marianne.imperor@cnrs.fr)
-               Anirban Mandal (mandalanirban2023@gmail.com)
 
-* **Last Modified by:** Anirban Mandal **Date:** 06 July 2026
+* **Last Modified by:** Anirban Mandal (mandalanirban2023@gmail.com) **Date:** 06 July 2026
 
-* **Last Reviewed by:** Steve King **Date:**
+* **Last Reviewed by:** Marianne Imperor-Clerc (marianne.imperor@cnrs.fr) **Date:** 07 September 2026
 
 """
 
