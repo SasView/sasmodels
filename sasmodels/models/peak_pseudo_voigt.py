@@ -7,7 +7,7 @@ Definition
 This pseudo-Voigt peak function is a weighted linear summation of
 Lorentzian (L) and Gaussian (G) peak shapes. 
 It is a popular function for modelling peak shape.
-It can be tailored to any specific peak shape and it can also produce a peak shape with asymmetry. 
+It can be tailored to any experimental peak shape. 
 
 The scattering intensity $I(q)$ is calculated as
 
