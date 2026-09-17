@@ -30,104 +30,103 @@ jobs:
       fail-fast: false
 
     env:
-       BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14') && 'true' || '' }}
-       PYTHONUNBUFFERED: "1"
+      BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14') && 'true' || '' }}
+      PYTHONUNBUFFERED: "1"
 
     steps:
 
-    - name: Obtain sasmodels source from git
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
+      - name: Obtain sasmodels source from git
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v7
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-        cache-dependency-path: |
-          **/requirements*.txt
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            **/requirements*.txt
 
-    # If actions have problems with disk-space this can be re-enabled
-    # (The reports always show many GB in free space and it takes minutes to run)
-    # - name: Free Disk Space (Ubuntu)
-    #   if: ${{ matrix.os == 'ubuntu-latest' }}
-    #   uses: jlumbroso/free-disk-space@main
-    #   with:
-    #     haskell: false
-    #     large-packages: false
+      # If actions have problems with disk-space this can be re-enabled
+      # (The reports always show many GB in free space and it takes minutes to run)
+      # - name: Free Disk Space (Ubuntu)
+      #   if: ${{ matrix.os == 'ubuntu-latest' }}
+      #   uses: jlumbroso/free-disk-space@main
+      #   with:
+      #     haskell: false
+      #     large-packages: false
 
-    ### Build sasmodels
+      ### Build sasmodels
 
 
-    - name: Record figure building tools
-      if: env.BUILD_WHEEL
-      id: build-tools
-      run: |
-        echo "details=$(
-          python -m pip index versions matplotlib --json | python -c "import json; print(json.loads(input())['latest'])"
-        )" >> $GITHUB_OUTPUT
-        SASMODELS_BUILD_CACHE=~/.cache/sasmodels-figures
-        mkdir -p $SASMODELS_BUILD_CACHE
-        echo "SASMODELS_BUILD_CACHE=$SASMODELS_BUILD_CACHE" >> $GITHUB_ENV
+      - name: Record figure building tools
+        if: env.BUILD_WHEEL
+        id: build-tools
+        run: |
+          echo "details=$(
+            python -m pip index versions matplotlib --json | python -c "import json; print(json.loads(input())['latest'])"
+          )" >> $GITHUB_OUTPUT
+          SASMODELS_BUILD_CACHE=~/.cache/sasmodels-figures
+          mkdir -p $SASMODELS_BUILD_CACHE
+          echo "SASMODELS_BUILD_CACHE=$SASMODELS_BUILD_CACHE" >> $GITHUB_ENV
 
-    - name: Cache figures in documentation
-      if: env.BUILD_WHEEL
-      id: cache-figures
-      uses: actions/cache@v6
-      with:
-        path: ${{ env.SASMODELS_BUILD_CACHE }}
-        key: ${{ steps.build-tools.outputs.details }}-${{ hashFiles('doc/genmodel.py') }}
+      - name: Cache figures in documentation
+        if: env.BUILD_WHEEL
+        id: cache-figures
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.SASMODELS_BUILD_CACHE }}
+          key: ${{ steps.build-tools.outputs.details }}-${{ hashFiles('doc/genmodel.py') }}
 
-    - name: Report cache status
-      if: env.BUILD_WHEEL
-      run: |
-        if [ "${{ steps.cache-figures.outputs.cache-hit }}" == "true" ]; then
-          echo "Figure cache hit - using cached figures"
-        else
-          echo "Figure cache miss - will generate new figures"
-        fi
+      - name: Report cache status
+        if: env.BUILD_WHEEL
+        run: |
+          if [ "${{ steps.cache-figures.outputs.cache-hit }}" == "true" ]; then
+            echo "Figure cache hit - using cached figures"
+          else
+            echo "Figure cache miss - will generate new figures"
+          fi
 
-    - name: Build sasmodels
-      if: env.BUILD_WHEEL
-      run: |
-        python -m pip install build hatchling
-        python -m build --sdist --wheel
-        python -m pip install dist/sasmodels*whl
+      - name: Build sasmodels
+        if: env.BUILD_WHEEL
+        run: |
+          python -m pip install build hatchling
+          python -m build --sdist --wheel
+          python -m pip install dist/sasmodels*whl
 
-    - name: Publish sdist and wheel package
-      if: env.BUILD_WHEEL
-      uses: actions/upload-artifact@v7
-      with:
-        name: sasmodels-${{ matrix.os }}-${{ matrix.python-version }}
-        path: |
-           dist/sasmodels*whl
-           dist/sasmodels*tar*
-        if-no-files-found: ignore
+      - name: Publish sdist and wheel package
+        if: env.BUILD_WHEEL
+        uses: actions/upload-artifact@v7
+        with:
+          name: sasmodels-${{ matrix.os }}-${{ matrix.python-version }}
+          path: |
+            dist/sasmodels*whl
+            dist/sasmodels*tar*
+          if-no-files-found: ignore
 
-    ### Publish documentation
+      ### Publish documentation
 
-    - name: Publish sasmodels docs
-      if: env.BUILD_WHEEL
-      uses: actions/upload-artifact@v7
-      with:
-        name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
-        path: |
-          build/doc/
-        if-no-files-found: error
+      - name: Publish sasmodels docs
+        if: env.BUILD_WHEEL
+        uses: actions/upload-artifact@v7
+        with:
+          name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
+          path: |
+            build/doc/
+          if-no-files-found: error
 
-    ### Install dependencies
+      ### Install dependencies
 
-    - name: Install Python dependencies (tests)
-      run: |
-        python -m pip install -r build_tools/requirements.txt -r build_tools/requirements-test.txt -r build_tools/requirements-opencl.txt
+      - name: Install Python dependencies (tests)
+        run: |
+          python -m pip install -r build_tools/requirements.txt -r build_tools/requirements-test.txt -r build_tools/requirements-opencl.txt
 
-    ### Build and test sasmodels
+      ### Build and test sasmodels
 
-    - name: Test with pytest
-      env:
-        PYOPENCL_COMPILER_OUTPUT: 1
-        SAS_OPENCL: none
-      run: |
-        pytest -v
-
+      - name: Test with pytest
+        env:
+          PYOPENCL_COMPILER_OUTPUT: 1
+          SAS_OPENCL: none
+        run: |
+          pytest -v
