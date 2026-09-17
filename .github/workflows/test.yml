@@ -26,12 +26,21 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: [
+          "3.11",
+          "3.12",
+          "3.13",
+          "3.14",
+          "3.15-dev",
+        ]
       fail-fast: false
 
     env:
       BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14') && 'true' || '' }}
       PYTHONUNBUFFERED: "1"
+      EXPERIMENTAL: ${{ endsWith(matrix.python-version, '-dev') && 'true' || '' }}
+
+    continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
 
     steps:
 
@@ -87,6 +96,16 @@ jobs:
           else
             echo "Figure cache miss - will generate new figures"
           fi
+
+      - name: Allow use of scientific-python nightly wheels for experimental builds
+        if: env.EXPERIMENTAL
+        run: |
+          # Enable the scientific-python-nightly wheels as primary source
+          echo "PIP_INDEX_URL=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple" >> $GITHUB_ENV
+          # with a fallback to regular pypi (since most wheels will not be there)
+          echo "PIP_EXTRA_INDEX_URL=https://pypi.org/simple" >> $GITHUB_ENV
+          # and we will need to permit prereleases for the nightly wheels
+          echo "PIP_PRE=true" >> $GITHUB_ENV
 
       - name: Build sasmodels
         if: env.BUILD_WHEEL
