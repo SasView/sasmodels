@@ -293,12 +293,12 @@ def make_dll(source, model_info, dtype=F64, system=False):
             basename = splitext(os.path.basename(dll))[0] + "_"
             system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
             logging.debug("make_dll: writing C for dll: %s", filename)
-            with os.fdopen(system_fd, "w") as file_handle:
+            with os.fdopen(system_fd, "w", encoding="utf-8") as file_handle:
                 file_handle.write(source)
         else:
             filename = splitext(dll)[0] + ".c"
             logging.debug("make_dll: writing C for system dll: %s", filename)
-            with open(filename, 'w') as file_handle:
+            with open(filename, 'w', encoding="utf-8") as file_handle:
                 file_handle.write(source)
         compile_model(source=filename, output=dll)
         # Comment the following to keep the generated C file.

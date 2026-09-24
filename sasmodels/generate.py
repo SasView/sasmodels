@@ -661,7 +661,7 @@ def load_template(filename):
     path = joinpath(DATA_PATH, filename)
     mtime = getmtime(path)
     if filename not in _template_cache or mtime > _template_cache[filename][0]:
-        with open(path) as fid:
+        with open(path, encoding="utf-8") as fid:
             _template_cache[filename] = (mtime, fid.read(), path)
     return _template_cache[filename][1], path
 
@@ -945,7 +945,10 @@ def _add_source(source, code, path, lineno=1):
     source.append(code)
 
 def read_text(f):
-    with open(f) as fid:
+    """
+    Read a source file. Sources are UTF-8.
+    """
+    with open(f, encoding="utf-8") as fid:
         return fid.read()
 
 def make_source(model_info):

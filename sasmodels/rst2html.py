@@ -145,7 +145,7 @@ def load_rst_as_html(filename):
     # type: (str) -> str
     """Load rst from file and convert to html"""
     from os.path import expanduser
-    with open(expanduser(filename)) as fid:
+    with open(expanduser(filename), encoding="utf-8") as fid:
         rst = fid.read()
     html = rst2html(rst)
     return html
