@@ -166,6 +166,7 @@ from inspect import currentframe, getframeinfo
 from os import environ
 from os.path import abspath, dirname, exists, getmtime, sep
 from os.path import join as joinpath
+from pathlib import Path
 from zlib import crc32
 
 import numpy as np  # type: ignore
@@ -1270,7 +1271,9 @@ def make_doc(model_info):
 
 
 # TODO: need a single source for rst_prolog; it is also in doc/rst_prolog
-RST_PROLOG = r"""\
+# from importlib import resources
+# RST_PROLOG = (resources.files(__package__) / "prolog.rst").read_text()
+RST_PROLOG = r"""
 .. |Ang| unicode:: U+212B
 .. |Ang^-1| replace:: |Ang|\ :sup:`-1`
 .. |Ang^2| replace:: |Ang|\ :sup:`2`
@@ -1279,6 +1282,7 @@ RST_PROLOG = r"""\
 .. |Ang^3| replace:: |Ang|\ :sup:`3`
 .. |Ang^-3| replace:: |Ang|\ :sup:`-3`
 .. |Ang^-4| replace:: |Ang|\ :sup:`-4`
+.. |nm^-1| replace:: nm\ :sup:`-1`
 .. |cm^-1| replace:: cm\ :sup:`-1`
 .. |cm^2| replace:: cm\ :sup:`2`
 .. |cm^-2| replace:: cm\ :sup:`-2`
@@ -1296,7 +1300,7 @@ RST_PROLOG = r"""\
 """
 
 # TODO: make a better fake reference role
-RST_ROLES = """\
+RST_ROLES = """
 .. role:: ref
 
 .. role:: numref
@@ -1310,8 +1314,19 @@ def make_html(model_info):
     """
     from . import rst2html
 
+    # Note: the sphinx stylesheets don't work with docutils rendering
+    #stylesheet = Path(__file__).absolute().parent / "css/classic.css"
+    stylesheet = Path(__file__).absolute().parent / "css/sasmodels_help.css"
+
+    # Make stylesheet path relative to the html file
+    path = Path(model_info.filename).absolute().parent
+    stylesheet = stylesheet.relative_to(path, walk_up=True)
+
     rst = make_doc(model_info)
-    return rst2html.rst2html("".join((RST_ROLES, RST_PROLOG, rst)))
+    return rst2html.rst2html(
+        rst="\n".join((RST_ROLES, RST_PROLOG, rst)),
+        css_list=[stylesheet],
+        )
 
 def view_html(model_name):
     # type: (str) -> None
@@ -1319,6 +1334,7 @@ def view_html(model_name):
     Load the model definition and view its help.
     """
     from . import modelinfo
+
     kernel_module = load_kernel_module(model_name)
     info = modelinfo.make_model_info(kernel_module)
     view_html_from_info(info)
@@ -1329,6 +1345,7 @@ def view_html_from_info(info):
     View the help for a loaded model definition.
     """
     from . import rst2html
+
     url = "file://"+dirname(info.filename)+"/"
     rst2html.view_html(make_html(info), url=url)
 

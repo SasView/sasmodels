@@ -1582,14 +1582,23 @@ def show_docs(opts):
     """
     show html docs for the model
     """
+    from pathlib import Path
+
     from . import rst2html
     from .generate import make_html
 
+    # Point the url to a file in the same directory as the model.
+    # Need this otherwise relative links to image files will be broken.
     info = opts['info'][0]
     html = make_html(info)
-    path = os.path.dirname(info.filename)
-    url = "file://" + path.replace("\\", "/")[2:] + "/"
-    rst2html.view_html_wxapp(html, url)
+    path = Path(info.filename).absolute()
+    url = f"file://{str(path).replace('\\', '/')}.html"
+    if True:
+        rst2html.view_html_browser(html, url, overwrite=True)
+    elif rst2html.can_use_qt():
+        rst2html.view_html_qtapp(html, url)
+    else:
+        rst2html.view_html_wxapp(html, url)
 
 def explore(opts):
     # type: (Dict[str, Any]) -> None

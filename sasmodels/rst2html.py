@@ -11,7 +11,10 @@ unicode, or with mathjax.
 import locale
 import re
 from contextlib import contextmanager
+from pathlib import Path
 
+# TODO: remove _parse_localename cruft
+# CRUFT: Old versions of locale did not support UTF-8 as a locale name.
 if hasattr(locale, '_parse_localename'):
     try:
         locale._parse_localename('UTF-8')
@@ -29,17 +32,20 @@ from docutils.core import publish_parts
 from docutils.nodes import SkipNode
 from docutils.writers.html4css1 import HTMLTranslator
 
+#MATHJAX_PATH = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
+MATHJAX_PATH = "https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" # recommended version as of 2026-11
 
-def rst2html(rst, part="whole", math_output="mathjax"):
+def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list=None):
     r"""
     Convert restructured text into simple html.
 
     Valid *math_output* formats for formulas include:
-    - html
-    - mathml
-    - mathjax
+    - HTML
+    - MathML
+    - MathJax
+
     See `<http://docutils.sourceforge.net/docs/user/config.html#math-output>`_
-    for details.
+    for details. The MathJax library url is defined in rst2html.MATHJAX_PATH.
 
     The following *part* choices are available:
     - whole: the entire html document
@@ -52,33 +58,43 @@ def rst2html(rst, part="whole", math_output="mathjax"):
         html_title, title, stylesheet, html_subtitle, html_body,
         body, head, body_suffix, fragment, docinfo, html_head,
         head_prefix, body_prefix, footer, body_pre_docinfo, whole
+
+    *rst_prolog* is the path to the reStructureText prolog file
     """
+    if rst_prolog:
+        prolog = Path(rst_prolog).read_text()
+        rst = prolog + rst
+
     # Ick! mathjax doesn't work properly with math-output, and the
     # others don't work properly with math_output!
     if math_output == "mathjax":
         # TODO: this is copied from docs/conf.py; there should be only one
-        mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
-        settings = {"math_output": math_output + " " + mathjax_path}
+        settings = {"math_output": math_output + " " + MATHJAX_PATH}
     else:
         settings = {"math-output": math_output}
 
-    # TODO: support stylesheets
-    #html_root = "/full/path/to/_static/"
-    #sheets = [html_root+s for s in ["basic.css","classic.css"]]
-    #settings["embed_styesheet"] = True
-    #settings["stylesheet_path"] = sheets
+    if css_list:
+        settings["embed_stylesheet"] = False
+        # The sytlesheet_path setting makes paths relative to current directory.
+        # Clear it out so that we can instead use the stylesheet paths given by the caller.
+        settings["stylesheet_path"] = None
+        settings["stylesheet"] = css_list
 
     # math2html and mathml do not support \frac12
-    rst = replace_compact_fraction(rst)
-
     # mathml, html do not support \tfrac
     if math_output in ("mathml", "html"):
+        rst = replace_compact_fraction(rst)
         rst = rst.replace(r'\tfrac', r'\frac')
+
+    # TODO: docutils math doesn't support the 'nowrap' option
+    rst = rst.replace(":nowrap:", "").replace(":no-wrap:", "")
 
     rst = replace_dollar(rst)
     with suppress_html_errors():
-        parts = publish_parts(source=rst, writer_name='html',
-                              settings_overrides=settings)
+        parts = publish_parts(
+            source=rst, writer_name='html',
+            settings_overrides=settings,
+            )
     return parts[part]
 
 @contextmanager
@@ -145,6 +161,7 @@ def load_rst_as_html(filename):
     # type: (str) -> str
     """Load rst from file and convert to html"""
     from os.path import expanduser
+
     with open(expanduser(filename)) as fid:
         rst = fid.read()
     html = rst2html(rst)
@@ -155,6 +172,7 @@ def wxview(html, url="", size=(850, 540)):
     """View HTML in a wx dialog"""
     import wx
     from wx.html2 import WebView
+
     frame = wx.Frame(None, -1, size=size)
     view = WebView.New(frame)
     view.SetPage(html, url)
@@ -165,6 +183,7 @@ def view_html_wxapp(html, url=""):
     # type: (str, str) -> None
     """HTML viewer app in wx"""
     import wx  # type: ignore
+
     app = wx.App()
     frame = wxview(html, url)  # pylint: disable=unused-variable
     app.MainLoop()
@@ -174,6 +193,7 @@ def view_url_wxapp(url):
     """URL viewer app in wx"""
     import wx  # type: ignore
     from wx.html2 import WebView
+
     app = wx.App()
     frame = wx.Frame(None, -1, size=(850, 540))
     view = WebView.New(frame)
@@ -181,16 +201,21 @@ def view_url_wxapp(url):
     frame.Show()
     app.MainLoop()
 
+def can_use_wx() -> bool:
+    """Return True if wx web viewer is available."""
+    try:
+        import wx
+        return True
+    except ImportError:
+        return False
+
 def qtview(html, url=""):
     # type: (str, str) -> "QWebView"
     """View HTML in a Qt dialog"""
-    try:
-        from PyQt5.QtCore import QUrl
-        from PyQt5.QtWebKitWidgets import QWebView
-    except ImportError:
-        from PyQt4.QtCore import QUrl
-        from PyQt4.QtWebKit import QWebView
-    helpView = QWebView()
+    from PySide6.QtCore import QUrl
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+
+    helpView = QWebEngineView()
     helpView.setHtml(html, QUrl(url))
     helpView.show()
     return helpView
@@ -199,10 +224,9 @@ def view_html_qtapp(html, url=""):
     # type: (str, str) -> None
     """HTML viewer app in Qt"""
     import sys
-    try:
-        from PyQt5.QtWidgets import QApplication
-    except ImportError:
-        from PyQt4.QtGui import QApplication
+
+    from PySide6.QtWidgets import QApplication
+
     app = QApplication([])
     frame = qtview(html, url)  # pylint: disable=unused-variable
     sys.exit(app.exec_())
@@ -211,59 +235,83 @@ def view_url_qtapp(url):
     # type: (str) -> None
     """URL viewer app in Qt"""
     import sys
-    try:
-        from PyQt5.QtWidgets import QApplication
-    except ImportError:
-        from PyQt4.QtGui import QApplication
+
+    from PySide6.QtCore import QUrl
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+    from PySide6.QtWidgets import QApplication
+
     app = QApplication([])
-    try:
-        from PyQt5.QtCore import QUrl
-        from PyQt5.QtWebKitWidgets import QWebView
-    except ImportError:
-        from PyQt4.QtCore import QUrl
-        from PyQt4.QtWebKit import QWebView
-    frame = QWebView()
+    frame = QWebEngineView()
     frame.load(QUrl(url))
     frame.show()
     sys.exit(app.exec_())
 
-# Set default html viewer
-view_html = view_html_qtapp
-
-def can_use_qt():
-    # type: () -> bool
-    """
-    Return True if QWebView exists.
-
-    Checks first in PyQt5 then in PyQt4
-    """
+def can_use_qt() -> bool:
+    """Return True if Qt web viewer is available."""
     try:
-        from PyQt5.QtWebKitWidgets import QWebView  # pylint: disable=unused-import
+        from PySide6.QtWebEngineWidgets import QWebEngineView
         return True
     except ImportError:
-        try:
-            from PyQt4.QtWebKit import QWebView  # pylint: disable=unused-import
-            return True
-        except ImportError:
-            return False
+        return False
 
-def view_help(filename, qt=False):
+def view_html_browser(html, url, overwrite=False):
+    # Show the docs in the default browser
+    import time
+    import webbrowser
+
+    # Write the html to the target file, found by removing file:// from the url
+    html_file = Path(url[7:])
+    if html_file.exists() and not overwrite:
+        delete_after = False
+        print(f"Warning: showing existing {str(html_file)}")
+    else:
+        delete_after = True
+        html_file.write_text(html)
+    webbrowser.open(url)
+
+    # Give the file time to open in the browser, then delete and exit the program.
+    # This may fail on Windows if it holds the file open while viewing
+    if delete_after:
+        time.sleep(0.5)
+        html_file.unlink()
+
+def view_url_browser(url, autoraise=False):
+    import webbrowser
+
+    webbrowser.open(url, autoraise=autoraise)
+
+
+# Set default html viewer
+view_html = view_html_browser
+
+def view_help(filename, viewer="browser"):
     # type: (str, bool) -> None
-    """View rst or html file.  If *qt* use q viewer, otherwise use wx."""
+    """
+    View rst or html file.
+    If *qt* use q viewer, otherwise use wx.
+    """
     import os
 
-    if qt:
-        qt = can_use_qt()
+    if viewer == "qt" and not can_use_qt():
+        viewer = "browser"
+        print("QtWebKit is not available. Use browser to view help")
+    if viewer == "wx" and not can_use_wx():
+        viewer = "browser"
+        print("wb is not available. Use browser to view help")
 
     url = "file:///"+os.path.abspath(filename).replace("\\", "/")
     if filename.endswith('.rst'):
         html = load_rst_as_html(filename)
-        if qt:
-            view_html_qtapp(html, url)
+        if viewer == "browser":
+            view_html_browser(html, url + ".html", overwrite=True)
+        elif viewer == "qt":
+            view_html_qtapp(html, url + ".html")
         else:
-            view_html_wxapp(html, url)
+            view_html_wxapp(html, url + ".html")
     else:
-        if qt:
+        if viewer == "browser":
+            view_url_browser(url)
+        elif viewer == "qt":
             view_url_qtapp(url)
         else:
             view_url_wxapp(url)
