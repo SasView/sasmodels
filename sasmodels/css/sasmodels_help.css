@@ -183,7 +183,7 @@ figcaption span.caption-text {
 
 
 /* PAK: Figure was escaping the document width. */
-div.figure img {
+div.document img {
     max-width: 100%;
 }
 

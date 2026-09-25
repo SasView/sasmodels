@@ -70,16 +70,20 @@ def sphinx_stubs():
     """
     from docutils.parsers.rst import directives, roles
 
+    # Adding :orphan: as a role or a directive still left "orphan:" at the top of the rendered html.
+    # Instead, lines containing :orphan: are automatically stripped.
+    # See sasview/src/sas/qtgui/Perspectives/CorFunc/media/fdr-pdfs.rst
+
     _directives = directives._directives.copy()
     _role_registry = roles._role_registry.copy()
     _roles = roles._roles.copy()
 
-    for name in "eq ref numref func class meth mod".split():
+    for name in "eq ref numref func class meth attr mod download".split():
         roles.register_canonical_role(name, noop_role)
     directives.register_directive('toctree', noop_directive(has_content=True))
     directives.register_directive('currentmodule', noop_directive(required_arguments=1))
     directives.register_directive('py:currentmodule', noop_directive(required_arguments=1))
-    for name in "py:module py:class py:func".split():
+    for name in "py:module py:class py:meth py:func".split():
         directives.register_directive(name, noop_directive())
     yield
     directives._directives = _directives
@@ -140,6 +144,7 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
         rst = replace_compact_fraction(rst)
         rst = rst.replace(r'\tfrac', r'\frac')
 
+    # TODO: docutils doesn't support :orphan: metadata
     # TODO: docutils math doesn't support :nowrap: or :label:
     # The :nowrap: option is used when the equation has its own \begin{align*}...\end{align*}
     # The docutils helper pick_math_environment() looks for \\ in the text, and if it
@@ -148,7 +153,7 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
     # This is too simple: if the author has :nowrap: in sphinx for a multiline equation, but
     # doesn't include their own \begin...\end block then it will display fine in the preview
     # but fail when rendering with sphinx. Doing this correctly is too much work.
-    pattern = r"^\s\s*:(?:nowrap|no[-_]wrap|label):.*\n?"
+    pattern = r"^\s*:(?:nowrap|no[-_]wrap|label|orphan):.*\n?"
     rst = re.sub(pattern, "", rst, flags=re.MULTILINE)
     rst = re.sub(r"\\(?:begin|end){align\*?}", "", rst, flags=re.MULTILINE)
 
@@ -226,7 +231,10 @@ def load_rst_as_html(filename):
 
     # Make stylesheet path relative to the html file
     filename = Path(filename).expanduser().absolute()
-    stylesheet = STYLESHEET.relative_to(filename.parent, walk_up=True)
+    try:
+        stylesheet = STYLESHEET.relative_to(filename.parent, walk_up=True)
+    except ValueError:
+        stylesheet = STYLESHEET # use absolute reference if relative ref fails
 
     with open(filename) as fid:
         rst = fid.read()
