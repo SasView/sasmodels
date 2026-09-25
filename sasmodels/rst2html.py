@@ -30,7 +30,7 @@ if hasattr(locale, '_parse_localename'):
 
 from docutils.core import publish_parts
 from docutils.nodes import SkipNode, literal
-from docutils.parsers.rst import Directive, directives, roles
+from docutils.parsers.rst import Directive
 from docutils.writers.html4css1 import HTMLTranslator
 
 # TODO: make a better sphinx stubs
@@ -62,15 +62,29 @@ def noop_directive(
 def noop_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     return [literal(text, text)], []
 
+@contextmanager
 def sphinx_stubs():
-    for name in "ref numref mod func class meth".split():
+    """
+    Temporarily register stubs for sphinx directives and roles. The originals
+    will be restored when exiting the context.
+    """
+    from docutils.parsers.rst import directives, roles
+
+    _directives = directives._directives.copy()
+    _role_registry = roles._role_registry.copy()
+    _roles = roles._roles.copy()
+
+    for name in "eq ref numref func class meth mod".split():
         roles.register_canonical_role(name, noop_role)
     directives.register_directive('toctree', noop_directive(has_content=True))
     directives.register_directive('currentmodule', noop_directive(required_arguments=1))
     directives.register_directive('py:currentmodule', noop_directive(required_arguments=1))
     for name in "py:module py:class py:func".split():
         directives.register_directive(name, noop_directive())
-sphinx_stubs()
+    yield
+    directives._directives = _directives
+    roles._role_registry = _role_registry
+    roles._roles = _roles
 
 #MATHJAX_PATH = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
 MATHJAX_PATH = "https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" # recommended version as of 2026-11
@@ -127,11 +141,19 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
         rst = rst.replace(r'\tfrac', r'\frac')
 
     # TODO: docutils math doesn't support :nowrap: or :label:
-    pattern = r'^\s\s*:(?:nowrap|no[-_]wrap|label):.*\n?'
-    rst = re.sub(pattern, '', rst, flags=re.MULTILINE)
+    # The :nowrap: option is used when the equation has its own \begin{align*}...\end{align*}
+    # The docutils helper pick_math_environment() looks for \\ in the text, and if it
+    # sees it, it wraps the block in "align" rather than "equation".
+    # We will strip label, nowrap, \begin{align*} and \end{align*}.
+    # This is too simple: if the author has :nowrap: in sphinx for a multiline equation, but
+    # doesn't include their own \begin...\end block then it will display fine in the preview
+    # but fail when rendering with sphinx. Doing this correctly is too much work.
+    pattern = r"^\s\s*:(?:nowrap|no[-_]wrap|label):.*\n?"
+    rst = re.sub(pattern, "", rst, flags=re.MULTILINE)
+    rst = re.sub(r"\\(?:begin|end){align\*?}", "", rst, flags=re.MULTILINE)
 
     rst = replace_dollar(rst)
-    with suppress_html_errors():
+    with suppress_html_errors(), sphinx_stubs():
         parts = publish_parts(
             source=rst, writer_name='html',
             settings_overrides=settings,
@@ -316,7 +338,7 @@ def view_html_browser(html, url, overwrite=False):
     # This may fail on Windows if it holds the file open while viewing
     #delete_after = False
     if delete_after:
-        time.sleep(0.5)
+        time.sleep(1.0)
         html_file.unlink()
 
 def view_url_browser(url, autoraise=False):
