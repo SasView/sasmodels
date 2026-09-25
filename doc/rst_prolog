@@ -1,5 +1,3 @@
-.. Set up some substitutions to make life easier...
-
 .. |Ang| unicode:: U+212B
 .. |Ang^-1| replace:: |Ang|\ :sup:`-1`
 .. |Ang^2| replace:: |Ang|\ :sup:`2`
