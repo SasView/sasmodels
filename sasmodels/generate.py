@@ -1270,7 +1270,9 @@ def make_doc(model_info):
     return DOC_HEADER % subst
 
 
-# TODO: need a single source for rst_prolog; it is also in doc/rst_prolog
+
+# TODO: These defines are specific to sasmodels and sasview. They don't belong here.
+# TODO: Need a single source for rst_prolog; it is also in doc/rst_prolog
 # from importlib import resources
 # RST_PROLOG = (resources.files(__package__) / "prolog.rst").read_text()
 RST_PROLOG = r"""
@@ -1299,13 +1301,9 @@ RST_PROLOG = r"""
 .. |Ang*cm^-1| replace:: |Ang|\ |cdot|\ cm\ :sup:`-1`
 """
 
-# TODO: make a better fake reference role
-RST_ROLES = """
-.. role:: ref
-
-.. role:: numref
-
-"""
+# Note: the sphinx stylesheets don't work with docutils rendering
+#stylesheet = Path(__file__).absolute().parent / "css/classic.css"
+STYLESHEET = Path(__file__).absolute().parent / "css/sasmodels_help.css"
 
 def make_html(model_info):
     # type: (ModelInfo) -> str
@@ -1314,19 +1312,12 @@ def make_html(model_info):
     """
     from . import rst2html
 
-    # Note: the sphinx stylesheets don't work with docutils rendering
-    #stylesheet = Path(__file__).absolute().parent / "css/classic.css"
-    stylesheet = Path(__file__).absolute().parent / "css/sasmodels_help.css"
-
     # Make stylesheet path relative to the html file
     path = Path(model_info.filename).absolute().parent
-    stylesheet = stylesheet.relative_to(path, walk_up=True)
+    stylesheet = STYLESHEET.relative_to(path, walk_up=True)
 
     rst = make_doc(model_info)
-    return rst2html.rst2html(
-        rst="\n".join((RST_ROLES, RST_PROLOG, rst)),
-        css_list=[stylesheet],
-        )
+    return rst2html.rst2html(rst=f"{RST_PROLOG}\n{rst}", css_list=[stylesheet])
 
 def view_html(model_name):
     # type: (str) -> None
@@ -1346,7 +1337,7 @@ def view_html_from_info(info):
     """
     from . import rst2html
 
-    url = "file://"+dirname(info.filename)+"/"
+    url = Path(info.filename).with_suffix('.html').as_uri()  # file://{absolute path}.html
     rst2html.view_html(make_html(info), url=url)
 
 def demo_time():

@@ -29,8 +29,48 @@ if hasattr(locale, '_parse_localename'):
         locale._parse_localename = _parse_localename
 
 from docutils.core import publish_parts
-from docutils.nodes import SkipNode
+from docutils.nodes import SkipNode, literal
+from docutils.parsers.rst import Directive, directives, roles
 from docutils.writers.html4css1 import HTMLTranslator
+
+# TODO: make a better sphinx stubs
+
+def noop_directive(
+    required_arguments=0,
+    optional_arguments=0,
+    final_argument_whitespace=False,
+    has_content=False,
+):
+    class _NoOpDirective(Directive):
+        """A minimal stub for Sphinx ``py:`` directives.
+
+        The real directives expect a single required argument (the module,
+        class, function name, …) and no content.  By declaring ``required_arguments
+        = 1`` the parser will treat the argument correctly and will not try to
+        interpret the following line as content, avoiding the "no content
+        permitted" error.
+        """
+        def run(self):
+            # Returning an empty list means the directive produces no output.
+            return []
+    _NoOpDirective.required_arguments = required_arguments          # e.g. ``sasmodels`` in ``.. py:currentmodule:: sasmodels``
+    _NoOpDirective.optional_arguments = optional_arguments
+    _NoOpDirective.final_argument_whitespace = final_argument_whitespace
+    _NoOpDirective.has_content = has_content
+    return _NoOpDirective
+
+def noop_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    return [literal(text, text)], []
+
+def sphinx_stubs():
+    for name in "ref numref mod func class meth".split():
+        roles.register_canonical_role(name, noop_role)
+    directives.register_directive('toctree', noop_directive(has_content=True))
+    directives.register_directive('currentmodule', noop_directive(required_arguments=1))
+    directives.register_directive('py:currentmodule', noop_directive(required_arguments=1))
+    for name in "py:module py:class py:func".split():
+        directives.register_directive(name, noop_directive())
+sphinx_stubs()
 
 #MATHJAX_PATH = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
 MATHJAX_PATH = "https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" # recommended version as of 2026-11
@@ -63,7 +103,7 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
     """
     if rst_prolog:
         prolog = Path(rst_prolog).read_text()
-        rst = prolog + rst
+        rst = f"{prolog}\n{rst}"
 
     # Ick! mathjax doesn't work properly with math-output, and the
     # others don't work properly with math_output!
@@ -86,8 +126,9 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
         rst = replace_compact_fraction(rst)
         rst = rst.replace(r'\tfrac', r'\frac')
 
-    # TODO: docutils math doesn't support the 'nowrap' option
-    rst = rst.replace(":nowrap:", "").replace(":no-wrap:", "")
+    # TODO: docutils math doesn't support :nowrap: or :label:
+    pattern = r'^\s\s*:(?:nowrap|no[-_]wrap|label):.*\n?'
+    rst = re.sub(pattern, '', rst, flags=re.MULTILINE)
 
     rst = replace_dollar(rst)
     with suppress_html_errors():
@@ -158,14 +199,16 @@ def test_dollar():
     assert replace_dollar("a (again $in parens$) a") == "a (again :math:`in parens`) a"
 
 def load_rst_as_html(filename):
-    # type: (str) -> str
     """Load rst from file and convert to html"""
-    from os.path import expanduser
+    from .generate import RST_PROLOG, STYLESHEET  # Ick! Circular import of sasmodels specific stuff
 
-    with open(expanduser(filename)) as fid:
+    # Make stylesheet path relative to the html file
+    filename = Path(filename).expanduser().absolute()
+    stylesheet = STYLESHEET.relative_to(filename.parent, walk_up=True)
+
+    with open(filename) as fid:
         rst = fid.read()
-    html = rst2html(rst)
-    return html
+    return rst2html(rst=f"{RST_PROLOG}\n{rst}", css_list=[stylesheet])
 
 def wxview(html, url="", size=(850, 540)):
     # type: (str, str, tuple[int, int]) -> "wx.Frame"
@@ -271,6 +314,7 @@ def view_html_browser(html, url, overwrite=False):
 
     # Give the file time to open in the browser, then delete and exit the program.
     # This may fail on Windows if it holds the file open while viewing
+    #delete_after = False
     if delete_after:
         time.sleep(0.5)
         html_file.unlink()
@@ -290,8 +334,6 @@ def view_help(filename, viewer="browser"):
     View rst or html file.
     If *qt* use q viewer, otherwise use wx.
     """
-    import os
-
     if viewer == "qt" and not can_use_qt():
         viewer = "browser"
         print("QtWebKit is not available. Use browser to view help")
@@ -299,8 +341,9 @@ def view_help(filename, viewer="browser"):
         viewer = "browser"
         print("wb is not available. Use browser to view help")
 
-    url = "file:///"+os.path.abspath(filename).replace("\\", "/")
+    url = Path(filename).expanduser().absolute().as_uri()  # file://{absolute path}
     if filename.endswith('.rst'):
+        # TODO: this fails without stubs for sphinx specific roles and directives
         html = load_rst_as_html(filename)
         if viewer == "browser":
             view_html_browser(html, url + ".html", overwrite=True)
@@ -320,7 +363,8 @@ def main():
     # type: () -> None
     """Command line interface to rst or html viewer."""
     import sys
-    view_help(sys.argv[1], qt=False)
+
+    view_help(sys.argv[1])
 
 if __name__ == "__main__":
     main()

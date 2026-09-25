@@ -1592,7 +1592,7 @@ def show_docs(opts):
     info = opts['info'][0]
     html = make_html(info)
     path = Path(info.filename).absolute()
-    url = f"file://{str(path).replace('\\', '/')}.html"
+    url = path.with_suffix(".html").as_uri()  # file://{absolute path}.html
     if True:
         rst2html.view_html_browser(html, url, overwrite=True)
     elif rst2html.can_use_qt():
