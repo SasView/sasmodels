@@ -96,7 +96,7 @@ Exp:
 
 .. math::
 
-    \rho_{{inter}_i}(r) &=
+    \rho_{{inter}_i}(r) =
     \begin{cases}
         B\, \exp\left(
             \frac{\pm A(r - r_{\text{flat}_i})}{\Delta t_{\text{inter}_i}}
@@ -110,7 +110,7 @@ Power-Law:
 
 .. math::
 
-    \rho_{{inter}_i}(r) &=
+    \rho_{{inter}_i}(r) =
     \begin{cases}
         \pm B\, \left(
             \frac{(r - r_{\text{flat}_i})}{\Delta t_{ \text{inter}_i }}

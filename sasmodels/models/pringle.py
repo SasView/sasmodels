@@ -7,7 +7,7 @@ paraboloid and calculated as
 
 .. math::
 
-    P(q) = (\Delta \rho )^2 V \int^{\pi/2}_0 d\psi \sin{\psi} sinc^2
+    P(q) = (\Delta \rho )^2 V \int^{\pi/2}_0 d\psi \sin{\psi}\,\text{sinc}^2
     \left( \frac{qd\cos{\psi}}{2} \right)
     \left[ \left( S^2_0+C^2_0\right) + 2\sum_{n=1}^{\infty}
      \left( S^2_n+C^2_n\right) \right]
@@ -26,7 +26,7 @@ where
     J_n\left( qr^2\beta \cos{\psi}\right)
     J_{2n}\left( qr \sin{\psi}\right)
 
-and $\Delta\rho\text{ is }\rho_{pringle}-\rho_{solvent}$, $V$ is the volume of
+and $\Delta\rho\text{ is }\rho_\text{pringle}-\rho_\text{solvent}$, $V$ is the volume of
 the disc, $\psi$ is the angle between the normal to the disc and the q vector,
 $d$ and $R$ are the "pringle" thickness and radius respectively, $\alpha$ and
 $\beta$ are the two curvature parameters, and $J_n$ is the n\ :sup:`th` order
@@ -41,7 +41,7 @@ Reference
 
 #. Karen Edler, Universtiy of Bath, Private Communication. 2012.
    Derivation by Stefan Alexandru Rautu.
-#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

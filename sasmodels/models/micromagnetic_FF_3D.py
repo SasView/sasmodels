@@ -12,13 +12,13 @@ and on the applied magnetic field. As shown in [#Michels2016]_ near magnetic
 saturation the scattering cross-section can be evaluated by means of micromagnetic theory
 
 .. math::
-    I(\mathbf{Q}) = I_{nuc} + I_{mag}(\mathbf{Q},H),
+    I(\mathbf{Q}) = I_\text{nuc} + I_\text{mag}(\mathbf{Q},H),
 
 with the field-independent nuclear and magnetic SANS cross section (due
 to nanoscale spatial variations of the magnetisation).
 
 .. math::
-    I_{mag}(\mathbf{Q},H)= S_K(Q) R_K(\mathbf{Q}, H_i) + S_M(Q) R_M(\mathbf{Q}, H_i),
+    I_\text{mag}(\mathbf{Q},H)= S_K(Q) R_K(\mathbf{Q}, H_i) + S_M(Q) R_M(\mathbf{Q}, H_i),
 
 with $H_i$ the internal field, i.e. the external magnetic field corrected for
 demagnetizing effects and the influence of the magnetodipolar field and of the
@@ -68,15 +68,15 @@ The magnetic scattering length density (SLD) is defined as
 $\rho_{\mathrm{mag}}=b_H M_S$, where $b_H= 2.91*10^{8}A^{-1}m^{-1}$ and $M_S$
 is the saturation magnetisation (in $A/m$).
 
-The fraction of "upward" neutrons before ('up_frac_i') and after the sample
-('up_frac_f') must range between 0 to 1, with 0.5 denoting an unpolarised beam.
+The fraction of "upward" neutrons before (*up_frac_i*) and after the sample
+(*up_frac_f*) must range between 0 to 1, with 0.5 denoting an unpolarised beam.
 Note that a fit may result in a negative magnetic SLD, and hence magnetisation,
 when the polarisation state is inverted, i.e. if you have analysed for a $I_{00}$
 state wheras your data are $I_{11}$. The model allows to construct the 4
 spin-resolved cross sections (non-spin-flip $I_{00}$, $I_{11}$ and spin-flip, here
 $I_{01}=I_{10}$), half-polarised SANS (SANSpol, incoming polarised beam $I_0$ and
-$I_1$, no analysis after sample 'up_frac_f'$=0.5$), and unpolarised beam
-('up_frac_i'$=$'up_frac_f'$=0.5$). Differences and other combinations between
+$I_1$, no analysis after sample *up_frac_f* = 0.5), and unpolarised beam
+(*up_frac_i* = *up_frac_f* = 0.5). Differences and other combinations between
 polarised scattering cross section, e.g. to obtain the nuclear-magnetic
 interference scattering, or subtraction of the residual scattering of the high
 field reference state can be constructed with a custom model (Fitting>
@@ -85,20 +85,20 @@ care has to be taken as the nculear structure factor (arrangement of particles)
 does not need to be identical with the magnetic microstructure e.g. local
 textures and correlations between easy axes (see [#Honecker2020]_ for further
 details). The use of structure model is therefore strongly discouraged. Better
-$I_{nuc}$, $S_K$ and $S_M$ are fit independent from each other in a model-free way.
+$I_\text{nuc}$, $S_K$ and $S_M$ are fit independent from each other in a model-free way.
 
 
 
 References
 ----------
 
-.. [#Arrott1963] A. Arrott, J. Appl. Phys. 34, 1108 (1963).
-.. [#Weissmueller2001] J. Weissmueller et al., *Phys. Rev. B* 63, 214414 (2001).
-.. [#Bick2013] J.-P. Bick et al., *Appl. Phys. Lett.* 102, 022415 (2013).
-.. [#Michels2010] A. Michels et al., *Phys. Rev. B* 82, 024433 (2010).
-.. [#Michels2014] A. Michels, *J. Phys.: Condens. Matter* 26, 383201 (2014).
-.. [#Michels2016] A. Michels et al., *Phys. Rev. B* 94, 054424 (2016).
-.. [#Honecker2020] D. Honecker, L. Fernandez Barguin, and P. Bender, *Phys. Rev. B* 101, 134401 (2020).
+.. [#Arrott1963] \A. Arrott, J. Appl. Phys. 34, 1108 (1963).
+.. [#Weissmueller2001] \F. J. Weissmueller et al., *Phys. Rev. B* 63, 214414 (2001).
+.. [#Bick2013] \J.-P. Bick et al., *Appl. Phys. Lett.* 102, 022415 (2013).
+.. [#Michels2010] \A. Michels et al., *Phys. Rev. B* 82, 024433 (2010).
+.. [#Michels2014] \A. Michels, *J. Phys.: Condens. Matter* 26, 383201 (2014).
+.. [#Michels2016] \A. Michels et al., *Phys. Rev. B* 94, 054424 (2016).
+.. [#Honecker2020] \D. Honecker, L. Fernandez Barguin, and P. Bender, *Phys. Rev. B* 101, 134401 (2020).
 
 
 
