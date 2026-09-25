@@ -40,7 +40,7 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 .. math::
 
     I(Q,\alpha) = \frac{\text{scale}}{V_t} \cdot
-        F(Q,\alpha)^2 \cdot sin(\alpha) + \text{background}
+        F(Q,\alpha)^2 \cdot \sin(\alpha) + \text{background}
 
 where
 
@@ -51,13 +51,13 @@ where
     F(Q,\alpha) = &\bigg[
     (\rho_c - \rho_f) V_c
      \frac{2J_1(QRsin \alpha)}{QRsin\alpha}
-     \frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
+     \frac{\sin(QLcos\alpha/2)}{Q(L/2)\cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f}
      \frac{2J_1(QRsin\alpha)}{QRsin\alpha}
-     \frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
+     \frac{\sin(Q(L/2+t_f)\cos\alpha)}{Q(L/2+t_f)\cos\alpha} \\
     &+(\rho_r - \rho_s) V_t
-     \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}
-     \frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
+     \frac{2J_1(Q(R+t_r)\sin\alpha)}{Q(R+t_r)\sin\alpha}
+     \frac{\sin(Q(L/2+t_f)\cos\alpha)}{Q(L/2+t_f)\cos\alpha}
     \bigg]
     \end{align*}
 
@@ -88,7 +88,7 @@ References
    lipid mixtures*, John's Hopkins University Thesis (2009) 223-225. `Available
    from Proquest <http://search.proquest.com/docview/304915826>`_
 
-#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

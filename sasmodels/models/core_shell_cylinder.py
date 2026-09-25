@@ -14,7 +14,7 @@ the "thick_face") to zero.
 
 .. math::
 
-    I(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q,\alpha).sin(\alpha) + \text{background}
+    I(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q,\alpha).\sin(\alpha) + \text{background}
 
 where
 
@@ -72,7 +72,7 @@ See also Livsey [#Livsey1987]_ and Onsager [#Onsager1949]_.
 
 .. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
-.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Onsager1949] L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

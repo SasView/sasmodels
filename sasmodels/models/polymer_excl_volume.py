@@ -10,7 +10,7 @@ The form factor was originally presented in the following integral form
 
 .. math::
 
-    P(Q)=2\int_0^{1}dx(1-x)exp\left[-\frac{Q^2a^2}{6}n^{2v}x^{2v}\right]
+    P(Q)=2\int_0^{1}dx(1-x)\exp\left[-\frac{Q^2a^2}{6}n^{2v}x^{2v}\right]
 
 where $\nu$ is the excluded volume parameter
 (which is related to the Porod exponent $m$ as $\nu=1/m$ ),

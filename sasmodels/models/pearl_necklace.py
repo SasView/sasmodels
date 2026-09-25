@@ -24,17 +24,17 @@ where
 
 .. math::
 
-    S_{ss}(q) &= 2m_s^2\psi^2(q)\left[\frac{N}{1-sin(qA)/qA}-\frac{N}{2}-
-        \frac{1-(sin(qA)/qA)^N}{(1-sin(qA)/qA)^2}\cdot\frac{sin(qA)}{qA}\right] \\
-    S_{ff}(q) &= m_r^2\left[M\left\{2\Lambda(q)-\left(\frac{sin(ql/2)}{ql/2}\right)\right\}+
-        \frac{2M\beta^2(q)}{1-sin(qA)/qA}-2\beta^2(q)\cdot
-        \frac{1-(sin(qA)/qA)^M}{(1-sin(qA)/qA)^2}\right] \\
+    S_{ss}(q) &= 2m_s^2\psi^2(q)\left[\frac{N}{1-\sin(qA)/qA}-\frac{N}{2}-
+        \frac{1-(\sin(qA)/qA)^N}{(1-\sin(qA)/qA)^2}\cdot\frac{\sin(qA)}{qA}\right] \\
+    S_{ff}(q) &= m_r^2\left[M\left\{2\Lambda(q)-\left(\frac{\sin(ql/2)}{ql/2}\right)\right\}+
+        \frac{2M\beta^2(q)}{1-\sin(qA)/qA}-2\beta^2(q)\cdot
+        \frac{1-(\sin(qA)/qA)^M}{(1-\sin(qA)/qA)^2}\right] \\
     S_{fs}(q) &= m_r \beta (q) \cdot m_s \psi (q) \cdot 4\left[
-        \frac{N-1}{1-sin(qA)/qA}-\frac{1-(sin(qA)/qA)^{N-1}}{(1-sin(qA)/qA)^2}
-        \cdot \frac{sin(qA)}{qA}\right] \\
-    \psi(q) &= 3 \cdot \frac{sin(qR)-(qR)\cdot cos(qR)}{(qR)^3} \\
-    \Lambda(q) &= \frac{\int_0^{ql}\frac{sin(t)}{t}dt}{ql} \\
-    \beta(q) &= \frac{\int_{qR}^{q(A-R)}\frac{sin(t)}{t}dt}{ql}
+        \frac{N-1}{1-\sin(qA)/qA}-\frac{1-(\sin(qA)/qA)^{N-1}}{(1-\sin(qA)/qA)^2}
+        \cdot \frac{\sin(qA)}{qA}\right] \\
+    \psi(q) &= 3 \cdot \frac{\sin(qR)-(qR)\cdot \cos(qR)}{(qR)^3} \\
+    \Lambda(q) &= \frac{\int_0^{ql}\frac{\sin(t)}{t}dt}{ql} \\
+    \beta(q) &= \frac{\int_{qR}^{q(A-R)}\frac{\sin(t)}{t}dt}{ql}
 
 where the mass *m*\ :sub:`i` is (SLD\ :sub:`i` - SLD\ :sub:`solvent`) \*
 (volume of the *N* pearls/rods). *V* is the total volume of the necklace.
@@ -52,7 +52,7 @@ References
 #. R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
    *Macromol. Symp.* 211 (2004) 25-42 2004
 
-#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

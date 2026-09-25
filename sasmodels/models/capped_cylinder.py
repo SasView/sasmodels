@@ -20,7 +20,7 @@ The scattered intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \frac{\Delta \rho^2}{V} \left<A^2(q,\alpha).sin(\alpha)\right>
+    I(q) = \frac{\Delta \rho^2}{V} \left<A^2(q,\alpha).\sin(\alpha)\right>
 
 where the amplitude $A(q,\alpha)$ with the rod axis at angle $\alpha$ to $q$
 is given as
@@ -83,7 +83,7 @@ References
 #. H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509
    (addenda and errata)
 
-#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
