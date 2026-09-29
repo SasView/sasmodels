@@ -1593,12 +1593,9 @@ def show_docs(opts):
     html = make_html(info)
     path = Path(info.filename).absolute()
     url = path.with_suffix(".html").as_uri()  # file://{absolute path}.html
-    if True:
-        rst2html.view_html_browser(html, url, overwrite=True)
-    elif rst2html.can_use_qt():
-        rst2html.view_html_qtapp(html, url)
-    else:
-        rst2html.view_html_wxapp(html, url)
+    rst2html.view_html_browser(html, url, overwrite=True)
+    # if rst2html.can_use_qt(): rst2html.view_html_qtapp(html, url)
+    # rst2html.view_html_wxapp(html, url)
 
 def explore(opts):
     # type: (Dict[str, Any]) -> None
