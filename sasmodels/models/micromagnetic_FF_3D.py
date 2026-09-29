@@ -93,7 +93,7 @@ References
 ----------
 
 .. [#Arrott1963] \A. Arrott, J. Appl. Phys. 34, 1108 (1963).
-.. [#Weissmueller2001] \F. J. Weissmueller et al., *Phys. Rev. B* 63, 214414 (2001).
+.. [#Weissmueller2001] \J. Weissmueller et al., *Phys. Rev. B* 63, 214414 (2001).
 .. [#Bick2013] \J.-P. Bick et al., *Appl. Phys. Lett.* 102, 022415 (2013).
 .. [#Michels2010] \A. Michels et al., *Phys. Rev. B* 82, 024433 (2010).
 .. [#Michels2014] \A. Michels, *J. Phys.: Condens. Matter* 26, 383201 (2014).
