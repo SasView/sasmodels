@@ -41,8 +41,7 @@ here, the lineshape is controlled by the single weighting factor $w_f$, so the m
 has the same number of free parameters as a true Voigt would: peak position, width
 and $w_f$, against peak position, $\sigma$ (Gaussian) and $\gamma$ (Lorentzian).
 Varying $w_f$ at fixed HWHM changes the weight in the tails rather than the width of
-the peak. The advantage over the true Voigt is that the expression is analytic and
-inexpensive to evaluate.
+the peak. The advantage of the pseudo-voigt is, it is a sum of two functions.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
