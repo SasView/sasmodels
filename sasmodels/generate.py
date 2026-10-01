@@ -1283,7 +1283,7 @@ def make_html(model_info):
     """
     Convert model docs directly to html.
     """
-    from .rst2html import URI, pseudo_sphinx
+    from .sphinx.rst2html import URI, pseudo_sphinx
 
     # We are storing the html file beside the python file so that image links will work.
     base_path = Path(model_info.filename).absolute().parent
@@ -1322,7 +1322,7 @@ def view_html_from_info(info):
     """
     View the help for a loaded model definition.
     """
-    from . import rst2html
+    from .sphinx import rst2html
 
     url = Path(info.filename).with_suffix('.html').as_uri()  # file://{absolute path}.html
     rst2html.view_html(make_html(info), url=url)

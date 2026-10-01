@@ -34,13 +34,13 @@ from docutils.nodes import SkipNode, literal
 from docutils.parsers.rst import Directive
 from docutils.writers.html4css1 import HTMLTranslator, Writer
 
-from .sphinx.dollarmath import replace_dollar
+from .dollarmath import replace_dollar
 
 # TODO: Get the files using importlib.resources
 # TODO: The prolog is sasview/sasmodels specific... it doesn't belong in rst2html
 # TODO: Remove all extra copies of rst_prolog
 # from importlib import resources
-THEME_PATH = Path(__file__).expanduser().resolve().parent / "sphinx"
+THEME_PATH = Path(__file__).expanduser().resolve().parent
 #STYLESHEET = THEME_PATH / "classic.css"
 TEMPLATE = THEME_PATH / "template.txt"
 RST_PROLOG_PATH = THEME_PATH / "prolog.rst"
@@ -468,7 +468,7 @@ def replace_compact_fraction(content):
 def load_rst_as_html(filename):
     """Load rst from file and convert to html"""
     # TODO: Take a configuration from elsewhere rather than assuming sasview docs
-    from .generate import DOC_ROOT  # Ick! Circular import of sasmodels specific stuff
+    from ..generate import DOC_ROOT  # Ick! Circular import of sasmodels specific stuff
 
     sasview_version = "" # Can pull this from DOC_TREE
     sasview_doc = URI("index", f"SasView {sasview_version} Documentation")

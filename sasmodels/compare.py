@@ -106,6 +106,7 @@ Options (* for default):
     -edit starts the parameter explorer (bumps webview)
     -wxedit starts the parameter explore (bumps wxgui)
     -help/-html shows the model docs instead of running the model
+    -rst=file.rst shows the rst file as html
 
     === help ===
     -h/-? print this help
@@ -1228,6 +1229,7 @@ def parse_opts(argv):
         'show_profile' : False,
         'sphere'    : 0,
         'ngauss'    : '0',
+        'rst'       : None,
     }
     for arg in flags:
         if arg == '-noplot':    opts['plot'] = False
@@ -1292,6 +1294,8 @@ def parse_opts(argv):
         elif arg == '-profile':     opts['show_profile'] = True
         elif arg == '-html':        opts['html'] = True
         elif arg == '-help':        opts['html'] = True
+#        elif arg.startswith('-rst'):
+#            opts['rst'] = arg[5:]
         elif arg.startswith('-D'):
             var, val = arg[2:].split('=')
             os.environ[var] = val
@@ -1310,6 +1314,12 @@ def parse_opts(argv):
     # Create the computational engines
     if opts['qmin'] is None:
         opts['qmin'] = 0.001*opts['qmax']
+
+    if name.endswith('.rst'):
+        # Short-circuit file.rst display
+        from .sphinx.rst2html import view_help
+        view_help(name)
+        return None
 
     comparison = any(PAR_SPLIT in v for v in values)
 
@@ -1584,8 +1594,8 @@ def show_docs(opts):
     """
     from pathlib import Path
 
-    from . import rst2html
     from .generate import make_html
+    from .sphinx import rst2html
 
     # Point the url to a file in the same directory as the model.
     # Need this otherwise relative links to image files will be broken.
