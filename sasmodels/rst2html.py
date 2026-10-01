@@ -11,6 +11,7 @@ unicode, or with mathjax.
 import locale
 import re
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 # TODO: remove _parse_localename cruft
@@ -31,7 +32,52 @@ if hasattr(locale, '_parse_localename'):
 from docutils.core import publish_parts
 from docutils.nodes import SkipNode, literal
 from docutils.parsers.rst import Directive
-from docutils.writers.html4css1 import HTMLTranslator
+from docutils.writers.html4css1 import HTMLTranslator, Writer
+
+from .sphinx.dollarmath import replace_dollar
+
+# TODO: Get the files using importlib.resources
+# TODO: The prolog is sasview/sasmodels specific... it doesn't belong in rst2html
+# TODO: Remove all extra copies of rst_prolog
+# from importlib import resources
+THEME_PATH = Path(__file__).expanduser().resolve().parent / "sphinx"
+#STYLESHEET = THEME_PATH / "classic.css"
+TEMPLATE = THEME_PATH / "template.txt"
+RST_PROLOG_PATH = THEME_PATH / "prolog.rst"
+
+#MATHJAX_PATH = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
+MATHJAX_PATH = "https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" # recommended version as of 2026-11
+
+
+if RST_PROLOG_PATH.exists():
+    RST_PROLOG = RST_PROLOG_PATH.read_text()
+else:
+    # CRUFT: Fallback in case the resources aren't available in the install.
+    RST_PROLOG = r"""
+.. |Ang| unicode:: U+212B
+.. |Ang^-1| replace:: |Ang|\ :sup:`-1`
+.. |Ang^2| replace:: |Ang|\ :sup:`2`
+.. |Ang^-2| replace:: |Ang|\ :sup:`-2`
+.. |1e-6Ang^-2| replace:: 10\ :sup:`-6`\ |Ang|\ :sup:`-2`
+.. |Ang^3| replace:: |Ang|\ :sup:`3`
+.. |Ang^-3| replace:: |Ang|\ :sup:`-3`
+.. |Ang^-4| replace:: |Ang|\ :sup:`-4`
+.. |nm^-1| replace:: nm\ :sup:`-1`
+.. |cm^-1| replace:: cm\ :sup:`-1`
+.. |cm^2| replace:: cm\ :sup:`2`
+.. |cm^-2| replace:: cm\ :sup:`-2`
+.. |cm^3| replace:: cm\ :sup:`3`
+.. |1e15cm^3| replace:: 10\ :sup:`15`\ cm\ :sup:`3`
+.. |cm^-3| replace:: cm\ :sup:`-3`
+.. |sr^-1| replace:: sr\ :sup:`-1`
+
+.. |cdot| unicode:: U+00B7
+.. |deg| unicode:: U+00B0
+.. |g/cm^3| replace:: g\ |cdot|\ cm\ :sup:`-3`
+.. |mg/m^2| replace:: mg\ |cdot|\ m\ :sup:`-2`
+.. |fm^2| replace:: fm\ :sup:`2`
+.. |Ang*cm^-1| replace:: |Ang|\ |cdot|\ cm\ :sup:`-1`
+"""
 
 # TODO: make a better sphinx stubs
 
@@ -90,10 +136,230 @@ def sphinx_stubs():
     roles._role_registry = _role_registry
     roles._roles = _roles
 
-#MATHJAX_PATH = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
-MATHJAX_PATH = "https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" # recommended version as of 2026-11
+class WriterShim(Writer):
+    """
+    HTML writer that allows extra substitution arguments for the template.
+    """
+    def __init__(self, template_args=None):
+        super().__init__()
+        self.template_args = template_args
+    def interpolation_dict(self):
+        subs = super().interpolation_dict()
+        if self.template_args:
+            subs.update(self.template_args)
+        #print("available subs", "\n".join(f"{k}: {v[:40]}" for k,v in subs.items()))
+        return subs
 
-def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list=None):
+
+class HTMLTranslatorShim(HTMLTranslator):
+    # Suppress HTML error messages
+    def visit_system_message(self, node):
+        raise SkipNode
+
+@dataclass
+class URI:
+    """
+    Sphinx layout templates use uri.title and uri.link in various locations.
+
+    Initialize with the base path of the reference, including filename without
+    extension. Before using in a layout substitution set *uri.link = pathto(uri.base)*.
+    This creates the full URI, including an implicit *.html* extension.
+
+    We are not resolving the link in the constructor since we don't know the local
+    and remote URIs when we create the link.
+    """
+    base: str
+    title: str
+
+
+def pseudo_sphinx(rst, path=None, title=None, context=(), rst_prolog=None, doc_root=None):
+    """
+    renders the document, linking to the sasview doc tree.
+    """
+    path = Path(path)
+    if title is None:
+        title = path.stem
+
+    # TODO: fix prev, next, parents
+    # TODO: use loops to render navigation parents
+    # TODO: Pull DOC_ROOT/objects.inv to resolve links in the rst.
+    # TODO: Remove the assumption that we are within plugins (needs parents, next and previous)
+    # TODO: Allow the html to go into a cache directory.
+    # TODO: Copy images to the correct directory relative to cache.
+    # TODO: Write the rst file to cache/_sources/filename.rst
+    # TODO: Use sphinx themes instead of hardcoding basic layout.html navigation and sidebar
+    # TODO: Guess the sasview version from DOC_ROOT, which probably encodes the version number.
+    # TODO: When modifying an existing file, allow linking to remote images
+    # TODO: won't handle sphinx extensions
+    # TODO: need full context; get it directly from sphinx?
+    # TODO: If no cache, cache in auto-reaped tempdir so we don't have to delete.
+    # TODO: Scan for figure/image tags to copy to cache
+
+    # We should have a plugins directory cache with all the plugin help prebuilt,
+    # and the associated img files copied. The rellink list should point to the next
+    # and previous in the plugins directory.
+    rst_root_path = None
+
+    this_uri = title # base uri for document we are rendering
+    local_uri = [this_uri] # list of uri base names that are resolved locally
+
+    # ==== context used by the sphinx templates ===
+
+    # Sphinx theme variables: see StandaloneHTMLBuilder.global_context
+    #    https://github.com/sphinx-doc/sphinx/blob/master/sphinx/builders/html/__init__.py
+    def pathto(uri, resource=False):
+        """
+        Resolve a uri base into a full URI.
+
+        If uri base refers to a *local_uri*, expand into a reference relative to
+        *path*, otherwise it is a reference relative to *doc_root*.
+
+        if *resource* is True, then return the uri as is, possibly substituting
+        *_sources/* with the parent of the reStructuredText sources tree. Sphinx
+        is opinionated about the location of the rst files when *html_copy_source*
+        is True in the sphinx configuration.
+
+        The variables *rst_root_path*, *local_uri*, *path* and *doc_root* are
+        local to pseudo_sphinx.
+        """
+        nonlocal rst_root_path, local_uri, path, doc_root
+        if resource:
+            # If we need to redirect rst files from _sources, do it here
+            if rst_root_path and uri.startswith('_sources/'):
+                uri = uri.replace('_sources', str(rst_root_path))
+            return uri
+        # if uri is a sister plugin model in the cache, then return that path; if it is
+        # coming from the inventory, return relative to docroot.
+        res = f"{str(path.parent)}/{uri}.html" if uri in local_uri else f"{doc_root}/{uri}.html"
+        return res
+
+    # Expand uri.base into uri.link using pathto()
+    for _uri in context: # resolve links
+        _uri.link = pathto(_uri.base)
+
+    # Navigation state
+    prev, next, _root_doc, *parents = context
+
+    def hasdoc(uri):
+        # Used by the template engine to make decisions about what to include.
+        # We could implement it using requests, trying to load the files from DOC_ROOT.
+        # If we start using the sphinx themes, though, I think it will be okay to drop some parts
+        # of the page when we are rendering the local document.
+        return True
+
+    def accesskey(key):
+        return f'accesskey="{key}"' if key else ''
+
+    # Note: "next" is the name in the context, so overriding the builtin next locally (bad form!)
+    prev, next = context[0], context[1]
+    #   [page name, link title, accesskey, link text],
+    rellinks: list[tuple[str, str, str, str]] = []
+    if hasdoc('genindex'):
+        rellinks.append(('genindex', 'General Index', 'I', 'index'))
+    if hasdoc('py-modindex'):
+        rellinks.append(('py-modindex', 'Python Module Index', '', 'modules'))
+    if next is not None:
+        rellinks.append((next.base, next.title, 'N', 'next'))
+    if prev is not None:
+        rellinks.append((prev.base, prev.title, 'P', 'previous'))
+    root_doc, shorttitle = _root_doc.base, _root_doc.title
+    link = pathto(this_uri)
+    reldelim1 = " »" # the default if not defined
+    reldelim2 = " |" # the default if not defined
+    # Ick! The default layout assumes sources are in `_sources/{sourcename}`, but we can
+    # override this in pathto().
+    sourcename = path.name
+    copyright = "2026, The SasView Project" # from conf.py
+    last_updated = None # If defined, expands to "Last updated on {last_updated}." in the footer.
+    show_sphinx = False # Not created using sphinx and we don't know the sphinx version.
+    sphinx_version = "9.1.0" # from sphinx
+    sidebars = ["localtoc.html", "relations.html", "sourcelink.html", "searchbox.html"] # from theme.toml
+    stylesheets = ["classic.css"] # from theme.toml; I didn't check if the template sees this symbol.
+
+    css_files = [
+        (THEME_PATH / css).relative_to(path.parent, walk_up=True)
+        for css in stylesheets
+    ]
+
+    # likely quite a bit more we could include, but our current sphinx theme isn't using them.
+
+    # ==== end of context ====
+
+    # Copy of the classic layout navigation, sidebar and footers, with macros expanded.
+    # https://github.com/sphinx-doc/sphinx/blob/master/sphinx/themes/basic/layout.html
+    # This is good enough to show the rst/latex rendering but it may not match the
+    # rest of the docs.
+    _rendered_rellinks = "\n".join(
+        f"""<li class="right"{' style="margin-right: 10px"' if k == 0 else ''}>
+          <a href="{pathto(rellink[0])}" title="{pathto(rellink[1])}" {accesskey(rellink[2])}>{rellink[3]}</a>{reldelim2 if k > 0 else ''}</li>"""
+        for k, rellink in enumerate(rellinks) if rellink
+    )
+    _rendered_parents = "\n".join(
+        f"""<li class="nav-item nav-item-{1}"><a href="{parent.link}">{parent.title}</a>{reldelim1}</li>"""
+        for parent in parents
+    )
+    navigation = f"""\
+<div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        {_rendered_rellinks}
+        <li class="nav-item nav-item-0"><a href="{pathto(root_doc)}">{shorttitle}</a>{reldelim1}</li>
+          {_rendered_parents}
+        <li class="nav-item nav-item-this"><a href="{link}">{title}</a></li>
+      </ul>
+    </div>
+"""
+    sidebar = f"""\
+<div class="sphinxsidebar" role="navigation" aria-label="Main">
+<div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="{prev.link}" title="previous chapter">{prev.title}</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="{next.link}" title="next chapter">{next.title}</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="{pathto('_sources/' + sourcename, True)}" rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: block;" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="{pathto('search')}" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <input type="submit" value="Go">
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+"""
+    # Original footer. It's problematic because it needs copyright year and sphinx version.
+    footer = f"""\
+<div class="footer" role="contentinfo">
+    © Copyright {copyright}.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> {sphinx_version}.
+    </div>"
+"""
+    footer = "" # suppressing because the page might not be from SasView and the generator was not Sphinx.
+
+    # Extra blocks available to the docutils template engine, used by TEMPLATE
+    template_args = dict(navigation=navigation, sidebar=sidebar, sphinx_footer=footer)
+
+    return rst2html(
+        rst=rst, rst_prolog=RST_PROLOG_PATH, template=TEMPLATE, template_args=template_args, css_list=css_files,
+    )
+
+def rst2html(
+        rst, part="whole", math_output="mathjax",
+        rst_prolog=None, template=None, css_list=None,
+        template_args=None,
+        ):
     r"""
     Convert restructured text into simple html.
 
@@ -119,7 +385,7 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
 
     *rst_prolog* is the path to the reStructureText prolog file
     """
-    if rst_prolog:
+    if rst_prolog and Path(rst_prolog).exists():
         prolog = Path(rst_prolog).read_text()
         rst = f"{prolog}\n{rst}"
 
@@ -133,7 +399,7 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
 
     if css_list:
         settings["embed_stylesheet"] = False
-        # The sytlesheet_path setting makes paths relative to current directory.
+        # The stylesheet_path setting makes paths relative to current directory.
         # Clear it out so that we can instead use the stylesheet paths given by the caller.
         settings["stylesheet_path"] = None
         settings["stylesheet"] = css_list
@@ -143,6 +409,9 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
     if math_output in ("mathml", "html"):
         rst = replace_compact_fraction(rst)
         rst = rst.replace(r'\tfrac', r'\frac')
+
+    if template:
+        settings["template"] = template
 
     # TODO: docutils doesn't support :orphan: metadata
     # TODO: docutils math doesn't support :nowrap: or :label:
@@ -156,11 +425,17 @@ def rst2html(rst, part="whole", math_output="mathjax", rst_prolog=None, css_list
     pattern = r"^\s*:(?:nowrap|no[-_]wrap|label|orphan):.*\n?"
     rst = re.sub(pattern, "", rst, flags=re.MULTILINE)
     rst = re.sub(r"\\(?:begin|end){align\*?}", "", rst, flags=re.MULTILINE)
+    #print(f"=== rst ===\n", rst)
 
     rst = replace_dollar(rst)
-    with suppress_html_errors(), sphinx_stubs():
+    writer = WriterShim(template_args=template_args)
+    #writer.translator_class = HTMLTranslatorShim
+    #with suppress_html_errors(),
+    with sphinx_stubs():
         parts = publish_parts(
-            source=rst, writer_name='html',
+            source=rst,
+            writer=writer,
+            #writer_name='html',
             settings_overrides=settings,
             )
     return parts[part]
@@ -190,55 +465,22 @@ def replace_compact_fraction(content):
     return _compact_fraction.sub(r"\1{\2}{\3}", content)
 
 
-_dollar = re.compile(r"(?:^|(?<=\s|[-(]))[$]([^\n]*?)(?<![\\])[$](?:$|(?=\s|[-.,;:?\\)]))")
-_notdollar = re.compile(r"\\[$]")
-def replace_dollar(content):
-    r"""
-    Convert dollar signs to inline math markup in rst.
-    """
-    content = _dollar.sub(r":math:`\1`", content)
-    content = _notdollar.sub("$", content)
-    return content
-
-
-def test_dollar():
-    """
-    Test substitution of dollar signs with equivalent RST math markup
-    """
-    assert replace_dollar("no dollar") == "no dollar"
-    assert replace_dollar("$only$") == ":math:`only`"
-    assert replace_dollar("$first$ is good") == ":math:`first` is good"
-    assert replace_dollar("so is $last$") == "so is :math:`last`"
-    assert replace_dollar("and $mid$ too") == "and :math:`mid` too"
-    assert replace_dollar("$first$, $mid$, $last$") == ":math:`first`, :math:`mid`, :math:`last`"
-    assert replace_dollar("dollar\\$ escape") == "dollar$ escape"
-    assert replace_dollar("dollar \\$escape\\$ too") == "dollar $escape$ too"
-    assert replace_dollar("spaces $in the$ math") == "spaces :math:`in the` math"
-    assert replace_dollar("emb\\ $ed$\\ ed") == "emb\\ :math:`ed`\\ ed"
-    assert replace_dollar("$first$a") == "$first$a"
-    assert replace_dollar("a$last$") == "a$last$"
-    assert replace_dollar("$37") == "$37"
-    assert replace_dollar("($37)") == "($37)"
-    assert replace_dollar("$37 - $43") == "$37 - $43"
-    assert replace_dollar("($37, $38)") == "($37, $38)"
-    assert replace_dollar("a $mid$dle a") == "a $mid$dle a"
-    assert replace_dollar("a ($in parens$) a") == "a (:math:`in parens`) a"
-    assert replace_dollar("a (again $in parens$) a") == "a (again :math:`in parens`) a"
-
 def load_rst_as_html(filename):
     """Load rst from file and convert to html"""
-    from .generate import RST_PROLOG, STYLESHEET  # Ick! Circular import of sasmodels specific stuff
+    # TODO: Take a configuration from elsewhere rather than assuming sasview docs
+    from .generate import DOC_ROOT  # Ick! Circular import of sasmodels specific stuff
 
-    # Make stylesheet path relative to the html file
-    filename = Path(filename).expanduser().absolute()
-    try:
-        stylesheet = STYLESHEET.relative_to(filename.parent, walk_up=True)
-    except ValueError:
-        stylesheet = STYLESHEET # use absolute reference if relative ref fails
+    sasview_version = "" # Can pull this from DOC_TREE
+    sasview_doc = URI("index", f"SasView {sasview_version} Documentation")
+    user_doc = URI("user/user", "SasView User Documentation")
+    # prev next root parents
+    context = (user_doc, user_doc, sasview_doc, user_doc)
 
-    with open(filename) as fid:
+    path = Path(filename).resolve()
+    with open(path) as fid:
         rst = fid.read()
-    return rst2html(rst=f"{RST_PROLOG}\n{rst}", css_list=[stylesheet])
+    return pseudo_sphinx(rst, path=path, context=context, doc_root=DOC_ROOT)
+    #return rst2html(rst=f"{RST_PROLOG}\n{rst}", css_list=[stylesheet])
 
 def wxview(html, url="", size=(850, 540)):
     # type: (str, str, tuple[int, int]) -> "wx.Frame"
@@ -371,7 +613,7 @@ def view_help(filename, viewer="browser"):
         viewer = "browser"
         print("wb is not available. Use browser to view help")
 
-    url = Path(filename).expanduser().absolute().as_uri()  # file://{absolute path}
+    url = Path(filename).expanduser().resolve().as_uri()  # file://{absolute path}
     if filename.endswith('.rst'):
         # TODO: this fails without stubs for sphinx specific roles and directives
         html = load_rst_as_html(filename)

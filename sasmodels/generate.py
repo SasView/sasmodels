@@ -1270,54 +1270,41 @@ def make_doc(model_info):
     return DOC_HEADER % subst
 
 
-
 # TODO: These defines are specific to sasmodels and sasview. They don't belong here.
-# TODO: Need a single source for rst_prolog; it is also in doc/rst_prolog
-# from importlib import resources
-# RST_PROLOG = (resources.files(__package__) / "prolog.rst").read_text()
-RST_PROLOG = r"""
-.. |Ang| unicode:: U+212B
-.. |Ang^-1| replace:: |Ang|\ :sup:`-1`
-.. |Ang^2| replace:: |Ang|\ :sup:`2`
-.. |Ang^-2| replace:: |Ang|\ :sup:`-2`
-.. |1e-6Ang^-2| replace:: 10\ :sup:`-6`\ |Ang|\ :sup:`-2`
-.. |Ang^3| replace:: |Ang|\ :sup:`3`
-.. |Ang^-3| replace:: |Ang|\ :sup:`-3`
-.. |Ang^-4| replace:: |Ang|\ :sup:`-4`
-.. |nm^-1| replace:: nm\ :sup:`-1`
-.. |cm^-1| replace:: cm\ :sup:`-1`
-.. |cm^2| replace:: cm\ :sup:`2`
-.. |cm^-2| replace:: cm\ :sup:`-2`
-.. |cm^3| replace:: cm\ :sup:`3`
-.. |1e15cm^3| replace:: 10\ :sup:`15`\ cm\ :sup:`3`
-.. |cm^-3| replace:: cm\ :sup:`-3`
-.. |sr^-1| replace:: sr\ :sup:`-1`
+# TODO: Use intersphinx to join sasmodels-sasdata-bumps-periodictable docs
+# The URI for the pre-built docs, to allow links from the model help renderer
+DOC_ROOT = "https://www.sasview.org/docs"  # Should be tied to sasview version
 
-.. |cdot| unicode:: U+00B7
-.. |deg| unicode:: U+00B0
-.. |g/cm^3| replace:: g\ |cdot|\ cm\ :sup:`-3`
-.. |mg/m^2| replace:: mg\ |cdot|\ m\ :sup:`-2`
-.. |fm^2| replace:: fm\ :sup:`2`
-.. |Ang*cm^-1| replace:: |Ang|\ |cdot|\ cm\ :sup:`-1`
-"""
+# SasView uses the contents of the prolog
 
-# Note: the sphinx stylesheets don't work with docutils rendering
-#stylesheet = Path(__file__).absolute().parent / "css/classic.css"
-STYLESHEET = Path(__file__).absolute().parent / "css/sasmodels_help.css"
 
 def make_html(model_info):
     # type: (ModelInfo) -> str
     """
     Convert model docs directly to html.
     """
-    from . import rst2html
+    from .rst2html import URI, pseudo_sphinx
 
-    # Make stylesheet path relative to the html file
-    path = Path(model_info.filename).absolute().parent
-    stylesheet = STYLESHEET.relative_to(path, walk_up=True)
+    # We are storing the html file beside the python file so that image links will work.
+    base_path = Path(model_info.filename).absolute().parent
+    rst_file = model_info.filename+'.rst'
+    rst_path = base_path / rst_file
+    title = model_info.name
 
+    sasview_version = "" # Can pull this from DOC_TREE
+    sasview_doc = URI("index", f"SasView {sasview_version} Documentation")
+    user_doc = URI("user/user", "SasView User Documentation")
+    models_doc = URI("user/qtgui/Perspectives/Fitting/models/index", "Model Functions")
+    plugins_doc = URI("plugins", "Plugin Models")
+    # Define [prev, next, root, *parents]
+    context = [models_doc, models_doc, sasview_doc, user_doc, models_doc, plugins_doc]
+
+    # TODO: build a cache of plugin models along with a plugin index.
+    # TODO: build plots for the model
     rst = make_doc(model_info)
-    return rst2html.rst2html(rst=f"{RST_PROLOG}\n{rst}", css_list=[stylesheet])
+    html = pseudo_sphinx(rst, path=rst_path, title=title, context=context, doc_root=DOC_ROOT)
+    return html
+
 
 def view_html(model_name):
     # type: (str) -> None
