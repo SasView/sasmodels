@@ -38,7 +38,6 @@ from .dollarmath import replace_dollar
 
 # TODO: Get the files using importlib.resources
 # TODO: The prolog is sasview/sasmodels specific... it doesn't belong in rst2html
-# TODO: Remove all extra copies of rst_prolog
 # from importlib import resources
 THEME_PATH = Path(__file__).expanduser().resolve().parent
 #STYLESHEET = THEME_PATH / "classic.css"

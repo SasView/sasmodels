@@ -72,12 +72,11 @@ _escaped_dollar = re.compile(r"\\[$]") # Match \$ so it can be replaced by $ aft
 
 def replace_dollar(content):
     # original = content
-    #print("text:", repr(content))
-    # match = _display_math.match(content); print("match", match)
+    # print("text:", repr(content))
     content = _display_math.sub(_display_math_sub, content)
     content = _inline_math.sub(r":math:`\1`", content)
     content = _escaped_dollar.sub("$", content)
-    #print("==>", repr(content))
+    # print("==>", repr(content))
     # # For debugging within sphinx, write directly to stdout
     # if '$' in content:
     #     import sys
