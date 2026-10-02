@@ -41,10 +41,9 @@ n_aggreg : aggregation number :math:`RN`.
 References
 ----------
 
-Burchard, W., & Kajiwara, K. (1970).
-The statistics of stiff chain molecules I.
-The particle scattering factor.
-*Proceedings of the Royal Society of London A* **316**, 185–199.
+#. Burchard, W., & Kajiwara, K. (1970).
+   The statistics of stiff chain molecules I. The particle scattering factor.
+   *Proceedings of the Royal Society of London A* **316**, 185–199.
 
 Authorship and Verification
 ----------------------------

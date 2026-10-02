@@ -8,7 +8,7 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \frac{scale}{\bigl(1+\bigl(\frac{q-q_0}{B}\bigr)^2\bigr)} + background
+    I(q) = \frac{\text{scale}}{\bigl(1+\bigl(\frac{q-q_0}{B}\bigr)^2\bigr)} + \text{background}
 
 with the peak having height of $I_0$ centered at $q_0$ and having
 a HWHM (half-width half-maximum) of B.

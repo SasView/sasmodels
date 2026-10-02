@@ -9,8 +9,8 @@ The geometric parameters are:
 
 * $R$: major (ring) radius of the torus centerline
 * $a$: core minor radius in the radial direction
-* $\nu_{core}$: aspect ratio of the elliptical core cross-section
-* $\nu_{shell}$: aspect ratio of the elliptical shell cross-section
+* $\nu_\mathrm{core}$: aspect ratio of the elliptical core cross-section
+* $\nu_\mathrm{shell}$: aspect ratio of the elliptical shell cross-section
 * $t$: shell thickness
 
 .. figure:: img/torus_elliptical_shell_geometry.png
@@ -18,8 +18,8 @@ The geometric parameters are:
     Schematic geometry of the torus with elliptical tube cross-section.
 
 The core and shell have independent aspect ratios, so the core semi-axes are
-$a$ and $\nu_{core} \cdot a$, and the outer semi-axes are $a+t$ and
-$\nu_{core} \cdot a + \nu_{shell} \cdot t$.
+$a$ and $\nu_\mathrm{core} \cdot a$, and the outer semi-axes are $a+t$ and
+$\nu_\mathrm{core} \cdot a + \nu_\mathrm{shell} \cdot t$.
 
 For a given orientation angle $\theta$ between the torus symmetry axis and
 $\vec q$, the kernel evaluates the amplitude using a numerical integral over
@@ -45,11 +45,11 @@ The core-shell amplitude is formed from outer and inner contributions:
 .. math::
 
     F_{cs}(q,\theta) =
-    F\!\left(q,\theta;a + t,\rho_{shell}-\rho_{solvent},\nu_{outer}\right)
-    -F\!\left(q,\theta;a,\rho_{shell}-\rho_{core},\nu_{core}\right)
+    F\!\left(q,\theta;a + t,\rho_\mathrm{shell}-\rho_\mathrm{solvent},\nu_\mathrm{outer}\right)
+    -F\!\left(q,\theta;a,\rho_\mathrm{shell}-\rho_\mathrm{core},\nu_\mathrm{core}\right)
 
 
-where $\nu_{outer} = \frac{\nu_{shell}t + \nu_{core}a}{a+t}$ is the aspect ratio of the outer ellipse.
+where $\nu_\mathrm{outer} = \frac{\nu_\mathrm{shell}t + \nu_\mathrm{core}a}{a+t}$ is the aspect ratio of the outer ellipse.
 
 and the orientationally averaged intensity is
 
@@ -60,8 +60,9 @@ and the orientationally averaged intensity is
 
 References
 ----------
-#.  T. Kawaguchi, *J. Appl. Crystallogr*, 34(2001) 580-584
-#.  S. Förster, *J. Phys. Chem.*, 103(1999) 6657-6668
+
+#. \T. Kawaguchi, *J. Appl. Crystallogr*, 34(2001) 580-584
+#. \S. Förster, *J. Phys. Chem.*, 103(1999) 6657-6668
 
 Authorship and Verification
 ---------------------------

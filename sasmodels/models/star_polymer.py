@@ -45,9 +45,9 @@ equation is recovered.
 References
 ----------
 
-.. [#Benoit1953] H Benoit *J. Polymer Science*, 11, 507-510 (1953)
-.. [#Richter1989] D Richter, B. Farago, J. S. Huang, L. J. Fetters,
-   B Ewen *Macromolecules*, 22, 468-472 (1989)
+.. [#Benoit1953] \H. Benoit *J. Polymer Science*, 11, 507-510 (1953)
+.. [#Richter1989] \D. Richter, B. Farago, J. S. Huang, L. J. Fetters,
+   B. Ewen *Macromolecules*, 22, 468-472 (1989)
 
 Authorship and Verification
 ----------------------------

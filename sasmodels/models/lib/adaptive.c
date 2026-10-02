@@ -11243,15 +11243,14 @@ constant double Gauss5000Z[5000]={
 //     n_outer = gauss_weights(qr_outer, ADAPTIVE_MAX_OUTER, &w_outer, &z_outer);
 //     n_inner = gauss_weights(qr_inner, n_outer, &w_inner, &z_inner);
 //
-// For a standard integral over a hemisphere ∫∫ F(θ,φ) sin θ dφ dθ with θ in [0, π/2]
-// and φ in [0, 2π], we do a u-substitution ∫∫ F(u,φ) du with u=cos θ in [0, 1]. Then
-// the loops will look like:
+// For a standard integral over a hemisphere the loops will look like:
 //
 //    const double *w_outer, *z_outer;
 //    const int n_outer = gauss_weights(qr_outer, 1, &w_outer, &z_outer);
 //    double total_outer = 0.;
 //    for (int j=0; j < n_outer; j++) {
 //        cos_theta = 0.5*z_outer[j] + 0.5; // [-1, 1] => [0, 1]
+//        sin_theta = sqrt(1.0 - cos_theta*cos_theta)
 //        ...
 //        const double *w_inner, *z_inner;
 //        const int n_inner = gauss_weights(qr_inner, n_outer, &w_inner, &z_inner);
@@ -11263,7 +11262,7 @@ constant double Gauss5000Z[5000]={
 //        }
 //        total_outer += w_outer[k]*total_inner;
 //     }
-//     total_outer /= 2.0*M_PI; // correct for dφ = 2πw/2, du = w/2
+//     total_outer /= 2.0*M_PI; // correct [-1, 1] => [0, 1] for u and [0, 2 pi] for phi
 //
 // Some models (barbell, capped cylinder, pringle) are not using spherical integration.
 // Instead we find that limiting the outer integral to 76 points leads to okay results:

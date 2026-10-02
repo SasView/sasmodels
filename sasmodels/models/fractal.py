@@ -9,7 +9,7 @@ building blocks according the following equation:
     I(q) = \phi\ V_\text{block} (\rho_\text{block}
           - \rho_\text{solvent})^2 P(q)S(q) + \text{background}
 
-where $\phi$ is The volume fraction of the spherical "building block" particles
+where $\phi$ is the volume fraction of the spherical "building block" particles
 of radius $R_0$, $V_{block}$ is the volume of a single building block,
 $\rho_{solvent}$ is the scattering length density of the solvent, and
 $\rho_{block}$ is the scattering length density of the building blocks, and

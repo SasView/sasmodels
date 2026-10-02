@@ -157,7 +157,7 @@ Translated FORTRAN code
 References
 ----------
 
-# Teixeira, J. (1988). Small-angle scattering by fractal systems. Applied Crystallography, 21(6), 781-785.
+#. Teixeira, J. (1988). Small-angle scattering by fractal systems. Applied Crystallography, 21(6), 781-785.
 
 Authorship and Verification
 ----------------------------

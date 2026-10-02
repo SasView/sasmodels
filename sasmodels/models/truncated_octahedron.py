@@ -14,60 +14,61 @@ Definition
 ----------
 
 This model computes the form factor of a general octahedron by defining its size through
-its circumradius :math:`radius_a` (parameter called *radius_a* in the model), 
-the elongations through the ratios :math:`\frac{b}{a}` and :math:`\frac{c}{a}` (parameters called *b2a_ratio* and *c2a_ratio* in the model) and the truncation level through the
+its circumradius :math:`r_a` (parameter called *radius_a* in the model),
+the elongations through the ratios :math:`\frac{b}{a}` and :math:`\frac{c}{a}` (parameters
+called *b2a_ratio* and *c2a_ratio* in the model) and the truncation level through the
 truncation ratio *t* (parameter called *truncation* in the model).
 
 Indeed, the general octahedron is defined by its dimensions along its three perpendicular two-fold axes along x, y and z directions.
-:math:`radius_a` (parameter called *radius_a* in the model), :math:`radius_b` and :math:`radius_c` are the distances from the center of the general octahedron to its 6 vertices,
-which are equivalent to the circumradiuses of the general octahedron along the three directions.
+The values :math:`r_a`, :math:`r_b` and :math:`r_c` are the distances from the center of the general octahedron to its 6 vertices,
+which are equivalent to the circumradii of the general octahedron along the three directions.
 
 Coordinates of the six vertices are:
 
 .. math::
 
-    (radius_a,\ 0,\ 0) \\
-    (-radius_a,\ 0,\ 0) \\
-    (0,\ radius_b,\ 0) \\
-    (0,\ -radius_b,\ 0) \\
-    (0,\ 0,\ radius_c) \\
-    (0,\ 0,\ -radius_c)
+    (r_a,\ 0,\ 0) \\
+    (-r_a,\ 0,\ 0) \\
+    (0,\ r_b,\ 0) \\
+    (0,\ -r_b,\ 0) \\
+    (0,\ 0,\ r_c) \\
+    (0,\ 0,\ -r_c)
 
 Truncation adds a square facet for each vertex that is perpendicular to a 2-fold axis.
 The resulting shape consists of six squares and eight hexagons, which may be irregular depending on the three dimensions.
-The truncation ratio *t* (parameter called `truncation` in the model) is defined as: 0 ≤ t ≤ 0.5, 0 corresponding to no truncation
+The truncation ratio *t* is defined over 0 ≤ t ≤ 0.5, with 0 corresponding to no truncation
 (full octahedron) and 0.5 corresponding to the maximum truncation (cuboctahedron).
-For the following formulas, we will use the notation :math:`t_inv = 1 - t`.
-Indeed, a square facet crosses the x, y, z directions at distances equal to 
-:math:`t_{\mathrm{inv}} \, radius_a`, :math:`t_{\mathrm{inv}} \, radius_b` and :math:`t_{\mathrm{inv}} \, radius_c`.
+For the following formulas, we will use the notation :math:`t_\mathrm{inv} = 1 - t`.
+Indeed, a square facet crosses the x, y, z directions at distances equal to
+:math:`t_{\mathrm{inv}} \, r_a`, :math:`t_{\mathrm{inv}} \, r_b` and :math:`t_{\mathrm{inv}} \, r_c`.
 
 A regular octahedron corresponds to:
 
 .. math::
 
-    radius_a = radius_b = radius_c, \quad t = 0
+    r_a = r_b = r_c, \quad t = 0
 
 A regular cuboctahedron shape with 6 squares and 8 triangles corresponds to:
 
-.. math:: 
+.. math::
 
-    radius_a = radius_b = radius_c, \quad t  = \frac{1}{2}
+    r_a = r_b = r_c, \quad t  = \frac{1}{2}
 
 
 The volume of the general shape including truncation is given by:
 
 .. math::
 
-    V = \frac{4}{3}\, radius_{\text{a}}^{3}\, \frac{b}{a}\, \frac{c}{a}\,\bigl(1 - 3t^{3}\bigr)
+    V = \frac{4}{3}\, r_{\text{a}}^{3}\, \frac{b}{a}\, \frac{c}{a}\,\bigl(1 - 3t^{3}\bigr)
 
 The general octahedron is made of eight triangular faces. The three edge lengths
 are:
 
 .. math::
 
-    A_{\text{edge}}^{2} = radius_{\text{a}}^{2} + radius_{\text{b}}^{2},\qquad
-    B_{\text{edge}}^{2} = radius_{\text{a}}^{2} + radius_{\text{c}}^{2},\qquad
-    C_{\text{edge}}^{2} = radius_{\text{b}}^{2} + radius_{\text{c}}^{2}
+    A_{\text{edge}}^{2} = r_{\text{a}}^{2} + r_{\text{b}}^{2},\qquad
+    B_{\text{edge}}^{2} = r_{\text{a}}^{2} + r_{\text{c}}^{2},\qquad
+    C_{\text{edge}}^{2} = r_{\text{b}}^{2} + r_{\text{c}}^{2}
 
 For a regular shape (no elongation):
 
@@ -77,18 +78,18 @@ For a regular shape (no elongation):
 
 .. math::
 
-    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = radius_{\text{a}} \sqrt{2}
-
-.. math::
-    
-    radius_{\text{a}} = radius_{\text{b}} = radius_{\text{c}} = A_{\text{edge}} / \sqrt{2}
+    A_{\text{edge}} = B_{\text{edge}} = C_{\text{edge}} = r_{\text{a}} \sqrt{2}
 
 .. math::
 
-    V = \frac{4}{3} \, radius_{\text{a}}^{3} \, \bigl(1 - 3 t^3 \bigr)
+    r_{\text{a}} = r_{\text{b}} = r_{\text{c}} = A_{\text{edge}} / \sqrt{2}
+
+.. math::
+
+    V = \frac{4}{3} \, r_{\text{a}}^{3} \, \bigl(1 - 3 t^3 \bigr)
 
 The reference orientation of the shape is: a along x, b along y and c along z.
-Amplitude of the form factor AP for the reference orientation of the shape reads 
+Amplitude of the form factor AP for the reference orientation of the shape reads
 
 .. math::
 
@@ -126,9 +127,9 @@ qx qy qz are rescaled components (no unit) for computing AA, BB and CC terms.
 
 .. math::
 
-    q_x = Q_x \, radius_{\text{a}},\qquad
-    q_y = Q_y \, radius_{\text{b}},\qquad
-    q_z = Q_z \, radius_{\text{c}}
+    q_x = Q_x \, r_{\text{a}},\qquad
+    q_y = Q_y \, r_{\text{b}},\qquad
+    q_z = Q_z \, r_{\text{c}}
 
 
 θ is the angle between the scattering vector and the z axis.

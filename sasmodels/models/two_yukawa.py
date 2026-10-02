@@ -76,13 +76,13 @@ cannot be zero.
 References
 ----------
 
-#. Y. Liu, W. R. Chen, S-H Chen, *J. Chem. Phys.*, 122 (2005) 044507
+#. \Y. Liu, W. R. Chen, S-H Chen, *J. Chem. Phys.*, 122 (2005) 044507
 
-#. M. Broccio, D. Costa, Y. Liu, S-H Chen, *J. Chem. Phys.*, 124 (2006) 084501
+#. \M. Broccio, D. Costa, Y. Liu, S-H Chen, *J. Chem. Phys.*, 124 (2006) 084501
 
-#. M. Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#. \M. Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
-#. J. S. Hoye, L. Blum, J. Stat. Phys., 16(1977) 399-413
+#. \J. S. Hoye, L. Blum, J. Stat. Phys., 16(1977) 399-413
 
 Authorship and Verification
 ---------------------------
