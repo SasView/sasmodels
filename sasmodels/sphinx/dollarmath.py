@@ -123,7 +123,7 @@ def test_dollar():
     assert replace_dollar("new line\n\n   $$indented$$") == "new line\n\n.. math::\n\n    indented\n\n"
     assert replace_dollar("$$only$$   \n\nmore") == "\n\n.. math::\n\n    only\n\nmore"
     assert replace_dollar("$$multiline\nequation$$""") == "\n\n.. math::\n\n    multiline\n    equation\n\n"
-    assert replace_dollar("\n$$\n   math\n   more math\n$$\n") == "\n\n.. math::\n\n       math\n       more math\n\n"
+    assert replace_dollar("\n$$\n   math\n   more math\n$$\n") == "\n\n.. math::\n\n\n       math\n       more math\n\n\n\n"
 
     # inline math tests
     assert replace_dollar("no dollar") == "no dollar"
