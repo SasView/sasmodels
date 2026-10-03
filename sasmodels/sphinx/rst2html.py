@@ -273,7 +273,7 @@ def pseudo_sphinx(rst, path=None, title=None, context=(), rst_prolog=None, doc_r
     show_sphinx = False # Not created using sphinx and we don't know the sphinx version.
     sphinx_version = "9.1.0" # from sphinx
     sidebars = ["localtoc.html", "relations.html", "sourcelink.html", "searchbox.html"] # from theme.toml
-    stylesheets = ["classic.css"] # from theme.toml; I didn't check if the template sees this symbol.
+    stylesheets = ["classic.css"] # from theme.toml
 
     css_files = [
         (THEME_PATH / css).relative_to(path.parent, walk_up=True)
