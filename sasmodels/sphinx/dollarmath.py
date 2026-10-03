@@ -1,21 +1,17 @@
 # This program is public domain
 # Author: Paul Kienzle
 r"""
-Allow \$math\$ and \$\$math\$\$ markup in text and docstrings, ignoring \\\$.
+Allow \$math\$ and \\\$\$math\\\$\$ markup in text and docstrings, ignoring \\\$.
 
-For inline math, \$...\$ is translated into a math role \:math\:\`...\'.
-The \$math\$ markup should be separated from the surrounding text by spaces,
+For inline math, \$...\$ is translated into a math role \:math\:\`...\`.
+The math markup should be separated from the surrounding text by spaces,
 To embed markup within a word, place backslash-space before and after.
-For convenience, the opening \$ can be preceded by punctuation:
+For convenience, \$ can be used beside some punctuation. To put \$ in the
+text it needs to be escaped with a backslash.
 
-    dash [-], comma [,], parenthesis [(]
+Display math "... \\\$\$ ... \\\$\$ ..." is translated into a math block:
 
-and the closing \$ can be followed by punctuation:
-
-    period [.], comma [,], semicolon [;], colon [:],
-    question mark [?], parenthesis [)], backslash [\]
-
-Display math "... \$\$...\$\$ ..." is translated into a math block::
+.. code:: restructuredtext
 
     ...
 
@@ -25,9 +21,29 @@ Display math "... \$\$...\$\$ ..." is translated into a math block::
 
     ...
 
-Because this transforms the reStructureText source before it is parsed the
-substitutions happen even when they occur in a comment block.
+
+**Examples**
+
+* \$a\$-\$b\$ becomes $a$-$b$
+* (\$a\$, \$b\$) becomes ($a$, $b$); to remove the space (\$a\$,\\ \$b\$) becomes ($a$,\ $b$)
+* \$f(x)\$. becomes $f(x)$. Similarly for , : ; and ?
+* K\\ \$\alpha\$ becomes K\ $\alpha$
+* \\\\\$3.56 becomes \$3.56; normally you won't need the escape since $3.56 doesn't have a closing dollar sign.
+* \\\$\$ x &= 1 \\\\ y &= 2 \\\$\$ becomes $$ x &=1 \\ y &= 2 $$
+* \\\\\$\\\\\$...\\\\\$\\\\\$ becomes \\\$\$...\\\$\$ which gets expanded by MathJax. To
+  show \\\$\$ in your text you need to use \\\\\\\\\\\\\\$\\\\\$.
+
+If you are using *sphinx.ext.autodoc* then it needs to appear in the extension
+list before *dollarmath*.
+
+The *dollarmath* extension is incompatible with *myst_parser*.
+
+The *dollarmath* extension transforms the reStructureText source before it is parsed, so the
+substitution happens even when it occurs in a comment block.
 """
+
+# TODO: Support myst-parser.
+# TODO: requires sphinx.ext.autodoc before dollarmath on the extensions list
 
 import re
 import textwrap
@@ -37,7 +53,7 @@ _inline_math = re.compile(
 r"""
     (?:           # Non-captured look-behind before $
       ^           # Allow $ at start of line
-      | (?<=\s|[-(]) # Allow leading space, dash or open parenthesis
+      | (?<=\s|[-(]) # Allow leading space, dash, comma or open parenthesis
     )
     [$]           # Opening $  (one of ^$, \s$, -$ or \($, but not \\$)
     ([^\n]*?)     # Capture everything on the line up to the next $, non-greedy
@@ -69,8 +85,20 @@ r"""
 # Match \$
 _escaped_dollar = re.compile(r"\\[$]") # Match \$ so it can be replaced by $ after prior transform
 
-
 def replace_dollar(content):
+    r"""
+    Converts latex math markup using dollar signs into sphinx math markup.
+
+    For inline math, \$...\$ becomes \:math\:\`...\`. For display math, \\\$\$ ... \\\$\$
+    becomes a math block:
+
+    .. code:: restructuredtext
+
+        .. math::
+
+            ...
+
+    """
     # original = content
     # print("text:", repr(content))
     content = _display_math.sub(_display_math_sub, content)
@@ -99,15 +127,27 @@ def _display_math_sub(match):
 
 """
 
-def rewrite_rst(app, docname, source):
+def _rewrite_rst(app, docname, source):
     source[0] = replace_dollar(source[0])
 
-def rewrite_autodoc(app, what, name, obj, options, lines):
-    lines[:] = [replace_dollar(L) for L in lines]
+def _rewrite_autodoc(app, what, name, obj, options, lines):
+    lines[:] = replace_dollar("\n".join(lines)).split("\n")
 
 def setup(app):
-    app.connect('source-read', rewrite_rst)
-    app.connect('autodoc-process-docstring', rewrite_autodoc)
+    """
+    Register sphinx event listeners for source-read (for rst source) and
+    autodoc-process-docstring (for python docstrings). These transform the
+    input text, replacing the dollar signs with the equivalent restructuredtext
+    math commands.
+    """
+    from sphinx.errors import SphinxError
+
+    if "myst_parser" in app.config.extensions:
+        raise SphinxError(f"The {__name__} extension is incompatible with myst_parser")
+
+    app.connect('source-read', _rewrite_rst)
+    if 'autodoc-process-docstring' in app.events.events:
+        app.connect('autodoc-process-docstring', _rewrite_autodoc)
 
 
 def test_dollar():
