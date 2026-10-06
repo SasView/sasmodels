@@ -27,7 +27,7 @@ where
 
     b = q\frac{L}{2}\cos(\alpha)
 
-    r'=\frac{r_{minor}}{\sqrt{2}}\sqrt{(1+\nu^{2}) + (1-\nu^{2})cos(\psi)}
+    r'=\frac{r_{minor}}{\sqrt{2}}\sqrt{(1+\nu^{2}) + (1-\nu^{2})\cos(\psi)}
 
 
 and the angle $\psi$ is defined as the orientation of the major axis of the
@@ -89,7 +89,7 @@ References
 
 #. L A Feigin and D I Svergun, *Structure Analysis by Small-Angle
    X-Ray and Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
-#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

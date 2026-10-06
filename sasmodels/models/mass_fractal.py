@@ -9,7 +9,7 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = scale \times P(q)S(q) + background
+    I(q) = \text{scale} \times P(q)S(q) + \text{background}
 
 .. math::
 
@@ -17,17 +17,17 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    F(x) = \frac{3\left[sin(x)-xcos(x)\right]}{x^3}
+    F(x) = \frac{3\left[\sin(x)-x\cos(x)\right]}{x^3}
 
 .. math::
 
     S(q) = \frac{\Gamma(D_m-1)\zeta^{D_m-1}}{\left[1+(q\zeta)^2
     \right]^{(D_m-1)/2}}
-    \frac{sin\left[(D_m - 1) tan^{-1}(q\zeta) \right]}{q}
+    \frac{\sin\left[(D_m - 1) \tan^{-1}(q\zeta) \right]}{q}
 
 .. math::
 
-    scale = scale\_factor \times NV^2(\rho_\text{particle} - \rho_\text{solvent})^2
+    \text{scale} = \text{scale\_factor} \times NV^2(\rho_\text{particle} - \rho_\text{solvent})^2
 
 .. math::
 

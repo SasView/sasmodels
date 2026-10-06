@@ -43,9 +43,9 @@ Translated FORTRAN code
 References
 ----------
 
-# Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
-structure factors for analysis of small-angle scattering data from
-desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
+#. Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+   structure factors for analysis of small-angle scattering data from
+   desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 Authorship and Verification
 ----------------------------

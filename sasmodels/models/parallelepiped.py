@@ -68,7 +68,7 @@ with
     S(x) &= \frac{\sin x}{x} \\
     \mu &= qB
 
-where substitution of $\sigma = cos\alpha$ and $\beta = \pi/2 \ u$ have been
+where substitution of $\sigma = \cos\alpha$ and $\beta = \pi/2 \ u$ have been
 applied.
 
 For **oriented** particles, the 2D scattering intensity, $I(q_x, q_y)$, is
@@ -181,7 +181,7 @@ See also Nayuk [#Nayuk2012]_ and Onsager [#Onsager1949]_.
 .. [#Mittelbach1961] P Mittelbach and G Porod, *Acta Physica Austriaca*,
    14 (1961) 185-211
 .. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Onsager1949] L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -197,14 +197,14 @@ from numpy import inf
 
 name = "parallelepiped"
 title = "Rectangular parallelepiped with uniform scattering length density."
-description = """
+description = r"""
     I(q)= scale*V*(sld - sld_solvent)^2*P(q,alpha)+background
         P(q,alpha) = integral from 0 to 1 of ...
            phi(mu*sqrt(1-sigma^2),a) * S(mu*c*sigma/2)^2 * dsigma
         with
             phi(mu,a) = integral from 0 to 1 of ..
-            (S((mu/2)*cos(pi*u/2))*S((mu*a/2)*sin(pi*u/2)))^2 * du
-            S(x) = sin(x)/x
+            (S((mu/2)*\cos(pi*u/2))*S((mu*a/2)*\sin(pi*u/2)))^2 * du
+            S(x) = \sin(x)/x
             mu = q*B
         V: Volume of the rectangular parallelepiped
         alpha: angle between the long axis of the

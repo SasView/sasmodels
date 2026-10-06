@@ -19,7 +19,7 @@ is given by (Dobrynin, 1996)
     \left(N+2\sum_{n-1}^{N-1}(N-n)\frac{\sin(qnl)}{qnl}\right)
     \left( 3\frac{\sin(qR)-qR\cos(qR)}{(qr)^3}\right)^2\right]
 
-where the mass $m_p$ is $(SLD_{pearl}-SLD_{solvent})*(volume\ of\ N\ pearls)$.
+where the mass $m_p$ is $(\text{SLD}_\text{pearl}-\text{SLD}_\text{solvent})*(\text{volume\ of\ N\ pearls})$.
 V is the total volume.
 
 The 2D scattering intensity is the same as P(q) above,
@@ -28,7 +28,7 @@ regardless of the orientation of the q vector.
 References
 ----------
 
-#.  A V Dobrynin, M Rubinstein and S P Obukhov, *Macromol.*, 29 (1996) 2974-2979
+#. A V Dobrynin, M Rubinstein and S P Obukhov, *Macromol.*, 29 (1996) 2974-2979
 
 Authorship and Verification
 ----------------------------

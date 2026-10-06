@@ -36,11 +36,6 @@ References
 #. P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*,
    *J. Appl. Phys.*, 20 (1949) 518
 
-Source
-------
-
-`dab.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/dab.py>`_
-
 Authorship and Verification
 ----------------------------
 

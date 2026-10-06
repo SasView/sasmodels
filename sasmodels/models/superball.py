@@ -67,7 +67,7 @@ The orientational average is then obtained by calculating
 with
 
 .. math::
-    \vec{q} &= q \begin{pmatrix} \cos (\varphi) \sin (\theta)\\
+    \vec{q} = q \begin{pmatrix} \cos (\varphi) \sin (\theta)\\
     \sin (\varphi) \sin(\theta)\\
     \cos (\theta)\end{pmatrix}
 
@@ -96,16 +96,9 @@ Validation
 References
 ----------
 
-.. [#WetterskogSuperball] E. Wetterskog, A. Klapper, S. Disch, E. Josten, R. P. Hermann, U. Rücker, T. Brückel, L. Bergström and G. Salazar-Alvarez, *Nanoscale*, 8 (2016) 15571
+.. [#WetterskogSuperball] \E. Wetterskog, A. Klapper, S. Disch, E. Josten, R. P. Hermann, U. Rücker, T. Brückel, L. Bergström and G. Salazar-Alvarez, *Nanoscale*, 8 (2016) 15571
 
-.. [#DresenSuperball] D. Dresen, A. Qdemat, S. Ulusoy, F. Mees, D. Zakutna, E. Wetterskog, E. Kentzinger, G. Salazar-Alvarez, S. Disch, *J. Phys. Chem. C* (2021), doi: 10.1021/acs.jpcc.1c06082
-
-Source
-------
-
-`superball.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/superball.py>`_
-
-`superball.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/superball.c>`_
+.. [#DresenSuperball] \D. Dresen, A. Qdemat, S. Ulusoy, F. Mees, D. Zakutna, E. Wetterskog, E. Kentzinger, G. Salazar-Alvarez, S. Disch, *J. Phys. Chem. C* (2021), doi: 10.1021/acs.jpcc.1c06082
 
 Authorship and Verification
 ----------------------------

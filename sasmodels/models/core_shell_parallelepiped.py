@@ -60,8 +60,8 @@ particle in the $xy$ detector plane and the $y$ axis.
 
 .. math::
 
-    P(q)=\frac {\int_{0}^{\pi/2}\int_{0}^{\pi/2}F^2(q,\alpha,\beta) \ sin\alpha
-    \ d\alpha \ d\beta} {\int_{0}^{\pi/2} \ sin\alpha \ d\alpha \ d\beta}
+    P(q)=\frac {\int_{0}^{\pi/2}\int_{0}^{\pi/2}F^2(q,\alpha,\beta) \sin\alpha
+    \ d\alpha \ d\beta} {\int_{0}^{\pi/2} \sin\alpha \ d\alpha \ d\beta}
 
 and
 
@@ -171,7 +171,7 @@ References
 #. D Singh (2009). *Small angle scattering studies of self assembly in
    lipid mixtures*, Johns Hopkins University Thesis (2009) 223-225. `Available
    from Proquest <http://search.proquest.com/docview/304915826>`_
-#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

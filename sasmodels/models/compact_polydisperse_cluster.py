@@ -134,17 +134,17 @@ n_aggreg : weight-average aggregation number
 References
 ----------
 
-# Pedersen, J. S., Møller, T. L., & Corredig, M. (2026). Scattering from 'Babinet 'particles (or not…):
-spherical particles made up of spheres and spherical particles with s
-pherical voids. Applied Crystallography, 59(1).
+#. Pedersen, J. S., Møller, T. L., & Corredig, M. (2026). Scattering from 'Babinet 'particles (or not…):
+   spherical particles made up of spheres and spherical particles with s
+   pherical voids. Applied Crystallography, 59(1).
 
-# Pedersen, J. S., Møller, T. L., Raak, N., & Corredig,
-M. (2022). A model on an absolute scale for the small-angle X-ray scattering
-from bovine casein micelles. Soft Matter, 18(45), 8613-8625.
+#. Pedersen, J. S., Møller, T. L., Raak, N., & Corredig,
+   M. (2022). A model on an absolute scale for the small-angle X-ray scattering
+   from bovine casein micelles. Soft Matter, 18(45), 8613-8625.
 
-# Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
-structure factors for analysis of small-angle scattering data from
-desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
+#. Larsen, A. H., Pedersen, J. S., & Arleth, L. (2020). Assessment of
+   structure factors for analysis of small-angle scattering data from
+   desired or undesired aggregates. Applied Crystallography, 53(4), 991-1005.
 
 Authorship and Verification
 ----------------------------

@@ -10,7 +10,7 @@ aggregates of vesicles for example.
 
 .. math::
 
-    I(q) = P(q)S(q) + \text{background}
+    I(q) = \text{scale}\,P(q)S(q) + \text{background}
 
 Where $P(q)$ is the core-shell form factor and $S(q)$ is the
 Teixeira\ [#Teixeira1988]_ fractal structure factor both of which are given
