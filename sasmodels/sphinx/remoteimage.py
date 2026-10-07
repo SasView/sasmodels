@@ -14,10 +14,7 @@ directory is supported.
 from pathlib import Path
 from typing import Any
 
-from docutils.parsers.rst.directives.images import Image
-from sphinx.application import Sphinx
-from sphinx.directives.patches import Figure
-
+#from sphinx.application import Sphinx
 
 class RemoteImageMixin:
     """Overridden Image directive to support remote fallback."""
@@ -44,13 +41,19 @@ class RemoteImageMixin:
         # print(f"Calling {super()}.run() with {self.arguments[0]}")
         return super().run()
 
-class RemoteFigure(RemoteImageMixin, Figure):
-    pass
+def setup(app: "Sphinx") -> dict[str, Any]:
+    # TODO: Make sphinx a sasmodels dependency
+    # TODO: Split sphinx extentions into their own pypi packages
+    # Put off adding sphinx to the sasmodels requirements for now.
+    from docutils.parsers.rst.directives.images import Image
+    from sphinx.directives.patches import Figure
 
-class RemoteImage(RemoteImageMixin, Image):
-    pass
+    class RemoteFigure(RemoteImageMixin, Figure):
+        pass
 
-def setup(app: Sphinx) -> dict[str, Any]:
+    class RemoteImage(RemoteImageMixin, Image):
+        pass
+
     # Add a config value so you can define the remote URL in conf.py
     app.add_config_value('remote_image_url', '', 'env')
 
