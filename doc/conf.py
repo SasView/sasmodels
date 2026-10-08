@@ -19,8 +19,6 @@ import sys
 #sys.path.append(os.path.abspath('_extensions'+(os.path.dirname('../../periodictable'))))
 
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('_extensions'))
-sys.path.insert(0, os.path.abspath('.')) # needed for extension tests
 # print("\n".join(sys.path))
 
 import sasmodels
