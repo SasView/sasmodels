@@ -1,20 +1,34 @@
-"""Insert remote images into documents.
+f"""Insert remote images into documents.
 
-Overrides the *figure* and *image* directives so that it retrieves the images from a
-remote URI if they are not available locally. This effectively extends intersphinx to
-support images as well.
+Overrides the :rst:directive:`figure` and :rst:directive:`image` directives so that it
+retrieves the images from a remote URI if they are not available locally. This
+effectively extends intersphinx to support images as well.
 
-Adds the config option *remote_image_url* which points to the image directory for a
-sphinx/docutils html document.
+Configuration
+-------------
 
-This assumes that images are stored in a single directory. Only one remote image
-directory is supported.
+To use remote image linking, add ``'{__name__}'`` to your :confval:`extensions`
+config value, and use these config values to activate linking:
+
+.. confval:: remote_image_url
+    :type: :code-py:`str`
+    :default: :code-py:`""`
+
+    URI for the remote image directory created for a sphinx/docutils html document.
+
+    This assumes that images are stored in a single directory. Only one remote image
+    directory is supported.
 """
 
 from pathlib import Path
 from typing import Any
 
-#from sphinx.application import Sphinx
+# TODO: Make sphinx a sasmodels dependency
+# TODO: Split sphinx extentions into their own pypi packages
+from docutils.parsers.rst.directives.images import Image
+from sphinx.application import Sphinx
+from sphinx.directives.patches import Figure
+
 
 class RemoteImageMixin:
     """Overridden Image directive to support remote fallback."""
@@ -41,21 +55,22 @@ class RemoteImageMixin:
         # print(f"Calling {super()}.run() with {self.arguments[0]}")
         return super().run()
 
-def setup(app: "Sphinx") -> dict[str, Any]:
-    # TODO: Make sphinx a sasmodels dependency
-    # TODO: Split sphinx extentions into their own pypi packages
-    # Put off adding sphinx to the sasmodels requirements for now.
-    from docutils.parsers.rst.directives.images import Image
-    from sphinx.directives.patches import Figure
+class RemoteFigure(RemoteImageMixin, Figure):
+    pass
 
-    class RemoteFigure(RemoteImageMixin, Figure):
-        pass
+class RemoteImage(RemoteImageMixin, Image):
+    pass
 
-    class RemoteImage(RemoteImageMixin, Image):
-        pass
 
+def setup(app: Sphinx) -> dict[str, Any]:
     # Add a config value so you can define the remote URL in conf.py
-    app.add_config_value('remote_image_url', '', 'env')
+    app.add_config_value(
+        name='remote_image_url',
+        default='_images', # TODO: use intersphinx inventory uri.parent / "_images"?
+        rebuild='html', # all html files change if you modify the remote
+        types=[str],
+        description='Path to the image directory on an intersphinx document server',
+        )
 
     # Override the standard directives
     app.add_directive('image', RemoteImage, override=True)

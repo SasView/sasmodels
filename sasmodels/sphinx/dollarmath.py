@@ -33,9 +33,6 @@ Display math "... \\\$\$ ... \\\$\$ ..." is translated into a math block:
 * \\\\\$\\\\\$...\\\\\$\\\\\$ becomes \\\$\$...\\\$\$ which gets expanded by MathJax. To
   show \\\$\$ in your text you need to use \\\\\\\\\\\\\\$\\\\\$.
 
-If you are using *sphinx.ext.autodoc* then it needs to appear in the extension
-list before *dollarmath*.
-
 The *dollarmath* extension is incompatible with *myst_parser*.
 
 The *dollarmath* extension transforms the reStructureText source before it is parsed, so the
@@ -140,13 +137,18 @@ def setup(app):
     input text, replacing the dollar signs with the equivalent restructuredtext
     math commands.
     """
-    from sphinx.errors import SphinxError
-
     if "myst_parser" in app.config.extensions:
-        raise SphinxError(f"The {__name__} extension is incompatible with myst_parser")
+        # Note: delayed import in case sphinx is not a dependency
+        from sphinx.util import logging
+
+        logger = logging.getLogger(__name__)
+        logger.error(f"The {__name__} extension is incompatible with myst_parser")
 
     app.connect('source-read', _rewrite_rst)
-    if 'autodoc-process-docstring' in app.events.events:
+
+    # if using autodoc, set it up and bind to its docstring event.
+    if 'sphinx.ext.autodoc' in app.config.extensions:
+        app.setup_extension('sphinx.ext.autodoc')
         app.connect('autodoc-process-docstring', _rewrite_autodoc)
 
 
