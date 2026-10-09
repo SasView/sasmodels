@@ -153,7 +153,7 @@ FITTING NOTES
 
 .. Comment by Paul Butler
    I am commenting this section out as we are trying to minimize the amount of
-   oritentational detail here and encourage the user to go to the full
+   orientational detail here and encourage the user to go to the full
    orientation documentation so that changes can be made in just one place.
    below is the commented paragraph:
    On introducing "Orientational Distribution" in the angles, "distribution of

@@ -1,3 +1,5 @@
 docutils
 pytest
 unittest-xml-reporting
+docutils
+sphinx
