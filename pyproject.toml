@@ -127,7 +127,7 @@ out_dir = "model"
 expand_globs = true
 commands = [
   "{python} genapi.py",
-  "{python} -m sasmodels/genhelp ../sasmodels/models/[a-z]*.py",
+  "{python} -m sasmodels.genhelp ../sasmodels/models/[a-z]*.py",
   "{python} -c \"import shutil; shutil.copytree('../sasmodels/models/img/', 'model/img/', dirs_exist_ok=True)\"",
   "{python} gentoc.py ../sasmodels/models/[a-z]*.py",
 ]
