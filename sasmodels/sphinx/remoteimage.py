@@ -1,18 +1,30 @@
-f"""Insert remote images into documents.
+"""
+==================
+Intersphinx images
+==================
 
-Overrides the :rst:directive:`figure` and :rst:directive:`image` directives so that it
+.. role:: code-py(code)
+  :language: Python
+
+Insert remote images into documents.
+
+Overrides the ``figure`` and ``image`` directives so that it
 retrieves the images from a remote URI if they are not available locally. This
 effectively extends intersphinx to support images as well.
 
 Configuration
 -------------
 
-To use remote image linking, add ``'{__name__}'`` to your :confval:`extensions`
+To use remote image linking, add ``'sasmodels.sphinx.remoteimage'`` to your ``extensions``
 config value, and use these config values to activate linking:
 
-.. confval:: remote_image_url
-    :type: :code-py:`str`
-    :default: :code-py:`""`
+**remote_image_url**
+
+.. container:: confval
+
+    **type**: :code-py:`str`
+
+    **default**: :code-py:`""`
 
     URI for the remote image directory created for a sphinx/docutils html document.
 

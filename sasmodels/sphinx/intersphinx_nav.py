@@ -1,5 +1,10 @@
 """
-intersphinx navigation
+======================
+Intersphinx navigation
+======================
+
+.. role:: code-py(code)
+  :language: Python
 
 If you are making a document which virtually resides in an existing remote document
 then you can set up an intersphinx navigation plugin to tie the root of your document
@@ -14,12 +19,16 @@ Configuration
 -------------
 
 To use Intersphinx navigation, add ``'sasmodels.sphinx.intersphinx_nav'`` to your
-:confval:`extensions` config value, and use these config values to activate
+*extensions* config value, and use these config values to activate
 linking:
 
-.. confval:: remote_relations
-    :type: :code-py:`dict[str, list[str]]`
-    :default: :code-py:`{{}}`
+**remote_relations**
+
+.. container:: confval
+
+    **Type**: :code-py:`dict[str, list[str]]`
+
+    **Default**: :code-py:`{{}}`
 
     A toctree dictionary giving all parents keyed by all parents
     of the insertion point, plus the parents of the page that comes next after the
@@ -61,7 +70,7 @@ linking:
         }
 
 When setting up intersphinx using a local build of the external sphinx document,
-you need to use ``file://`` as the external target, but you must strip ``file://`
+you need to use ``file://`` as the external target, but you must strip ``file://``
 from the inventory location. For example:
 
 .. code:: python
@@ -80,6 +89,18 @@ target directly if it is a fully qualified URI) and
 remote link if the target docname is in the intersphinx inventory). It adds
 ``intersphinx_pages`` to the the builder attributes on the ``env-updated`` event.
 """
+
+# If this were in its own package I would use the sphinx_toolbox.confval extension
+# from pip sphinx-toolbox, but it pulls in a lot of stuff. Another option is to
+# vendor in the extension from:
+#
+#   https://github.com/sphinx-toolbox/sphinx-toolbox/blob/master/sphinx_toolbox/confval.py
+#
+#
+# .. confval:: remote_relations
+#     :type: :code-py:`dict[str, list[str]]`
+#    :default: :code-py:`{{}}`
+#
 
 import contextlib
 from urllib.parse import quote
