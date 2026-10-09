@@ -19,6 +19,8 @@ __pycache__
 /.project
 /.pydevproject
 /.idea
+/explore/plugins-doc/_build
+/explore/plugins-doc/model
 /sasmodels.egg-info/
 /example/Fit_*/
 /example/batch_fit.csv
