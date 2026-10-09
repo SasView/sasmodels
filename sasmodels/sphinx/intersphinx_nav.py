@@ -85,9 +85,6 @@ import contextlib
 from urllib.parse import quote
 
 import docutils.nodes
-import sphinx.builders
-import sphinx.builders.html
-import sphinx.util.osutil
 from sphinx.application import Sphinx
 from sphinx.locale import _
 from sphinx.util import logging
@@ -123,31 +120,7 @@ def inject_remote_relations(app, env):
     app.env.titles.update(titles)
 
     # Save the intersphinx pages in the build attributes for later link hijacking
-    app.builder.intersphinx_pages = intersphinx_pages
-
-    # *** Monkeypatch solution ***
-    def get_target_uri(self, docname: str, typ: str | None = None) -> str:
-        # Intersphinx link hijacking
-        remote = getattr(self, 'intersphinx_pages', {})
-        if docname in remote:
-            # print(f"   {docname} is remote")
-            return self.intersphinx_pages[docname].uri
-        return quote(docname) + self.link_suffix
-    sphinx.builders.html.StandaloneHTMLBuilder.get_target_uri = get_target_uri
-
-    # Keep existing relative_uri so that we can fallback to it for local checks
-    relative_uri_orig = sphinx.util.osutil.relative_uri
-    def relative_uri(base: str, to: str) -> str:
-        if '://' in to:
-            # print(f"   ... target {to} is absolute")
-            return to
-        # print(f"   ... target {to} is relative")
-        return relative_uri_orig(base, to)
-
-    # relative_uri was already loaded into the html builders, so replace it there
-    sphinx.builders.relative_uri = relative_uri
-    sphinx.builders.html.relative_uri = relative_uri
-
+    app.env.intersphinx_pages = intersphinx_pages
 
 def _get_intersphinx_pages(app: Sphinx) -> dict[str, _InventoryItem]:
     """
@@ -155,7 +128,7 @@ def _get_intersphinx_pages(app: Sphinx) -> dict[str, _InventoryItem]:
     """
     # TODO: maybe need to include py:modules links, etc.
     # Get inventory of remote pages from intersphinx
-    inventory = app.env.intersphinx_inventory
+    inventory = getattr(app.env, 'intersphinx_inventory', {})
     pages = inventory.get("std:doc", {}).copy()
     # Include genindex from the std:label group.
     labels = inventory.get("std:label", {})
@@ -173,11 +146,46 @@ def _build_title(title: str) -> docutils.nodes.title:
     return node
 
 
+_patched = False
+def _monkeypatch_link_hijack():
+    from sphinx import builders
+    from sphinx.builders.html import StandaloneHTMLBuilder
+    from sphinx.util import osutil
+
+    global _patched
+    if _patched:
+        return
+    _patched = True
+
+    get_target_uri_orig = StandaloneHTMLBuilder.get_target_uri
+    def get_target_uri(self, docname: str, typ: str | None = None) -> str:
+        # Intersphinx link hijacking
+        remote = getattr(self.app.env, 'intersphinx_pages', {})
+        if docname in remote:
+            # print(f"   {docname} is remote")
+            return remote[docname].uri
+        return get_target_uri_orig(self, docname, typ)
+        #return quote(docname) + self.link_suffix
+    StandaloneHTMLBuilder.get_target_uri = get_target_uri
+
+    # Keep existing relative_uri so that we can fallback to it for local checks
+    # relative_uri was already loaded into the html builders, so replace it there
+    relative_uri_orig = osutil.relative_uri
+    def relative_uri(base: str, to: str) -> str:
+        if '://' in to:
+            # print(f"   ... target {to} is absolute")
+            return to
+        # print(f"   ... target {to} is relative")
+        return relative_uri_orig(base, to)
+    osutil.relative_uri = relative_uri
+    builders.relative_uri = relative_uri
+    builders.html.relative_uri = relative_uri
+
+
 # *** Unused code ***
-# If we don't monkeypatch the link resolution code in the html builder then we
-# need to duplicate a lot of code which used the original version or relative_uri
-# and get_target_uri, either directly or indirectly. In this case, the monkeypatch
-# seems less brittle.
+# If we don't monkeypatch link hijacking in the html builder then we need to
+# duplicate a lot of code that referencess relative_uri and get_target_uri,
+# either directly or indirectly. In this case, the monkeypatch is less brittle.
 def add_remote_nav_context(app: Sphinx, pagename, templatename, context, doctree):
     from sphinx.util.osutil import relative_uri
     # TODO: do nothing if intersphinx inventory is not available
@@ -321,4 +329,6 @@ def setup(app):
     # We require intersphinx, so make sure it is included
     app.setup_extension('sphinx.ext.intersphinx')
     app.connect('env-updated', inject_remote_relations)
+    _monkeypatch_link_hijack()
+    # Don't need to tweak the context if we've applied the monkeypatch
     #app.connect('html-page-context', add_remote_nav_context)
