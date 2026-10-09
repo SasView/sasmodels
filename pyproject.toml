@@ -102,6 +102,8 @@ exclude = [
 ]
 ignore-vcs = true
 
+[tool.hatch.build.targets.wheel.hooks.sphinx]
+enable-by-default = false
 
 [tool.hatch.build.targets.wheel]
 packages = [
@@ -125,7 +127,7 @@ out_dir = "model"
 expand_globs = true
 commands = [
   "{python} genapi.py",
-  "{python} genmodel.py ../sasmodels/models/[a-z]*.py",
+  "{python} -m sasmodels/genhelp ../sasmodels/models/[a-z]*.py",
   "{python} -c \"import shutil; shutil.copytree('../sasmodels/models/img/', 'model/img/', dirs_exist_ok=True)\"",
   "{python} gentoc.py ../sasmodels/models/[a-z]*.py",
 ]

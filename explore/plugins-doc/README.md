@@ -8,8 +8,7 @@ Build using:
 ```shell
 cd sasmodes/explore/plugins-doc
 mkdir model
-python ../../doc/genmodel.py ellipsoid
-python ../../doc/genmodel.py triaxial_ellipsoid
+python -m sasmodels.genhelp ../../sasmodels/models/*ellipsoid*.py
 python gen_plugins_toc.py
-python -m sphinx -b html . _build
+python -m sphinx -b html . html
 ```

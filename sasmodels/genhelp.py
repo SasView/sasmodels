@@ -1,7 +1,7 @@
 """
 Generate ReST docs with figures for each model.
 
-usage: python genmodels.py path/to/model1.py ...
+usage: python -m sasmodels.genhelp path/to/model1.py ...
 
 Output is placed in the directory model, with *model1.py* producing
 *model/model1.rst* and *model/img/model1.png*.
@@ -15,7 +15,7 @@ cleared if the image generation is updated, either because matplotib
 is upgraded or because this file changes.  To accomodate both these
 conditions set the path as the following in your build script::
 
-    SASMODELS_BUILD_CACHE=/tmp/sasbuild_$(shasum genmodel.py | cut -f 1 -d" ")
+    SASMODELS_BUILD_CACHE=/tmp/sasbuild_$(shasum sasmodels/genhelp.py | cut -f 1 -d" ")
 
 Putting the cache in /tmp allows temp-reaper to clean it up automatically.
 Putting the sha1 hash of this file in the cache directory name means that
@@ -39,6 +39,7 @@ have one.
 """
 
 import argparse
+import glob
 import math
 import os
 import re
@@ -51,8 +52,6 @@ from os.path import join as joinpath
 
 import numpy as np
 
-# TODO: Remove this line when genmodel is moved to the sasmodels directory.
-sys.path.insert(0, realpath(joinpath(dirname(__file__), '..')))
 from sasmodels import core, generate
 from sasmodels.data import empty_data1D, empty_data2D
 from sasmodels.direct_model import DirectModel, call_profile
@@ -460,6 +459,13 @@ def main():
     parser.add_argument("files", nargs="+",
         help="model files ")
     args = parser.parse_args()
+
+    if os.name == "nt" and "MSYSTEM" not in os.environ:
+        args.files = [
+            match
+            for pattern in args.files
+            for match in (glob.glob(pattern) or [pattern])
+        ]
 
     global TARGET_DIR
     TARGET_DIR = os.path.expanduser(args.rst)
