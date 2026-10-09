@@ -103,7 +103,7 @@ exclude = [
 ignore-vcs = true
 
 [tool.hatch.build.targets.wheel.hooks.sphinx]
-enable-by-default = false
+enable-by-default = true
 
 [tool.hatch.build.targets.wheel]
 packages = [
