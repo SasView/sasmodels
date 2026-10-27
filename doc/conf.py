@@ -19,10 +19,10 @@ import sys
 #sys.path.append(os.path.abspath('_extensions'+(os.path.dirname('../../periodictable'))))
 
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('_extensions'))
-sys.path.insert(0, os.path.abspath('.')) # needed for extension tests
-print("\n".join(sys.path))
+# print("\n".join(sys.path))
+
 import sasmodels
+from sasmodels.sphinx.rst2html import RST_PROLOG
 
 nitpick_ignore = [
     ('py:class', 'argparse.Namespace'),
@@ -66,26 +66,32 @@ nitpick_ignore = [
 
 # -- General configuration -----------------------------------------------------
 
+# TODO: Replace local dollarmath extension with sphinx_math_dollar from sphinx-math-dollar
+# TODO: Drop the numfig extension. Sphinx now has numfig as a configuration flag.
+# TODO: Use mathjax_options to configure mathjax rather than _templates/layout.html
+
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.coverage',
               #'sphinx.ext.pngmath',
-              'sphinx.ext.mathjax',
+              #'sphinx.ext.mathjax', # This happens automatically
               #'matplotlib.sphinxext.mathmpl',
               'matplotlib.sphinxext.plot_directive',
-              'dollarmath',
-              'numfig',
+              'sasmodels.sphinx.dollarmath',
+              #'sphinx_math_dollar',  # sympy dollar math support is broken [v1.2.1 2022-04-25]
+              #'numfig',
+              #'myst_parser', # For markdown documents; incompatible with dollarmath
              ]
 
 # Redirect mathjax to a different CDN
-mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
+mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+#templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+#source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
 
 # The encoding of source files.
 #source_encoding = 'utf-8'
@@ -95,7 +101,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'SAS Models'
-copyright = '2016, sasview team'
+copyright = '2026, The SasView Project'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -151,7 +157,8 @@ pygments_style = 'sphinx'
 html_theme = 'haiku'
 html_theme_options = {}
 
-html_style = 'haiku-site.css'
+#html_style = 'haiku-site.css'  # replaces the theme style file
+html_css_files = ["mathjax-leftalign.css"] # added after the theme style file
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -269,9 +276,8 @@ autoclass_content = 'both'
 # Autodoc member sort order: by class or by type
 autodoc_member_order = 'groupwise'
 
-if os.path.exists('rst_prolog'):
-    with open('rst_prolog') as fid:
-        rst_prolog = fid.read()
+# imported from sasmodels.rst2html
+rst_prolog = RST_PROLOG
 
 numfig = True
 #numfig_format = {"figure": "Fig. %s", "table": "Table %s", "code-block": "Program %s"}
