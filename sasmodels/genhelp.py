@@ -407,22 +407,28 @@ def run_sphinx(rst_files, output):
 
     # print("Building index...")
 
-    conf_dir = dirname(realpath(__file__))
+    targets = ['model/index.rst']
     with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
         fid.write(".. toctree::\n\n")
         for path in rst_files:
             fid.write("    %s\n"%basename(path))
+            targets.append(f"model/{basename(path)}")
 
     # print("Running sphinx command...")
 
+    # TODO: redo sphinx build support
+    # Use the parent of the model directory for the conf directory
+    conf_dir = dirname(realpath(TARGET_DIR))
     command = [
         sys.executable,
         "-m", "sphinx",
         "-c", conf_dir,
         TARGET_DIR,
         output,
+        *targets,
     ]
 
+    # print("command:", " ".join(command))
     process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE)
 
     # Make sure we can see process output in real time
@@ -434,7 +440,7 @@ def run_sphinx(rst_files, output):
             break
 
         if output:
-            print(output.strip())
+            print(output.decode('utf-8').strip())
 
 
 
@@ -469,14 +475,24 @@ def main():
 
     global TARGET_DIR
     TARGET_DIR = os.path.expanduser(args.rst)
-    if not os.path.exists(TARGET_DIR) and not args.sphinx:
+    if args.sphinx:
+        # For now, --sphinx only runs in a doc directory with a sphinx conf.py file.
+        # Make the build directory if this is the first time.
+        sphinx_conf = joinpath(dirname(realpath(TARGET_DIR)), "conf.py")
+        if not os.path.exists(sphinx_conf):
+            print("Need to run genhelp -s from the sasmodels/doc directory.")
+            sys.exit(1)
+        makedirs(TARGET_DIR, exist_ok=True)
+    elif not os.path.exists(TARGET_DIR):
+        # When not running with --sphinx make sure the build directory exists.
+        # Otherwise we will have "build" directories propping up whereever we
+        # happen to run genhelp.
         print("Build directory %r does not exist"%TARGET_DIR)
         sys.exit(1)
-    makedirs(TARGET_DIR, exist_ok=True)
 
+    # TODO: allow model name glob and find matches in search path
     # print("** Generating all .rst files and figures **")
-    rst_files = [process_model(py_file, args.force)
-                     for py_file in args.files]
+    rst_files = [process_model(py_file, args.force) for py_file in args.files]
 
     if args.sphinx:
         # print("** running sphinx **")
