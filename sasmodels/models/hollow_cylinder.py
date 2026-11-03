@@ -68,8 +68,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** September 06, 2018
-   (corrected VR calculation)
+* **Last Modified by:** Oliver Hammond **Date:** Nov 3, 2026
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
 
