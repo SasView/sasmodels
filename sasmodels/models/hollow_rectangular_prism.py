@@ -83,6 +83,7 @@ preserved, but the results may be not correct.
     Examples of the angles for oriented hollow rectangular prisms against the
     detector plane.
 
+**NB**: As described for the :ref:`vesicle` model, with a structure factor, $S(q)$ automatically uses the volume fraction enclosed by the shape and *volfraction* is the volume fraction of shell material. 
 
 Validation
 ----------
@@ -103,7 +104,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** Miguel Gonzales **Date:** February 26, 2016
-* **Last Modified by:** Paul Kienzle **Date:** December 14, 2017
+* **Last Modified by:** Oliver Hammond **Date:** Nov 3, 2026
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
 
