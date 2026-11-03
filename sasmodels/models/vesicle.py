@@ -49,8 +49,13 @@ orientation of the *q* vector which is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-NB: The outer most radius (= *radius* + *thickness*) is used as the effective
-radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
+
+NB: When *P(Q)* \* *S(Q)* is applied, *S(Q)* uses the outermost radius
+(= *radius* + *thickness*) as the effective radius. It also automatically uses
+the volume fraction enclosed by the vesicle, rather
+than the volume fraction of shell material, *volfraction*. For 'thin' shells this value can be significantly larger.
+
+
 
 
 References
@@ -63,7 +68,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** March 20, 2016
+* **Last Modified by:** Oliver Hammond **Date:** Nov 3, 2026
 * **Last Reviewed by:** Paul Butler **Date:** September 7, 2018
 """
 
