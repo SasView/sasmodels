@@ -84,7 +84,7 @@ description = """
         sld: the shell SLD
         sld_solvent: the solvent (and core) SLD
         background: incoherent background
-        volfraction: shell volume fraction
+        volfraction: shell volume fraction (S(Q) uses enclosed volume fraction)
         scale : scale factor = 1 if on absolute scale"""
 category = "shape:sphere"
 
@@ -94,7 +94,7 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
               ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "sld",
                "solvent scattering length density"],
               ["volfraction", "", 0.05, [0, 1.0], "",
-               "volume fraction of shell"],
+               "volume fraction of shell (S(Q) uses enclosed volume fraction)"],
               ["radius", "Ang", 100, [0, inf], "volume",
                "vesicle core radius"],
               ["thickness", "Ang", 30, [0, inf], "volume",
