@@ -124,7 +124,7 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
-* **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
+* **Last Modified by:** Oliver Hammond **Date:** Nov 4, 2026
 """
 
 import numpy as np
