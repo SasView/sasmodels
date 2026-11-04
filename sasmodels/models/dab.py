@@ -8,6 +8,8 @@ Porod behavior $(I \sim q^{-4})$ at large $q$, $(qL \gg 1)$.
 
 The DAB model is ostensibly a development of the earlier Debye-Bueche model.
 
+NB. At present, the scale factor for this model has units of Å$^{-3}$ cm$^{-1}$, not unitless as the table above suggests. 
+
 Definition
 ----------
 
