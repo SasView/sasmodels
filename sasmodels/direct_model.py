@@ -35,8 +35,8 @@ from . import (
 from .data import Data
 from .details import make_kernel_args
 from .kernel import KernelModel
-from .product import RADIUS_MODE_ID
 from .modelinfo import PD_N, PD_NSIGMA, PD_TYPE
+from .product import RADIUS_MODE_ID
 
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
