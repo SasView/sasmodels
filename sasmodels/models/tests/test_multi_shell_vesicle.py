@@ -19,8 +19,8 @@ import numpy as np
 import pytest
 
 from sasmodels.core import load_model
-from sasmodels.direct_model import DirectModel
 from sasmodels.data import empty_data1D
+from sasmodels.direct_model import DirectModel
 
 
 def _run(model_name, pars):
