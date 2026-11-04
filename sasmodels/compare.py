@@ -40,7 +40,7 @@ from . import core, kernelcl, kernelcuda, kerneldll, weights
 from .data import Data, empty_data1D, empty_data2D, empty_sesans, load_data, plot_theory
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
-from .modelinfo import ModelInfo, ParameterSet
+from .modelinfo import ModelInfo, ParameterSet, PD_N, PD_NSIGMA, PD_TYPE
 
 # Only use optional bumps dependency for type checking
 if TYPE_CHECKING:
@@ -327,11 +327,11 @@ def _randomize_one(model_info, name, value):
 
     # Don't mess with distribution type for now
     if name.endswith('_pd_type'):
-        return 'gaussian'
+        return PD_TYPE
 
     # type-dependent value of number of sigmas; for gaussian use 3.
     if name.endswith('_pd_nsigma'):
-        return 3.
+        return PD_NSIGMA
 
     # background in the range [0.01, 1]
     if name == 'background':
@@ -409,7 +409,7 @@ def _random_pd(model_info, pars, is2d):
             num_oriented_pd += 1
 
     # Process non-orientation parameters
-    pd = [p for p in pd if p.type != 'orientation']
+    unoriented = [p for p in pd if p.type != 'orientation']
 
     # Find the remaining pd parameters, which are all volume parameters.
     # Use the parameter value as the weight on the choice function for
@@ -418,20 +418,24 @@ def _random_pd(model_info, pars, is2d):
     # TODO: choose better weights for parameters like num_pearls or num_disks.
     name = [] # type: List[str]  # name of the next volume parameter
     default = [] # type: List[float]  # default val for that volume parameter
-    for p in pd:
-        if p.length_control is not None:
-            slots = int(pars.get(p.length_control, 1) + 0.5)
-            name.extend(p.name+str(k+1) for k in range(slots))
-            default.extend(p.default for k in range(slots))
-        elif p.length > 1:
-            slots = p.length
-            name.extend(p.name+str(k+1) for k in range(slots))
-            default.extend(p.default for k in range(slots))
+    for par in unoriented:
+        if par.length_control is not None:
+            slots = int(pars.get(par.length_control, 1) + 0.5)
+            name.extend(par.name+str(k+1) for k in range(slots))
+            default.extend(par.default for k in range(slots))
+        elif par.length > 1:
+            slots = par.length
+            name.extend(par.name+str(k+1) for k in range(slots))
+            default.extend(par.default for k in range(slots))
         else:
-            name.append(p.name)
-            default.append(p.default)
-    p = [pars.get(k, v) for k, v in zip(name, default)]  # relative weight
-    p = np.array(p)/sum(p) if p else []  # normalize to probability
+            name.append(par.name)
+            default.append(par.default)
+    weight = [pars.get(k, v) for k, v in zip(name, default)]  # relative weight
+    weight = np.array(weight)/sum(weight) if weight else []  # normalize to probability
+
+    # Clear the pd_n so we can tell which are selected
+    for par in pd:
+        pars[par.name + '_pd_n'] = 0
 
     # Select number of pd parameters to use.  The selection is biased
     # toward fewer pd parameters if there is already orientational pd
@@ -449,20 +453,25 @@ def _random_pd(model_info, pars, is2d):
         pass
     elif u < 0.66 or n < 2:
         # 65% chance of pd on one value (35x cost)
-        choice = np.random.choice(n, size=1, replace=False, p=p)
+        choice = np.random.choice(n, size=1, replace=False, p=weight)
         pars[name[choice[0]]+"_pd_n"] = 35 // (1 + num_oriented_pd)
     elif u < 0.99 or n < 3:
         # 33% chance of pd on two values (250x cost)
-        choice = np.random.choice(n, size=2, replace=False, p=p)
+        choice = np.random.choice(n, size=2, replace=False, p=weight)
         pars[name[choice[0]]+"_pd_n"] = 25 // (1 + num_oriented_pd)
         pars[name[choice[1]]+"_pd_n"] = 10 // (1 + num_oriented_pd)
     else:
         # 1% chance of pd on three values (1250x cost)
-        choice = np.random.choice(n, size=3, replace=False, p=p)
+        choice = np.random.choice(n, size=3, replace=False, p=weight)
         pars[name[choice[0]]+"_pd_n"] = 25
         pars[name[choice[1]]+"_pd_n"] = 10
         pars[name[choice[2]]+"_pd_n"] = 5
 
+    # Clear the pd for the unselected
+    for par in pd:
+        if pars[par.name + '_pd_n'] == 0:
+            pars[par.name + '_pd'] = 0.0
+            pars[par.name + '_pd_n'] = PD_N
 
     ## Show selected polydispersity
     #for name, value in pars.items():
@@ -593,9 +602,9 @@ def parlist(model_info, pars, is2d):
         fields = dict(
             value=pars.get(p.id, p.default),
             pd=pars.get(p.id+"_pd", 0.),
-            n=int(pars.get(p.id+"_pd_n", 0)),
-            nsigma=pars.get(p.id+"_pd_nsgima", 3.),
-            pdtype=pars.get(p.id+"_pd_type", 'gaussian'),
+            n=int(pars.get(p.id+"_pd_n", PD_N)),
+            nsigma=pars.get(p.id+"_pd_nsgima", PD_NSIGMA),
+            pdtype=pars.get(p.id+"_pd_type", PD_TYPE),
             relative_pd=p.relative_pd,
             M0=pars.get(p.id+'_M0', 0.),
             mphi=pars.get(p.id+'_mphi', 0.),
@@ -609,7 +618,7 @@ def parlist(model_info, pars, is2d):
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
 
-def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
+def _format_par(name, value=0., pd=0., n=PD_N, nsigma=PD_NSIGMA, pdtype=PD_TYPE,
                 relative_pd=False, M0=0., mphi=0., mtheta=0.):
     # type: (str, float, float, int, float, str, bool, float, float, float) -> str
     line = "%s: %g"%(name, value)
@@ -629,8 +638,8 @@ def suppress_pd(pars):
     """
     pars = pars.copy()
     for p in pars:
-        if p.endswith("_pd_n"):
-            pars[p] = 0
+        if p.endswith("_pd"):
+            pars[p] = 0.0
     return pars
 
 def suppress_magnetism(pars):
@@ -1112,9 +1121,9 @@ def get_pars(model_info):
         parts = [('', p.default)]
         if p.polydisperse:
             parts.append(('_pd', 0.0))
-            parts.append(('_pd_n', 0))
-            parts.append(('_pd_nsigma', 3.0))
-            parts.append(('_pd_type', "gaussian"))
+            parts.append(('_pd_n', PD_N))
+            parts.append(('_pd_nsigma', PD_NSIGMA))
+            parts.append(('_pd_type', PD_TYPE))
         for ext, val in parts:
             if p.length > 1:
                 dict(("%s%d%s" % (p.id, k, ext), val)
@@ -1529,12 +1538,13 @@ def parse_pars(opts, maxdim=None):
             presets2[k] = float(v2) if isnumber(v2) else v2
 
     # If pd given on the command line, default pd_n to 35
+    # Note: the test below checks for float or string, not int
     for k, v in list(presets.items()):
         if k.endswith('_pd'):
-            presets.setdefault(k+'_n', 35.)
+            presets.setdefault(k+'_n', float(PD_N))
     for k, v in list(presets2.items()):
         if k.endswith('_pd'):
-            presets2.setdefault(k+'_n', 35.)
+            presets2.setdefault(k+'_n', float(PD_N))
 
     # Evaluate preset parameter expressions
     # Note: need to replace ':' with '_' in parameter names and expressions
