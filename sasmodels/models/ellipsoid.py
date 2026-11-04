@@ -67,6 +67,11 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
+Note on the geometry of the ellipsoid: This form factor has the flexibility to model both prolate and oblate ellipsoids, which are similar but non-identical form factors. Please refer to the below figure which illustrates the subtle difference in geometry (source: Andreas Haahr Larsen, 2023). Note, therefore, that where priors are far from the best fit, this model is prone to converging upon local minima which correspond to the opposite ellipsoid configuration. 
+
+.. figure:: img/ellipsoids.png
+
+
 Validation
 ----------
 
