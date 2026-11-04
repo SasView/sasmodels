@@ -1,6 +1,11 @@
 Release notes
 =============
 
+New in development (unreleased)
+-------------------------------
+
+* Add multi_shell_vesicle model (Python and C)
+
 v1.1.0 2026-30-07
 ------------------
 
