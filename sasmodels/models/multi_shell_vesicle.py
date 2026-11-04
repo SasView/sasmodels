@@ -128,7 +128,7 @@ def random():
     return pars
 
 
-def profile(radius, sld_solvent, n, sld, thickness):
+def profile(radius, sld_solvent, n, sld, thickness, volfraction):
     """
     Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
