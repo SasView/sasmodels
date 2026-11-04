@@ -19,7 +19,7 @@ The following functional form is used
     \end{cases}
 
 This is based on the generalized Guinier law for such elongated objects
-(see the Glatter reference below). For 3D globular objects (such as spheres),
+(see Glatter, 1982). For 3D globular objects (such as spheres),
 $s = 0$ and one recovers the standard Guinier formula. For 2D symmetry
 (such as for rods) $s = 1$, and for 1D symmetry (such as for lamellae or
 platelets) $s = 2$. A dimensionality parameter ($3-s$) is thus defined,
@@ -63,12 +63,13 @@ Reference
    *J. Appl. Cryst.*, (2010), 43, 716-719
 #. B Hammouda, *Analysis of the Beaucage model*,
    *J. Appl. Cryst.*, (2010), 43, 1474-1478
+#. O Glatter, O Kratky, *Small Angle X-ray Scattering*, Academic Press, London, (1982), ISBN 0-12-286280-5
 
 Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by:**
+* **Last Modified by:** Cristian Pilloni, **Date:** November 04, 2026
 * **Last Reviewed by:**
 """
 
