@@ -173,7 +173,6 @@ class PyKernel(Kernel):
                     # TODO: Change Rx, Ry, Rz to array rather than matrix
                     jitter = Rz(dphi)@Ry(dtheta)@Rz(dpsi)
                     q = self._rotate@jitter@np.vstack((qx, qy, 0.*qx))
-                    q = np.asarray(q)
                     return model_info.Iqabc(q[0], q[1], q[2], *parameter_vector[:-3])
                 self._form = _form
             elif model_info.Iqac:
@@ -181,7 +180,6 @@ class PyKernel(Kernel):
                     dtheta, dphi = parameter_vector[-2:]
                     jitter = Rz(dphi)@Ry(dtheta)
                     q = self._rotate@jitter@np.vstack((qx, qy, 0.*qx))
-                    q = np.asarray(q)
                     return model_info.Iqac(q[0], q[2], *parameter_vector[:-2])
                 self._form = _form
             else:
