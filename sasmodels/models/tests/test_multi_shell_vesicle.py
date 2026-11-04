@@ -20,7 +20,7 @@ import pytest
 
 from sasmodels.core import load_model
 from sasmodels.data import empty_data1D
-from sasmodels.direct_model import DirectModel
+from sasmodels.direct_model import DirectModel, call_Fq
 
 
 def _run(model_name, pars):
@@ -82,11 +82,16 @@ def test_zero_contrast_gives_zero_scattering():
 
 
 def test_effective_radius_modes():
-    """Mode 1 (outer radius) and mode 2 (core radius)."""
+    """Mode 1 (outer radius) and mode 2 (core radius).
+
+    NB: sasmodels radius_effective modes are 1-based; mode 0 means the
+    user-provided radius_effective parameter is used instead.
+    """
     model = load_model("multi_shell_vesicle")
-    info = model.info
+    assert model.info.radius_effective_modes == ["outer radius", "core radius"]
     pars = dict(radius=100.0, n=2, thickness1=30.0, thickness2=15.0)
-    # radius_effective is exposed via the model's test infrastructure
-    # (checked more directly through the model tests list); here we
-    # only verify the modes are registered as expected.
-    assert info.radius_effective_modes == ["outer radius", "core radius"]
+    kernel = model.make_kernel([np.array([1e-3])])
+    _, _, r_outer, _, _ = call_Fq(kernel, dict(pars, radius_effective_mode=1))
+    _, _, r_core, _, _ = call_Fq(kernel, dict(pars, radius_effective_mode=2))
+    assert r_outer == pytest.approx(145.0)
+    assert r_core == pytest.approx(100.0)
