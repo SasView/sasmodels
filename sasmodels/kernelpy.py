@@ -20,8 +20,8 @@ except ImportError:
         return x ** (1.0/3.0)
 
 from .generate import F64
+from .jitter import Ry, Rz
 from .kernel import Kernel, KernelModel
-from .jitter import Rx, Ry, Rz
 
 # pylint: disable=unused-import
 try:
@@ -224,7 +224,7 @@ class PyKernel(Kernel):
         #print("Calling python kernel")
         #call_details.show(values)
         form_radius = (
-            (lambda: 0.0) 
+            (lambda: 0.0)
             if radius_effective_mode == 0
             else (lambda: self._radius(radius_effective_mode))
         )

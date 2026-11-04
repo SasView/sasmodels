@@ -40,7 +40,7 @@ from . import core, kernelcl, kernelcuda, kerneldll, weights
 from .data import Data, empty_data1D, empty_data2D, empty_sesans, load_data, plot_theory
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
-from .modelinfo import ModelInfo, ParameterSet, PD_N, PD_NSIGMA, PD_TYPE
+from .modelinfo import PD_N, PD_NSIGMA, PD_TYPE, ModelInfo, ParameterSet
 
 # Only use optional bumps dependency for type checking
 if TYPE_CHECKING:
