@@ -57,6 +57,8 @@ absolute units) *scale* is related to the total surface area.
 
 **The 2D scattering intensity is not computed by this model.**
 
+**NB**: As described for the :ref:`vesicle` model, with a structure factor, $S(q)$ automatically uses the volume fraction enclosed by the shape and *volfraction* is the volume fraction of shell material. 
+
 
 Validation
 ----------
@@ -78,7 +80,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** Miguel Gonzales **Date:** February 26, 2016
-* **Last Modified by:** Paul Kienzle **Date:** October 15, 2016
+* **Last Modified by:** Oliver Hammond **Date:** Nov 3, 2026
 * **Last Reviewed by:** Paul Butler **Date:** September 07, 2018
 """
 
