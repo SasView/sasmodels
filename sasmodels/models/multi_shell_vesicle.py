@@ -51,6 +51,10 @@ the :ref:`magnetism` documentation.
 References
 ----------
 
+The single-shell vesicle model on which this model is based is described in
+[#Kline2006]_. General background on small-angle scattering can be found in
+[#Feigin1987]_.
+
 .. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 .. [#Feigin1987] L A Feigin and D I Svergun, *Structure Analysis by
    Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
