@@ -141,8 +141,14 @@ class PyKernel(Kernel):
         offset = 0
         kernel_args, volume_args = [], []
         for p in partable.kernel_parameters:
+            if p.type == "orientation":
+                continue
             if p.length == 1:
                 # Scalar values are length 1 vectors with no dimensions.
+                # The following expression captures the location of the
+                # parameter in the vector so that it can be updated according
+                # to the index into the polydispersity mesh within the _loops
+                # method below.
                 v = parameter_vector[offset:offset+1].reshape(())
             else:
                 # Vector values are simple views.
@@ -152,13 +158,8 @@ class PyKernel(Kernel):
                 kernel_args.append(v)
             if p in volume_parameters:
                 volume_args.append(v)
-        # Location of the volume parameters in the parameter vector
-        volume_index = np.array([
-            p in partable.form_volume_parameters
-            for p in partable.kernel_parameters
-        ])
 
-        # Hold on to the parameter vector so we can use it to call kernel later.
+        # Hold on to the parameter vector so it doesn't get collected
         # This may also be required to preserve the views into the vector.
         self._parameter_vector = parameter_vector
         # Similarly for the orientation matrix
@@ -173,30 +174,30 @@ class PyKernel(Kernel):
                     # TODO: Change Rx, Ry, Rz to array rather than matrix
                     jitter = Rz(dphi)@Ry(dtheta)@Rz(dpsi)
                     q = self._rotate@jitter@np.vstack((qx, qy, 0.*qx))
-                    return model_info.Iqabc(q[0], q[1], q[2], *parameter_vector[:-3])
+                    return model_info.Iqabc(q[0], q[1], q[2], *kernel_args)
                 self._form = _form
             elif model_info.Iqac:
                 def _form():
                     dtheta, dphi = parameter_vector[-2:]
                     jitter = Rz(dphi)@Ry(dtheta)
                     q = self._rotate@jitter@np.vstack((qx, qy, 0.*qx))
-                    return model_info.Iqac(q[0], q[2], *parameter_vector[:-2])
+                    return model_info.Iqac(q[0], q[2], *kernel_args)
                 self._form = _form
             else:
                 form = model_info.Iqxy
-                self._form = lambda: form(qx, qy, *parameter_vector)
+                self._form = lambda: form(qx, qy, *kernel_args)
             self._nq_copies = 1
         else:
             end = -3 if model_info.Iqabc else -2 if model_info.Iqac else len(parameter_vector)
             q = q_input.q
             if model_info.have_Fq:
                 def _form():
-                    return _pack_fq(*model_info.Fq(q, *parameter_vector[:end]))
+                    return _pack_fq(*model_info.Fq(q, *kernel_args))
                 self._nq_copies = 2
             else:
                 form = model_info.Iq
                 def _form():
-                    return model_info.Iq(q, *parameter_vector[:end])
+                    return model_info.Iq(q, *kernel_args)
                 self._form = _form
                 self._nq_copies = 1
             self._form = _form
@@ -207,12 +208,12 @@ class PyKernel(Kernel):
         shell = model_info.shell_volume
         radius = model_info.radius_effective
         self._volume = (
-            (lambda: (shell(*parameter_vector[volume_index]), volume(*parameter_vector[volume_index]))) if shell and volume
-            else (lambda: [volume(*parameter_vector[volume_index])]*2) if volume
+            (lambda: (shell(*volume_args), volume(*volume_args))) if shell and volume
+            else (lambda: [volume(*volume_args)]*2) if volume
             else (lambda: (1.0, 1.0)))
         self._radius = (
-            (lambda mode: radius(mode, *parameter_vector[volume_index])) if radius
-            else (lambda mode: cbrt(0.75/pi*volume(*parameter_vector[volume_index]))) if volume
+            (lambda mode: radius(mode, *volume_args)) if radius
+            else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
             else (lambda mode: 1.0))
 
     def _call_kernel(self, call_details, values, cutoff, magnetic, radius_effective_mode):
