@@ -135,18 +135,18 @@ which is equivalent to
     &=
       3 V(r_\text{shell}) \frac{\Delta\rho_\text{shell}}{\Delta t_\text{shell}}
         \left[\frac{
-                2 \cos(qr_\text{out})
-                    + qr_\text{out} \sin(qr_\text{out})
+                2 \cos(qr_\text{shell})
+                    + qr_\text{shell} \sin(qr_\text{shell})
             }{
-                (qr_\text{out})^4
+                (qr_\text{shell})^4
             }\right] \\
      &{}
       -3 V(r_\text{shell}) \frac{\Delta\rho_\text{shell}}{\Delta t_\text{shell}}
         \left[\frac{
-                    2\cos(qr_\text{in})
-                +qr_\text{in}\sin(qr_\text{in})
+                    2\cos(qr_\text{shell-1})
+                +qr_\text{shell-1}\sin(qr_\text{shell-1})
             }{
-                (qr_\text{in})^4
+                (qr_\text{shell-1})^4
             }\right] \\
     &{}
       +3\rho_\text{out}V(r_\text{shell}) \frac{j_1(qr_\text{out})}{qr_\text{out}}
