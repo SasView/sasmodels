@@ -51,8 +51,8 @@ else
 	$(COPY) $< $@
 endif
 
-ref/models/index.rst: gentoc.py genmodel.py $(MODELS_PY)
-	"$(PYTHON)" genmodel.py $(MODELS_PY)
+ref/models/index.rst: gentoc.py ../sasmodels/genhelp.py $(MODELS_PY)
+	"$(PYTHON)" -m sasmodels.genhelp $(MODELS_PY)
 	"$(PYTHON)" gentoc.py $(MODELS_PY)
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest build

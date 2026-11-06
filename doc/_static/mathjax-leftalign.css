@@ -1,0 +1,19 @@
+/* Left-align rather than center MathJax equations */
+
+/* Target the MathJax display container */
+.mjx-chtml, .MathJax_Display {
+    text-align: left !important;
+}
+
+/* Target the actual math block to add the indent */
+mjx-container[display="true"] {
+    text-align: left !important;
+    padding-left: 2em !important; /* Adjust the indent size here */
+    margin-left: 0 !important;
+}
+
+/* Compatibility for older MathJax versions */
+.MathJax_Display {
+    text-align: left !important;
+    margin-left: 2em !important;
+}
