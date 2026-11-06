@@ -16,10 +16,12 @@ many different types of particles, including fractal clusters, random coils
 (Debye equation), ellipsoidal particles, etc.
 
 The model works best for mass fractal systems characterized by Porod exponents
-between 5/3 and 3. It should not be used for surface fractal systems. Hammouda
-(2010) has pointed out a deficiency in the way this model handles the
-transitioning between the Guinier and Porod regimes and which can create
-artefacts that appear as kinks in the fitted model function.
+between 5/3 and 3. It should not be used for surface fractal systems. Beaucage
+(1996) mentioned that this multiple level extention can only be justified when
+data extend over many decades in $q$. Hammouda (2010) has pointed out a 
+deficiency in the way this model handles the transitioning between the Guinier 
+and Porod regimes and which can createartefacts that appear as kinks in the
+fitted model function.
 
 Also see the :ref:`guinier-porod` model.
 
@@ -43,11 +45,21 @@ where
 
 
 For each level, the four parameters $G_i$, $R_{gi}$, $B_i$ and $P_i$ must
-be chosen.  Beaucage has an additional factor $k$ in the definition of
+be chosen. Beaucage has an additional factor $k$ in the definition of
 $q_i^*$ which is ignored here.
 
+These four parameters are independently adjustable, and the
+implementation does not impose any explicit constraints or coupling 
+relationships between them, either eithin or across structural levels.
+Nevertheless, specific physical models may require relationships between these
+paramenters to ensure a physically meaningful description of the scattering
+system. 
 For example, to approximate the scattering from random coils (Debye equation),
 set $R_{gi}$ as the Guinier radius, $P_i = 2$, and $B_i = 2 G_i / R_{gi}$
+
+The implementation does not impose any ordering constraints on the $R_{g,i}$
+values. However, it is generally recommended to initialize the fitting procedure
+with the largest radius of gyration at the first structural levels.
 
 See the references for further information on choosing the parameters.
 
@@ -93,7 +105,7 @@ description = """
 parameters = [
     ["level",     "",     1,      [1, 6], "", "Level number"],
     ["rg[level]", "Ang",  15.8,   [0, inf], "", "Radius of gyration"],
-    ["power[level]", "",  4,      [-inf, inf], "", "Power"],
+    ["power[level]", "",  3,      [-inf, inf], "", "Power"],
     ["B[level]",  "1/cm", 4.5e-6, [-inf, inf], "", ""],
     ["G[level]",  "1/cm", 400,    [0, inf], "", ""],
     ]
