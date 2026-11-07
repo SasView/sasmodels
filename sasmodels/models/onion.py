@@ -69,11 +69,11 @@ Now consider the SLD of a shell defined by
     \rho_\text{shell}(r) = \begin{cases}
         B\exp\left(A(r-r_{\text{shell}-1})/\Delta t_\text{shell}\right)
             + C & \mbox{for } A \neq 0 \\
-        \rho_\text{in} = \text{constant} & \mbox{for } A = 0
+        \rho_\text{shell} = \text{constant} & \mbox{for } A = 0
     \end{cases}
 
 An example of a possible SLD profile is shown below where
-$\rho_\text{in}$ and $\Delta t_\text{shell}$ stand for the
+$\rho_\text{shell}$ and $\Delta t_\text{shell}$ stand for the
 SLD of the inner side of the $k^\text{th}$ shell and the
 thickness of the $k^\text{th}$ shell in the equation above, respectively.
 
@@ -101,8 +101,10 @@ where
     :nowrap:
 
     \begin{align*}
-    B&=\frac{\rho_\text{out} - \rho_\text{in}}{e^A-1}
-         & C &= \frac{\rho_\text{in}e^A - \rho_\text{out}}{e^A-1} \\
+    B&=\frac{\rho_\text{shell}(r_\text{shell}) 
+				- \rho_\text{shell}(r_\text{shell-1})}{e^A-1}
+         & C &= \frac{\rho_\text{shell}(r_\text{shell-1})e^A 
+		 			- \rho_\text{shell}(r_\text{shell})}{e^A-1} \\
     \alpha_\text{in} &= A\frac{r_{\text{shell}-1}}{\Delta t_\text{shell}}
          & \alpha_\text{out} &= A\frac{r_\text{shell}}{\Delta t_\text{shell}} \\
     \beta_\text{in} &= qr_{\text{shell}-1}
@@ -149,8 +151,10 @@ which is equivalent to
                 (qr_\text{shell-1})^4
             }\right] \\
     &{}
-      +3\rho_\text{out}V(r_\text{shell}) \frac{j_1(qr_\text{out})}{qr_\text{out}}
-      -3\rho_\text{in}V(r_{\text{shell}-1}) \frac{j_1(qr_\text{in})}{qr_\text{in}}
+      +3\rho_\text{shell}(r_\text{shell})V(r_\text{shell})
+	    \frac{j_1(qr_\text{shell})}{qr_\text{shell}}
+      -3\rho_\text{shell}(r_{\text{shell}-1})V(r_{\text{shell}-1})
+	    \frac{j_1(qr_\text{shell-1})}{qr_\text{shell-1}}
     \end{align*}
 
 
@@ -164,10 +168,10 @@ the shells is
 .. math::
 
     f_\text{shell} =
-        3\rho_\text{in}V(r_\text{shell})
-           \frac{j_1(qr_\text{out})}{qr_\text{out}}
-        - 3\rho_\text{in}V(r_{\text{shell}-1})
-            \frac{j_1(qr_\text{in})}{qr_\text{in}}
+        3\rho_\text{shell}(r_\text{shell-1})V(r_\text{shell})
+           \frac{j_1(qr_\text{shell})}{qr_\text{shell}}
+        - 3\rho_\text{shell}(r_\text{shell-1})V(r_{\text{shell}-1})
+            \frac{j_1(qr_\text{shell-1})}{qr_\text{shell-1}}
 
 The 2D scattering intensity is the same as $P(q)$ above, regardless of the
 orientation of the $q$ vector which is defined as
