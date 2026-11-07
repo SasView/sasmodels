@@ -20,7 +20,7 @@ between 5/3 and 3. It should not be used for surface fractal systems. Beaucage
 (1996) mentioned that this multiple level extention can only be justified when
 data extend over many decades in $q$. Hammouda (2010) has pointed out a 
 deficiency in the way this model handles the transitioning between the Guinier 
-and Porod regimes and which can createartefacts that appear as kinks in the
+and Porod regimes and which can create artefacts that appear as kinks in the
 fitted model function.
 
 Also see the :ref:`guinier-porod` model.
@@ -50,16 +50,19 @@ $q_i^*$ which is ignored here.
 
 These four parameters are independently adjustable, and the
 implementation does not impose any explicit constraints or coupling 
-relationships between them, either eithin or across structural levels.
-Nevertheless, specific physical models may require relationships between these
-paramenters to ensure a physically meaningful description of the scattering
-system. 
-For example, to approximate the scattering from random coils (Debye equation),
-set $R_{gi}$ as the Guinier radius, $P_i = 2$, and $B_i = 2 G_i / R_{gi}$
+relationships between them, either within or across structural levels.
+Nevertheless, specific physical models may require relationships 
+between these paramenters to ensure a physically meaningful description
+of the scattering system. For example, to approximate the scattering 
+from random coils (Debye equation), set $R_{gi}$ as the Guinier radius,
+$P_i = 2$, and $B_i = 2 G_i / R_{gi}$.
 
-The implementation does not impose any ordering constraints on the $R_{g,i}$
-values. However, it is generally recommended to initialize the fitting procedure
-with the largest radius of gyration at the first structural levels.
+The implementation does not impose any ordering constraints on the 
+$R_{g,i}$ values. However, it is generally recommended to initialize
+the fitting procedure with the largest radius of gyration at the first
+structural level and progressively smaller values at subsequent levels,
+as this can facilitate parameter interpretation and fitting 
+convergence.
 
 See the references for further information on choosing the parameters.
 
@@ -75,9 +78,12 @@ References
 ----------
 
 #. G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
+ https://doi.org/10.1107/S0021889895005292
 #. G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+ https://doi.org/10.1107/S0021889895011605
 #. B Hammouda, *Analysis of the Beaucage model*,
    *J. Appl. Cryst.*, (2010), 43, 1474-1478
+   https://doi.org/10.1107/S0021889810033856
 
 Authorship and Verification
 ----------------------------
