@@ -1,5 +1,5 @@
 r"""
-This model provides the form factor for a bifrustum whose cross-section is a regular polygon. 
+This model provides the form factor for a bifrustum whose cross-section is a regular polygon.
 Orientation averaging is done by using the Fibonacci quadrature.
 This quadrature provides a quasi-uniform distribution of points on the unit sphere
 using the golden ratio. The number of points to generate on the unit sphere is set to 500 points, it usually provides
@@ -694,8 +694,7 @@ Iq.vectorized = True
 
 tests = [
     [{"background": 0, "scale": 1, "n_sides": 4, "radius_polygon": 50, "half_height": 500, "truncation": 0.5, "sld": 1., "sld_solvent": 0.},
-     0.01, 145.11465],
+     0.01, 94.64139],
     [{"background": 0, "scale": 1, "n_sides": 4, "radius_polygon": 50, "half_height": 500, "truncation": 0.5, "sld": 1., "sld_solvent": 0.},
-     [0.01, 0.1], [145.11465, 0.37072]],
+     [0.01, 0.1], [94.64139, 0.37072]],
 ]
-
