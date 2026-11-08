@@ -106,7 +106,11 @@ def make_mixture_info(parts, operation='+'):
                         sub_prefixes.append(sub_prefix)
                 # Concatenate sub_prefixes to form prefix for the scale
                 scale_prefix = ''.join(sub_prefixes) + '_'
-            scale = Parameter(scale_prefix + 'scale', default=1.0,
+            # Carry over any scale units the component declares (e.g., dab);
+            # each term in a sum has the units of its own scale.
+            scale = Parameter(scale_prefix + 'scale',
+                              units=part.parameters.common_parameters[0].units,
+                              default=1.0,
                               description="model intensity for " + part.name)
             combined_pars.append(scale)
         for p in part.parameters.kernel_parameters:

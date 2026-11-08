@@ -516,6 +516,24 @@ class ParameterTable:
         self.common_parameters[1].default = 0.0
         self.defaults = self._get_defaults()
 
+    def set_scale_metadata(self, units=None, description=None):
+        # type: (Optional[str], Optional[str]) -> None
+        """
+        Override the units and/or description of the *scale* parameter.
+
+        This is display metadata only (documentation tables and GUI labels);
+        it does not change the default, limits or the calculation.  It is
+        used by models such as :ref:`dab` where *scale* absorbs a dimensional
+        prefactor rather than being a volume fraction.
+        """
+        # Make sure scale is the first common parameter.
+        assert self.common_parameters[0].id == "scale"
+        scale = self.common_parameters[0]
+        if units is not None:
+            scale.units = units
+        if description is not None:
+            scale.description = description
+
     def check_angles(self, strict=False):
         """
         Check that orientation angles are theta, phi and possibly psi.
@@ -953,6 +971,18 @@ def make_model_info(kernel_module):
     structure_factor = getattr(kernel_module, 'structure_factor', False)
     if structure_factor:
         parameter_table.set_zero_background()
+
+    # Optional per-model units/description for the scale parameter, for
+    # models where scale is a dimensional prefactor not a volume fraction.
+    info.scale_units = getattr(kernel_module, 'scale_units', None)
+    info.scale_description = getattr(kernel_module, 'scale_description', None)
+    for attr in ('scale_units', 'scale_description'):
+        value = getattr(info, attr)
+        if value is not None and not isinstance(value, str):
+            raise TypeError("%s.%s should be a string but got %r"
+                            % (kernel_id, attr, value))
+    parameter_table.set_scale_metadata(
+        units=info.scale_units, description=info.scale_description)
     info.base = info.parameters = parameter_table
 
     info.title = getattr(kernel_module, 'title', name+" model")
@@ -1102,6 +1132,14 @@ class ModelInfo:
     #: :ref:`capped-cylinder` uses: *category="shape:cylinder"*, which puts
     #: it in the :ref:`shape-cylinder` section.
     category = None         # type: Optional[str]
+    #: Units for the *scale* parameter, using the same unit strings as the
+    #: parameter table (e.g., *"1/cm/Ang^3"*).  Leave as None for models where
+    #: scale is a dimensionless scale factor or volume fraction.  Only the
+    #: documentation and GUI display are affected.
+    scale_units = None      # type: Optional[str]
+    #: Description of the *scale* parameter, replacing the default
+    #: "Scale factor or Volume fraction".  Leave as None to keep the default.
+    scale_description = None  # type: Optional[str]
     #: True if the model can be computed accurately with single precision.
     #: This is True by default, but models such as :ref:`bcc-paracrystal` set
     #: it to False because they require double precision calculations.

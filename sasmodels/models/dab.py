@@ -59,6 +59,11 @@ L: the correlation length
 """
 category = "shape-independent"
 
+# scale = 8 pi phi (1-phi) Delta rho^2 absorbs the contrast, so it carries
+# units of cm^-1 Ang^-3 (I(q) is in cm^-1 and the kernel returns L^3 in Ang^3).
+scale_units = "1/cm/Ang^3"
+scale_description = "Prefactor 8 pi phi (1-phi) (Delta rho)^2"
+
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],

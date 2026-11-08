@@ -517,6 +517,48 @@ def test_composite():
     assert target == actual, "%s != %s"%(target, actual)
 
 
+def test_scale_metadata():
+    # type: () -> None
+    """Check per-model scale units/description and their propagation."""
+    from .generate import make_partable
+    from .modelinfo import COMMON_PARAMETERS
+
+    default_units, default_desc = COMMON_PARAMETERS[0][1], COMMON_PARAMETERS[0][5]
+
+    # dab declares scale units, which appear in the parameter table
+    dab = load_model_info("dab")
+    scale = dab.parameters.common_parameters[0]
+    assert scale.units == "1/cm/Ang^3"
+    assert scale.description != default_desc
+    assert "|cm^-1| |Ang^-3|" in make_partable(dab.parameters.common_parameters)
+    # metadata only: default and limits are unchanged
+    assert scale.default == 1 and scale.limits == (0.0, np.inf)
+
+    # models without an override keep the defaults, and are not affected
+    # by dab having been loaded (common parameters are per model)
+    sphere = load_model_info("sphere")
+    scale = sphere.parameters.common_parameters[0]
+    assert (scale.units, scale.description) == (default_units, default_desc)
+
+    # sum models carry the component scale units through
+    mix = load_model_info("dab+sphere")
+    pars = {p.id: p for p in mix.parameters.kernel_parameters}
+    assert pars["A_scale"].units == "1/cm/Ang^3"
+    assert pars["B_scale"].units == default_units
+    # the overall scale of a composite model is the default
+    assert mix.parameters.common_parameters[0].units == default_units
+
+    # products ignore the component override
+    prod = load_model_info("sphere@hardsphere")
+    assert prod.parameters.common_parameters[0].units == default_units
+
+    # models still compute
+    from .direct_model import call_kernel
+    model = load_model("dab+porod")
+    kernel = model.make_kernel([np.array([0.01, 0.1])])
+    assert np.all(np.isfinite(call_kernel(kernel, {})))
+
+
 def list_models_main():
     # type: () -> int
     """
