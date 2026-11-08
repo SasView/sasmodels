@@ -11,11 +11,11 @@ Definition
 **Geometry.** The bifrustum is a bipyramid with a regular polygonal cross-section, truncated at both ends.
 It is defined by the number of sides :math:`n` (n_sides), the circumradius :math:`R` of the central polygon
 (radius_polygon), the half-height :math:`H` of the bipyramid before truncation (half_height) and the truncation
-ratio :math:`t` (truncation) with :math:`t = 0` giving a sharp bipyramid and :math:`t = 1` a fully truncated bipyramid to 0 height. The bifrustum has :math:`3n` vertices.
+ratio :math:`t` (truncation) with :math:`t = 0` giving a sharp bipyramid and :math:`t = 1` a fully truncated bipyramid with zero thickness. The bifrustum has :math:`3n` vertices.
 
 .. figure:: img/bifrustum-doc.png
 
-    Bifrustum geometry: pentagonal cross-section and truncation ratio of 0 and 0.25.
+    Bifrustum geometry: examples with n=5, n=3 and n=15. 
 
 
 The scattering amplitude of a homogeneous particle is
@@ -32,10 +32,10 @@ tetrahedra filling its volume:
     F_{\text{bifrustum}}(\mathbf{q}) = \sum_{\text{tetrahedra}} F_{\text{tetra}}(\mathbf{q})
 
 The tetrahedra are obtained by a Delaunay triangulation of the :math:`3n` vertices (scipy.spatial.Delaunay).
-Delaunay only connects the existing vertices: since the bifrustum is convex, every tetrahedron has its four
-corners among the vertices of the bifrustum, even when it crosses the inside of the particle.
-Degenerate tetrahedra (volume below :math:`10^{-6}` |Ang^3|) are discarded.
 This approach applies to any convex polyhedron defined by its vertices.
+Delaunay only connects the existing vertices: every tetrahedron has its four
+corners among the vertices of the polyhedron.
+If a degenerate tetrahedron (volume below :math:`10^{-6}` |Ang^3|) is obtained, it is discarded.
 
 
 .. figure:: img/simplex_method.png
@@ -44,7 +44,7 @@ This approach applies to any convex polyhedron defined by its vertices.
 
 **Form factor of a tetrahedron.** Let :math:`\mathbf{r}_0, \mathbf{r}_1, \mathbf{r}_2, \mathbf{r}_3` be the
 vertices of a tetrahedron and :math:`\mathbf{V}_k = \mathbf{r}_k - \mathbf{r}_0` (:math:`k = 1, 2, 3`) its edges.
-Any point inside is written :math:`\mathbf{r} = \mathbf{r}_0 + u\mathbf{V}_1 + v\mathbf{V}_2 + w\mathbf{V}_3` with
+Any point inside is written as :math:`\mathbf{r} = \mathbf{r}_0 + u\mathbf{V}_1 + v\mathbf{V}_2 + w\mathbf{V}_3` with
 :math:`u, v, w \geq 0` and :math:`u + v + w \leq 1`. This change of variables maps the integral onto a reference
 tetrahedron, with Jacobian :math:`|\det T|`, where :math:`T = (\mathbf{V}_1\ \mathbf{V}_2\ \mathbf{V}_3)`
 (:math:`|\det T|` is six times the volume of the tetrahedron). With the projections of :math:`\mathbf{q}` on the edges
@@ -63,7 +63,7 @@ The form factor amplitude of a regular tetrahedron is derived using the projecti
       + \frac{e^{iQ_3}}{Q_3(Q_3-Q_1)(Q_3-Q_2)}
       - \frac{1}{Q_1 Q_2 Q_3} \right]
 
-where :math:`e^{i\mathbf{q}\cdot\mathbf{r}_0}` is the translation phase of the tetrahedron.
+where :math:`e^{i\mathbf{q}\cdot\mathbf{r}_0}` is the translation phase term at the origin of the tetrahedron.
 For :math:`\mathbf{q} \to 0`, :math:`F_{\text{tetra}} \to |\det T|/6`, the volume of the tetrahedron.
 
 **Expression used in the code.** Since
@@ -168,7 +168,7 @@ Validation
 
 The model has been tested against experimental data obtained on truncated gold bipyramids with pentagonal cross-section synthetized by Claire Goldmann at LPS, Orsay.
 Moreover, comparisons with Debye formula calculations were made using DebyeCalculator library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
-Good agreement was found at q < 0.1 1/Angstrom.
+Good agreement was found at q < 0.6 1/Angstrom.
 
 References
 ----------
@@ -214,7 +214,7 @@ description = """
 category = "shape:polyhedron"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
-               "Prism scattering length density"],
+               "scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["n_sides", "", 5, [3, 50], "volume",
@@ -222,9 +222,9 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
               ["radius_polygon", "Ang", 50, [0., inf], "volume",
                "Circumradius of the polygonal cross-section"],
               ["half_height", "Ang", 250, [0., inf], "volume",
-               "Half-height of the bifrustum (before truncation)"],
+               "Half-height of the bifrustum (without truncation)"],
               ["truncation", "", 0.5, [0., 1.], "volume",
-               "Truncation ratio, t = 0 → sharp bipyramid and t = 1 → fully truncated to zero height"],
+               "Truncation ratio, t = 0 → sharp bipyramid and t = 1 → fully truncated to zero thickness"],
               ["theta", "degrees", 0, [-180, 180], "orientation", "c axis to beam angle"],
               ["phi", "degrees", 0, [-360, 360], "orientation", "rotation about beam"],
               ["psi", "degrees", 0, [-360, 360], "orientation", "rotation about c axis"],
@@ -233,7 +233,7 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
 ### Functions for geometrical calculations: volume and vertices of the bifrustum
 def form_volume(n_sides, radius_polygon, half_height, truncation):
     """
-    Computes the volume of a nanoprism given its number of sides, average radius and length.
+    Computes the volume of a bifrustum.
     Parameters
     ----------
     n_sides : int
@@ -241,13 +241,13 @@ def form_volume(n_sides, radius_polygon, half_height, truncation):
     radius_polygon : float
         Circumradius of the regular polygon cross-section.
     half_height : float
-        Half-height of the bipyramid (before truncation).
+        Half-height of the bipyramid (without truncation).
     truncation : float
         Truncation ratio of the bipyramid.
     Returns
     -------
     volume : float
-        Volume of the nanoprism.
+        Volume of the bifrustum.
     """
     angle    = math.pi / n_sides
     r_top    = radius_polygon * truncation  # circumradius of the top polygon
@@ -280,7 +280,7 @@ def bifrustum_verts(n_sides, radius_polygon, half_height, truncation):
     - truncation: float
         Truncation ratio:
           t = 0 → sharp bipyramid,
-          t = 1 → fully truncated to zero height.
+          t = 1 → fully truncated to zero thickness.
 
     Returns:
     - verts: (3n, 3) np.ndarray
@@ -381,8 +381,7 @@ def Fq_ortho(qa, qb, qc, V1, V2, V3):
      Some cases are not covered in the original paper and are added here:
      - 5. q perpendicular to a face containing V0 (two Q_i = 0)
      - 6. q perpendicular to two opposite edges (Q_i = 0 and Q_j = Q_k).
-    Code written by Tianjuan Yang, adapted by Sara Mokhtari.
-    https://doi.org/10.1107/S160057672201130X
+    Code written by Tianjuan Yang [1], adapted by Sara Mokhtari.
     Parameters
     ----------
     qa, qb, qc : float
@@ -524,7 +523,7 @@ NEAR_SINGULAR = 1e-3
 def Fqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation):
     """
     Computes the form factor amplitude of the sum of all the
-    tetrahedrons that compose the prism from the three components of the
+    tetrahedrons that compose the bifrustum from the three components of the
     scattering vector q, the number of sides of the regular polygon cross-section
     and the circumradius of the regular polygon cross-section.
     Parameters
@@ -614,7 +613,7 @@ def _Iqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation): # prop
     Returns
     -------
     Iqabc : float or array
-        Scattered intensity of the tetrahedron at the specific three
+        Scattered intensity of the bifrustum at the specific three
         dimensional q components.
     """
     A = Fqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation)
@@ -640,7 +639,7 @@ def Iqabc(qa, qb, qc, sld, sld_solvent, n_sides, radius_polygon, half_height, tr
     Returns
     -------
     Iqabc : float or array
-        Scattered intensity of the tetrahedron at the specific three
+        Scattered intensity of the bifrustum at the specific three
         dimensional q components.
     """
     intensity = _Iqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation)  # shape (nq, npoints)
