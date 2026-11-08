@@ -20,7 +20,7 @@ except ImportError:
         return x ** (1.0/3.0)
 
 from .generate import F64
-from .jitter import Ry, Rz
+from .jitter import Rx, Ry, Rz
 from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
@@ -47,9 +47,9 @@ class PyModel(KernelModel):
         self.dtype = np.dtype('d')
         logger.info("make python model %s", self.info.name)
 
-    def make_kernel(self, q_vectors):
+    def make_kernel(self, q_vectors, wavelength=None):
         """Instantiate the python kernel with input *q_vectors*"""
-        q_input = PyInput(q_vectors, dtype=F64)
+        q_input = PyInput(q_vectors, dtype=F64, wavelength=wavelength)
         return PyKernel(self.info, q_input)
 
     def release(self):
@@ -78,14 +78,20 @@ class PyInput:
     Call :meth:`release` when complete.  Even if not called directly, the
     buffer will be released when the data object is freed.
     """
-    def __init__(self, q_vectors, dtype):
+    def __init__(self, q_vectors, dtype, wavelength=None):
         self.nq = q_vectors[0].size
         self.dtype = dtype
-        self.is_2d = (len(q_vectors) == 2)
+        self.is_2d = 2 <= len(q_vectors) <= 3
         if self.is_2d:
+            qx, qy = q_vectors[:2]
             self.q = np.empty((self.nq, 2), dtype=dtype)
-            self.q[:, 0] = q_vectors[0]
-            self.q[:, 1] = q_vectors[1]
+            self.q[:, 0] = qx
+            self.q[:, 1] = qy
+            # TODO: should be putting this in self.q
+            if len(q_vectors) == 3:
+                self.qz = q_vectors[3]
+            else:
+                self.qz = deduce_qz(qx, qy, wavelength)
         else:
             self.q = np.empty(self.nq, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
@@ -95,6 +101,19 @@ class PyInput:
         Free resources associated with the model inputs.
         """
         self.q = None
+
+
+def deduce_qz(qx, qy, wavelength):
+    if wavelength is not None:
+        # we can deduce the value of qz from qx and qy
+        # if we have the wavelength
+        # this is how you convert qx, qy, and wavelength to qz
+        k0 = 2.0 * np.pi / wavelength
+        qz = k0 - np.sqrt(k0**2 - qx**2 - qy**2)
+    else:
+        qz = np.zeros_like(qx)
+
+    return qz
 
 
 class PyKernel(Kernel):
@@ -167,20 +186,23 @@ class PyKernel(Kernel):
         # Generate a closure which calls the kernel with the views into the
         # parameter array.
         if q_input.is_2d:
-            qx, qy = q_input.q[:, 0], q_input.q[:, 1]
+            qx, qy, qz = q_input.q[:, 0], q_input.q[:, 1], q_input.qz
+            assert (qz == 0.).all()
             if model_info.Iqabc:
                 def _form():
                     dtheta, dphi, dpsi = parameter_vector[-3:]
-                    # TODO: Change Rx, Ry, Rz to array rather than matrix
-                    jitter = Rz(dphi)@Ry(dtheta)@Rz(dpsi)
-                    q = self._rotate@jitter@np.vstack((qx, qy, 0.*qx))
+                    #jitter = Rx(dphi)@Ry(dtheta)@Rz(dpsi)
+                    jitter = Rz(-dpsi)@Ry(-dtheta)@Rx(-dphi)
+                    q = self._rotate@jitter@np.vstack((qx, qy, qz))
+                    # prism with n_sides=4 is rotated 45 degrees relative to parallelepiped
+                    q = Rz(-45)@q
                     return model_info.Iqabc(q[0], q[1], q[2], *kernel_args)
                 self._form = _form
             elif model_info.Iqac:
                 def _form():
                     dtheta, dphi = parameter_vector[-2:]
-                    jitter = Rz(dphi)@Ry(dtheta)
-                    q = self._rotate@jitter@np.vstack((qx, qy, 0.*qx))
+                    jitter = Ry(-dtheta)@Rz(-dphi)
+                    q = self._rotate@jitter@np.vstack((qx, qy, qz))
                     return model_info.Iqac(q[0], q[2], *kernel_args)
                 self._form = _form
             else:
@@ -260,11 +282,29 @@ class PyKernel(Kernel):
 
         if self.info.Iqabc:
             theta, phi, psi = parameters[-3:]
-            self._rotate = Rz(phi)@Ry(theta)@Rz(psi)
+            self._rotate = Rz(-psi)@Ry(-theta)@Rz(-phi)
             parameters[-3:] = 0. # Default is no jitter
+
+            _ = """
+            sin_theta, cos_theta = np.sin(np.degrees(theta)), np.cos(np.degrees(theta))
+            sin_phi, cos_phi = np.sin(np.degrees(phi)), np.cos(np.degrees(phi))
+            sin_psi, cos_psi = np.sin(np.degrees(psi)), np.cos(np.degrees(psi))
+            V11 = -sin_phi*sin_psi + cos_phi*cos_psi*cos_theta
+            V12 = sin_phi*cos_psi*cos_theta + sin_psi*cos_phi
+            V21 = -sin_phi*cos_psi - sin_psi*cos_phi*cos_theta
+            V22 = -sin_phi*sin_psi*cos_theta + cos_phi*cos_psi
+            V31 = sin_theta*cos_phi
+            V32 = sin_phi*sin_theta
+            rot = np.array([[V11, V12], [V21, V22], [V31, V32]])
+            if (rot != self._rotate[:2]).any():
+                print(rot)
+                print(self._rotate[:2])
+                raise Hell
+            """
+
         elif self.info.Iqac:
             theta, phi = parameters[-2:]
-            self._rotate = Rz(phi)@Ry(theta)
+            self._rotate = Ry(-theta)@Rz(-phi)
             parameters[-2:] = 0. # Default is no jitter
         else:
             # Unused. self._rotate is used within form, which
