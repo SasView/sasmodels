@@ -523,7 +523,7 @@ NEAR_SINGULAR = 1e-3
 def Fqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation):
     """
     Computes the form factor amplitude of the sum of all the
-    tetrahedrons that compose the prism from the three components of the
+    tetrahedrons that compose the bifrustum from the three components of the
     scattering vector q, the number of sides of the regular polygon cross-section
     and the circumradius of the regular polygon cross-section.
     Parameters
@@ -613,7 +613,7 @@ def _Iqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation): # prop
     Returns
     -------
     Iqabc : float or array
-        Scattered intensity of the tetrahedron at the specific three
+        Scattered intensity of the bifrustum at the specific three
         dimensional q components.
     """
     A = Fqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation)
@@ -639,7 +639,7 @@ def Iqabc(qa, qb, qc, sld, sld_solvent, n_sides, radius_polygon, half_height, tr
     Returns
     -------
     Iqabc : float or array
-        Scattered intensity of the tetrahedron at the specific three
+        Scattered intensity of the bifrustum at the specific three
         dimensional q components.
     """
     intensity = _Iqabc(qa, qb, qc, n_sides, radius_polygon, half_height, truncation)  # shape (nq, npoints)
