@@ -170,6 +170,8 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "Average radius"],
               ["length", "Ang", 5000, [0., inf], "volume",
                "Length"],
+              ["theta", "degrees", 0, [-180, 180], "orientation",
+               "c axis to beam angle"],
               ["phi", "degrees", 0, [-360, 360], "orientation", "rotation about beam"],
               ["psi", "degrees", 0, [-360, 360], "orientation", "rotation about c axis"],
                ]

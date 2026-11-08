@@ -296,9 +296,15 @@ def Iq(q, sld_core, sld_shell, sld_solvent, *args, npoints_fibonacci: int = 500)
 Iq.vectorized = True
 
 tests = [
-    [{"background": 0, "scale": 1, "n_sides_prism": 4, "radius_average_prism": 10, "length_prism": 100, "n_sides_bifrustum": 4, "radius_polygon_bifrustum": 10, "half_height_bifrustum": 100, "truncation_bifrustum": 0.5, "sld_prism": 1., "sld_bifrustum": 1., "sld_solvent": 0.},
-     0.01, 5.62789],
-    [{"background": 0, "scale": 1, "n_sides_prism": 4, "radius_average_prism": 10, "length_prism": 100, "n_sides_bifrustum": 4, "radius_polygon_bifrustum": 10, "half_height_bifrustum": 100, "truncation_bifrustum": 0.5, "sld_prism": 1., "sld_bifrustum": 1., "sld_solvent": 0.},
-     [0.01, 0.1], [5.62789, 0.73696]],
+    # core centred, core more contrasted than the shell
+    [{"background": 0, "scale": 1, "sld_core": 2., "sld_shell": 1., "sld_solvent": 0.,
+      "shell_n_sides": 4, "shell_radius_average": 10, "shell_length": 100,
+      "core_n_sides": 4, "core_radius_polygon": 10, "core_half_height": 80, "core_truncation": 0.5},
+     [0.01, 0.1], [5.15199, 1.32571]],
+    # same particle with the core rotated by 45 deg and translated by 10 Ang along z
+    [{"background": 0, "scale": 1, "sld_core": 2., "sld_shell": 1., "sld_solvent": 0.,
+      "shell_n_sides": 4, "shell_radius_average": 10, "shell_length": 100,
+      "core_n_sides": 4, "core_radius_polygon": 10, "core_half_height": 80, "core_truncation": 0.5,
+      "core_rotation": 45, "core_translation": 10},
+     [0.01, 0.1], [5.14899, 1.31752]],
 ]
-
