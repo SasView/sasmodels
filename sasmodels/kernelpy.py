@@ -195,7 +195,7 @@ class PyKernel(Kernel):
                     jitter = Rz(-dpsi)@Ry(-dtheta)@Rx(-dphi)
                     q = self._rotate@jitter@np.vstack((qx, qy, qz))
                     # prism with n_sides=4 is rotated 45 degrees relative to parallelepiped
-                    q = Rz(-45)@q
+                    #q = Rz(-45)@q
                     return model_info.Iqabc(q[0], q[1], q[2], *kernel_args)
                 self._form = _form
             elif model_info.Iqac:
