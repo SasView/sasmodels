@@ -7,7 +7,8 @@ a good balance between accuracy and computational efficiency.
 
 Definition
 ----------
-**Geometry.** This model describes a core-shell particle with a bifrustum core and a prism shell.
+**Geometry.** This model describes a core-shell particle with a bifrustum core and a prism shell. Both shapes are defined with their symmetry axis along the z-axis and centered at the origin. The bifrustum core can be rotated around the z-axis by an angle :math:`\alpha` (*core_rotation*)
+and translated along the z-axis by a distance :math:`z_0` (*core_translation*) with respect to the prism shell.
 
 .. figure:: img/cs5sides.png
 
@@ -16,43 +17,40 @@ Definition
 Both the bifrustum and prism are already existing models in SasView. For further details on the bifrustum and prism models,
 please refer to their respective model documentations (see bifrustum.py and prism.py).
 
-**Bifrustum parameters.** The bifrustum is a truncated bipyramid with a polygonal cross-section. It is defined
-by  :math:`n` the number of sides of the polygonal cross-section (n_sides_bifrustum),
-:math:`R` the circumradius of the polygonal cross-section (radius_polygon_bifrustum),
-:math:`H` the half-height of the bifrustum before truncation (half_height_bifrustum)
-and :math:`t` the truncation ratio (truncation_bifrustum) with :math:`t = 0` giving
+**Parameters notation.** The slds are called *sld_core*, *sld_shell* and *sld_solvent* for the bifrustum core, prism shell and solvent, respectively.
+The geometric parameters of the bifrustum core and prism shell are prefixed with *core_* and *shell_*, respectively, to distinguish them.
+
+**Core parameters (bifrustum).** The bifrustum is a truncated bipyramid with a polygonal cross-section. It is defined
+by  :math:`n` the number of sides of the polygonal cross-section (core_n_sides),
+:math:`R` the circumradius of the polygonal cross-section (core_radius_polygon),
+:math:`H` the half-height of the bifrustum before truncation (core_half_height)
+and :math:`t` the truncation ratio (core_truncation) with :math:`t = 0` giving
 a sharp bipyramid and :math:`t = 1` a fully truncated bipyramid to 0 height.
 
-**Prism parameters.** The prism is a rod with a polygonal cross-section.
-It is defined by :math:`n` the number of sides of the polygonal cross-section (n_sides_prism),
-:math:`R` the average radius of the polygonalcross-section (radius_average_prism)
- and :math:`L` the length of the prism (length_prism).
+**Shell parameters (prism).** The prism is a rod with a polygonal cross-section.
+It is defined by :math:`n` the number of sides of the polygonal cross-section (shell_n_sides),
+:math:`R` the average radius of the polygonal cross-section (shell_radius_average)
+and :math:`L` the length of the prism (shell_length_prism).
 
 .. figure:: img/core_shell_bifrustum_prism_parameters.png
 
     Prism and and bifrustum geometries and their parameters.
 
-Both shapes are defined with their symmetry axis along the z-axis and centered at the origin.
-The bifrustum core can be rotated around the z-axis by an angle core_rotation
-and translated along the z-axis by a distance core_translation with respect to the prism shell.
-
-
-
 **Form factor.** The prism and bifrustum form factor expressions are described in their respective model documentations (see bifrustum.py and prism.py).
 The total scattering amplitude is given by the sum of the prism and bifrustum form factors,
-weighted by their respective scattering length densities (sld_prism, sld_bifrustum)
+weighted by their respective scattering length densities (sld_shell, sld_core)
 and the solvent scattering length density (sld_solvent).
 
 The general expression for the total scattering amplitude :math:`F_{\text{cs}}(\mathbf{q})` is given by:
 
 .. math::
 
-    F_{\text{cs}}(\mathbf{q}) = F_{\text{shell}}(\mathbf{q}) \cdot (\text{sld}_{\text{shell}} - \text{sld}_{\text{solvent}}) +
-    F_{\text{core}}(\mathbf{Rotation,q}) \cdot e^{i \mathbf{q} \cdot \mathbf{z_0}} \cdot (\text{sld}_{\text{core}} - \text{sld}_{\text{shell}})
+    F_{\text{cs}}(\mathbf{q, \alpha, z_0}) = F_{\text{shell}}(\mathbf{q}) \cdot (\text{sld}_{\text{shell}} - \text{sld}_{\text{solvent}}) +
+    F_{\text{core}}(\mathbf{\alpha, q}) \cdot e^{i \mathbf{q} \cdot \mathbf{z_0}} \cdot (\text{sld}_{\text{core}} - \text{sld}_{\text{shell}})
 
 with :math:`F_{\text{shell}}(\mathbf{q})` and :math:`F_{\text{core}}(\mathbf{q})` being the form factor amplitudes of the prism and bifrustum,
 respectively, :math:`\mathbf{z_0}` being the translation vector of the bifrustum core along the z-axis with respect to the prism shell and
-:math:`\mathbf{Rotation}` (core_rotation) being the rotation matrix of the bifrustum core around the z-axis with respect to the prism shell.
+:math:`\alpha` being the rotation matrix of the bifrustum core around the z-axis with respect to the prism shell.
 
 
 **Orientation average**: The 1D form factor corresponds to the orientation average with all the possible orientations having the same probability.
@@ -75,9 +73,9 @@ In the sum, all weights :math:`w_j` are taken identical and equal to :math:`\fra
 Validation
 ----------
 
-The model has been tested against experimental data obtained on gold nanoprisms with pentagonal cross-section (see J. Marcone et al. JAC 2025).
-Moreover, comparisons with Debye formula calculations were made using DebyeCalculator library (https://github.com/FrederikLizakJohansen/DebyeCalculator).
-Good agreement was found at q < 0.1 1/Angstrom.
+F(q) checked against an independent method (Debye equation with Debye calculator: https://github.com/FrederikLizakJohansen/DebyeCalculator)
+for different prism cross-sections. The Debye equation is based on atomic positions while SasView model is based on analytical expressions.
+Good agreement was found at q < 0.1 1/Angstrom. The model has not been tested with experimental data yet.
 
 References
 ----------
