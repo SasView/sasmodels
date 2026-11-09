@@ -1,0 +1,24 @@
+%(head_prefix)s
+%(head)s
+%(stylesheet)s
+</head>
+<body>
+%(navigation)s
+<div class="document">
+  <div class="documentwrapper">
+    <div class="bodywrapper">
+      <div class="body" role="main">
+        <section id="%(title)s"><span id="id1" />
+          <h1>%(title)s<a class="headerlink" href="#%(title)s" title="Link to this heading">¶</a></h1>
+          %(body)s
+        </section>
+      </div>
+    </div>
+  </div>
+  %(sidebar)s
+  <div class="clearer"></div>
+</div>
+%(navigation)s
+%(sphinx_footer)s
+</body>
+</html>
