@@ -5,9 +5,9 @@ Definition
 ----------
 
 This pseudo-Voigt peak function is a weighted linear summation of
-Lorentzian (L) and Gaussian (G) peak shapes. 
+Lorentzian (L) and Gaussian (G) peak shapes.
 It is a popular function for modelling peak shape.
-It can be tailored to any experimental peak shape. 
+It can be tailored to any experimental peak shape.
 
 The scattering intensity $I(q)$ is calculated as
 
@@ -69,8 +69,8 @@ The pseudo-Voigt peak reduces exactly to a pure Lorentzian for $w_f = 1$
 and to a pure Gaussian for $w_f = 0$; both limits were checked against their
 analytic values (see tests section at the end).
 The full pseudo-Voigt shape has also been compared, for identical
-parameters, against a slightly different SasView implementation (https://marketplace.sasview.org/models/127/) 
-of the same function and gives the same result. 
+parameters, against a slightly different SasView implementation (https://marketplace.sasview.org/models/127/)
+of the same function and gives the same result.
 
 
 References

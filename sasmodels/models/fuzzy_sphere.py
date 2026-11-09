@@ -31,7 +31,7 @@ is the difference in SLD between a sphere and the surrounding medium.
 **In this model,** $R$ **represents the radius at which the SLD has decreased to
 half of its value at the core, not the overall radius of a sphere**. This is
 a frequent source of confusion when applying this model.
-  
+
 $\sigma_\text{fuzzy}$ is then the width of the fuzzy interface; strictly, the
 standard deviation from the average thickness of the interface.
 
@@ -45,7 +45,7 @@ From Reference [1]:
 For this model to give meaningful results it is important $\sigma_\text{fuzzy} \ll R$.
 It is for the User to ensure that this condition is maintained, especially if
 applying polydispersity to one or both length scales.
-    
+
 This model has been widely applied to the scattering from polymer microgel
 particles as illustrated below, where $R_\text{h}$ is the hydrodynamic radius.
 
@@ -78,7 +78,7 @@ References
 
 #. E Ponomareva, B Tadgell, M Hildebrandt, M Krüsmann, S Prévost, P Mulvaney, M Karg,
    *Soft Matter*, 18 (2022) 807-825
-   
+
 #. F Scheffold,
    *Soft Matter*, 20 (2024) 8181-8184
 

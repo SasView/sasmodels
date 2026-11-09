@@ -1,5 +1,5 @@
 r"""
-This model provides the form factor for a right prism whose cross-section is a regular polygon. 
+This model provides the form factor for a right prism whose cross-section is a regular polygon.
 Orientation averaging is done by using the Fibonacci quadrature.
 This quadrature provides a quasi-uniform distribution of points on the unit sphere
 using the golden ratio. The number of points to generate on the unit sphere is set to 500 points, it usually provides
@@ -8,7 +8,7 @@ a good balance between accuracy and computational efficiency.
 Definition
 ----------
 
-We consider particles having the shape of a right prism of length *L* (parameter called *length* in the model) and a cross section made of 
+We consider particles having the shape of a right prism of length *L* (parameter called *length* in the model) and a cross section made of
 a regular polygon with a certain number of sides *n* (parameter called *n_sides* in the model) as illustrated in the figure below.
 
 .. figure:: img/nanoprisms_geometry.jpg
@@ -100,7 +100,7 @@ Instead of rotating the shape through all the possible orientations,
 it is equivalent to integrate the 3D scattering vector over a sphere of radius q with the shape in its reference orientation.
 
 The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform distribution of points on the unit sphere.
-The distribution of the N points is computed using the golden ratio (see fibonacci.py). 
+The distribution of the N points is computed using the golden ratio (see fibonacci.py).
 Each point of the quadrature on the unit sphere corresponds to a vector :math:`\mathbf{u}_{j}`.
 In the sum, all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
@@ -304,7 +304,7 @@ def parallel_factor(vertices:np.ndarray, q:np.ndarray, c:float): # gives the are
     Computes the parallel form factor of a 2D shape defined by its vertices at a specific in-plane scattering vector q.
     Parameters
     ----------
-    vertices : np.ndarray shape (2, n) 
+    vertices : np.ndarray shape (2, n)
         list of the vertices of the 2D-shape each listed as a list of the
         2D coordinates of the shape in the plane
     q : np.ndarray shape (N, 2)

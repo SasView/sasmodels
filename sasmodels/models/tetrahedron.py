@@ -10,7 +10,7 @@ Definition
 ----------
 
 This model computes the form factor of a regular tetrahedron by defining its size through its circumradius :math:`R`
-(parameter called *radius* in the model), which is the radius of the circumscribed sphere. 
+(parameter called *radius* in the model), which is the radius of the circumscribed sphere.
 The relationship between the circumradius and the edge length is also implemented. The edge length :math:`L`
 and volume :math:`V` are given by:
 
