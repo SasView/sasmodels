@@ -82,6 +82,8 @@ of circumradius :math:`R` can be expressed as
 In the sum over all edges, :math:`\mathbf{M}_{j}` is the vector joining the center of the polygon to the middle of the jth edge and
 :math:`\mathbf{E}_{j}` is the half-edge vector.
 
+Note that the a axis of a prism is crossing a vertice of the polygon in the (a,b) plane.
+
 The scattered intensity for one prism is given by:
 
 .. math::
