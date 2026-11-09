@@ -47,9 +47,9 @@ class PyModel(KernelModel):
         self.dtype = np.dtype('d')
         logger.info("make python model %s", self.info.name)
 
-    def make_kernel(self, q_vectors, wavelength=None):
+    def make_kernel(self, q_vectors):
         """Instantiate the python kernel with input *q_vectors*"""
-        q_input = PyInput(q_vectors, dtype=F64, wavelength=wavelength)
+        q_input = PyInput(q_vectors, dtype=F64)
         return PyKernel(self.info, q_input)
 
     def release(self):
@@ -91,7 +91,7 @@ class PyInput:
             if len(q_vectors) == 3:
                 self.qz = q_vectors[3]
             else:
-                self.qz = deduce_qz(qx, qy, wavelength)
+                self.qz = np.zeros_like(self.q[:, 0])
         else:
             self.q = np.empty(self.nq, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
@@ -101,19 +101,6 @@ class PyInput:
         Free resources associated with the model inputs.
         """
         self.q = None
-
-
-def deduce_qz(qx, qy, wavelength):
-    if wavelength is not None:
-        # we can deduce the value of qz from qx and qy
-        # if we have the wavelength
-        # this is how you convert qx, qy, and wavelength to qz
-        k0 = 2.0 * np.pi / wavelength
-        qz = k0 - np.sqrt(k0**2 - qx**2 - qy**2)
-    else:
-        qz = np.zeros_like(qx)
-
-    return qz
 
 
 class PyKernel(Kernel):
@@ -284,7 +271,10 @@ class PyKernel(Kernel):
         nq = self.q_input.nq*self._nq_copies
 
         if self.info.Iqabc:
-            # Rx, Ry, Rz take degrees
+            # The last three parameters contain the orienation in degrees with respect
+            # to the beam (the view). During the polydispersity loop these are
+            # replaced by points in the angular dispersion mesh (the jitter), defaulting
+            # to zero if there is no angular dispersion on that parameter.
             theta, phi, psi = parameters[-3:]
             self._view_inv = Rz(-psi)@Ry(-theta)@Rz(-phi)
             parameters[-3:] = 0. # Default is no jitter
@@ -309,6 +299,8 @@ class PyKernel(Kernel):
                     raise Hell
 
         elif self.info.Iqac:
+            # Like Iqabc, the last two parameters (theta, phi) start with
+            # the view but switch to the jitter within the polydispersity loop.
             theta, phi = parameters[-2:]
             self._view_inv = Ry(-theta)@Rz(-phi)
             parameters[-2:] = 0. # Default is no jitter

@@ -52,8 +52,20 @@ except ImportError:
 RESID_RATIO = 0.25
 """Portion of the graph area to use for the residuals plot"""
 
+def deduce_qz(qx, qy, wavelength):
+    if wavelength is not None:
+        # we can deduce the value of qz from qx and qy
+        # if we have the wavelength
+        # this is how you convert qx, qy, and wavelength to qz
+        k0 = 2.0 * np.pi / wavelength
+        qz = k0 - np.sqrt(k0**2 - qx**2 - qy**2)
+    else:
+        qz = np.zeros_like(qx)
 
-def load_data(filename, index=0):
+    return qz
+
+# TODO: deprecate in favour of sasdata, once it is available
+def load_data(filename, index=0, wavelength=None):
     # type: (str, int) -> Data
     """
     Load data using a sasview loader.
@@ -82,6 +94,9 @@ def load_data(filename, index=0):
                          else np.zeros_like(data.x, dtype='bool'))
         elif hasattr(data, 'qx_data'):
             data.mask = ~data.mask
+            if wavelength is not None:
+                qz = deduce_qz(data.qx_data, data.qy_data, wavelength=wavelength)
+                data.qz_data = qz
     return datasets[index] if index != 'all' else datasets
 
 
@@ -380,7 +395,7 @@ def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     return data
 
 
-def empty_data2D(qx, qy=None, resolution=0.0):
+def empty_data2D(qx, qy=None, resolution=0.0, wavelength=None):
     # type: (np.ndarray, OptArray, float) -> Data2D
     """
     Create empty 2D data using the given mesh.
@@ -417,8 +432,11 @@ def empty_data2D(qx, qy=None, resolution=0.0):
     # pixel_size in mm, distance in m
     detector = Detector(pixel_size=(5, 5), distance=4)
     data.detector.append(detector)
-    data.source.wavelength = 5 # angstroms
+    data.source.wavelength = wavelength # angstroms
     data.source.wavelength_unit = "A"
+    if wavelength is not None:
+        qz = deduce_qz(data.qx_data, data.qy_data, wavelength=wavelength)
+        data.qz_data = qz
     return data
 
 
