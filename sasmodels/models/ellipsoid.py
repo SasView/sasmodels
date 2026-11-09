@@ -67,6 +67,16 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
+Note on the geometry of the ellipsoid: This form factor has the flexibility to
+model both prolate and oblate ellipsoids, which are similar but non-identical
+form factors. Please refer to the below figure which illustrates this subtle
+difference in geometry (source: Andreas Haahr Larsen, 2023). Therefore, when the
+starting values are far from the best fit this model is prone to converging upon
+local minima which correspond to the opposite ellipsoid configuration.
+
+.. figure:: img/ellipsoids.png
+
+
 Validation
 ----------
 
@@ -107,14 +117,16 @@ References
 
 #. \L. A. Feigin and D. I. Svergun. *Structure Analysis by Small-Angle X-Ray
    and Neutron Scattering*, Plenum Press, New York, 1987
+   https://doi.org/10.1007/978-1-4757-6624-0
 #. \A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
+   https://doi.org/10.1063/1.1747510
 
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
-* **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
+* **Last Modified by:** Oliver Hammond **Date:** Nov 4, 2026
 """
 
 import numpy as np
