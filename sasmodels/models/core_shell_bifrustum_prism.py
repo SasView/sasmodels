@@ -17,7 +17,7 @@ and translated along the c-axis by a distance :math:`T_c` (*core_translation*) w
     Core-shell bifrustum-prism geometry.
 
 Both the bifrustum and prism are already existing models in SasView. 
-Note that for both shapes, the a axis is crossing a vertice of the polygon in the (a,b) plane. 
+Note that the a axis is crossing a vertice of the polygon in the (a,b) plane of the shell prism. 
 For further details on the bifrustum and prism models, please refer to their respective model documentations (see bifrustum.py and prism.py).
 
 **Parameters notation.** The slds are called *sld_core*, *sld_shell* and *sld_solvent* for the bifrustum core, prism shell and solvent, respectively.
