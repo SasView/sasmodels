@@ -7,15 +7,18 @@ a good balance between accuracy and computational efficiency.
 
 Definition
 ----------
-**Geometry.** This model describes a core-shell particle with a bifrustum core and a prism shell. Both shapes are defined with their symmetry axis along the z-axis and centered at the origin. The bifrustum core can be rotated around the z-axis by an angle :math:`\alpha` (*core_rotation*)
-and translated along the z-axis by a distance :math:`z_0` (*core_translation*) with respect to the prism shell.
+**Geometry.** This model describes a core-shell particle with a bifrustum core and a prism shell. 
+Both shapes are centered at the origin of the core-shell particle, with their symmetry axis along the c-axis.
+The orientation of the prism shell is fixed when the bifrustum core can be rotated around the c-axis by an angle :math:`\alpha` (*core_rotation*)
+and translated along the c-axis by a distance :math:`T_c` (*core_translation*) with respect to the prism shell.
 
 .. figure:: img/cs5sides.png
 
     Core-shell bifrustum-prism geometry.
 
-Both the bifrustum and prism are already existing models in SasView. For further details on the bifrustum and prism models,
-please refer to their respective model documentations (see bifrustum.py and prism.py).
+Both the bifrustum and prism are already existing models in SasView. 
+Note that for both shapes, the a axis is crossing a vertice of the polygon in the (a,b) plane. 
+For further details on the bifrustum and prism models, please refer to their respective model documentations (see bifrustum.py and prism.py).
 
 **Parameters notation.** The slds are called *sld_core*, *sld_shell* and *sld_solvent* for the bifrustum core, prism shell and solvent, respectively.
 The geometric parameters of the bifrustum core and prism shell are prefixed with *core_* and *shell_*, respectively, to distinguish them.
@@ -45,13 +48,15 @@ The general expression for the total scattering amplitude :math:`F_{\text{cs}}(\
 
 .. math::
 
-    F_{\text{cs}}(\mathbf{q, \alpha, z_0}) = F_{\text{shell}}(\mathbf{q}) \cdot (\text{sld}_{\text{shell}} - \text{sld}_{\text{solvent}}) +
-    F_{\text{core}}(\mathbf{\alpha, q}) \cdot e^{i \mathbf{q} \cdot \mathbf{z_0}} \cdot (\text{sld}_{\text{core}} - \text{sld}_{\text{shell}})
+    F_{\text{cs}}(\mathbf{q}, \alpha, \mathbf{T_c}) = (\text{sld}_{\text{shell}} - \text{sld}_{\text{solvent}}) \cdot F_{\text{shell}}(\mathbf{q})  +
+     (\text{sld}_{\text{core}} - \text{sld}_{\text{shell}}) \cdot e^{i \mathbf{q} \cdot \mathbf{T_c}} \cdot F_{\text{core}}(R_{\alpha}(\mathbf{q})) 
 
 with :math:`F_{\text{shell}}(\mathbf{q})` and :math:`F_{\text{core}}(\mathbf{q})` being the form factor amplitudes of the prism and bifrustum,
-respectively, :math:`\mathbf{z_0}` being the translation vector of the bifrustum core along the z-axis with respect to the prism shell and
-:math:`\alpha` being the rotation matrix of the bifrustum core around the z-axis with respect to the prism shell.
+respectively, :math:`\mathbf{T_c}` being the translation vector of the bifrustum core along the c-axis with respect to the prism shell and
+:math:`R_{\alpha}` being the rotation matrix of the bifrustum core around the c-axis with respect to the prism shell.
 
+Note that the dimensions of the core particle have to be chosen in a way that it is entirely embedded within the shell particle.
+When applying the translation, one has to make sure that the core is still entirely embedded inside the shell.
 
 **Orientation average**: The 1D form factor corresponds to the orientation average with all the possible orientations having the same probability.
 Instead of rotating the shape through all the possible orientations,
@@ -75,7 +80,7 @@ Validation
 
 F(q) checked against an independent method (Debye equation with Debye calculator: https://github.com/FrederikLizakJohansen/DebyeCalculator)
 for different prism cross-sections. The Debye equation is based on atomic positions while SasView model is based on analytical expressions.
-Good agreement was found at q < 0.1 1/Angstrom. The model has not been tested with experimental data yet.
+Good agreement was found at q < 0.6 1/Angstrom. The model has not been tested with experimental data yet.
 
 References
 ----------
@@ -139,15 +144,15 @@ N_CORE, N_SHELL = len(CORE), len(SHELL)
 parameters = (
     ###########################   SLD PARAMETERS    #########################
     [["sld_core", "1e-6/Ang^2", 126., [-inf, inf], "sld", "Core scattering length density"],
-     ["sld_shell", "1e-6/Ang^2", 126., [-inf, inf], "sld", "Shell scattering length density"],
+     ["sld_shell", "1e-6/Ang^2", 78., [-inf, inf], "sld", "Shell scattering length density"],
      ["sld_solvent", "1e-6/Ang^2", 9.4, [-inf, inf], "sld", "Solvent scattering length density"]]
      ####### Geometry parameters for the prism shell and bifrustum core #######
     + _prefixed("shell_", SHELL) + _prefixed("core_", CORE)
     ##################  Seed orientation parameters    ##################
     +[["core_rotation", "deg", 0.0, [-180., 180.], "",
-     "Rotation angle of the bifrustum core around the z-axis (vertical axis) with respect to the prism shell"],
+     "Rotation angle of the bifrustum core around the c-axis (vertical axis) with respect to the prism shell"],
     ["core_translation", "Ang", 0.0, [-inf, inf], "",
-     "Translation of the bifrustum core along the z-axis (vertical axis) with respect to the prism shell"],
+     "Translation of the bifrustum core along the c-axis (vertical axis) with respect to the prism shell"],
     ################## orientation angles of the whole system ###########################
     ["theta", "degrees", 0, [-180, 180], "orientation", "c axis to beam angle"],
     ["phi", "degrees", 0, [-360, 360], "orientation", "rotation about beam"],
@@ -155,7 +160,7 @@ parameters = (
 
 
 def _split(args):
-    """Kernel arguments (in the order of `parameters`) -> shell geometry, core geometry, rotation, z0."""
+    """Kernel arguments (in the order of `parameters`) -> shell geometry, core geometry, rotation, Tc."""
     shell = args[:N_SHELL]
     core = args[N_SHELL:N_SHELL + N_CORE]
     core_rotation, core_translation = args[N_SHELL + N_CORE:]
@@ -183,14 +188,11 @@ def Fqabc(qa, qb, qc, sld_core, sld_shell, sld_solvent, *args):
         Form factor amplitude of the core-shell particle
 
     """
-    # 0. Retreive geometric parameters of the prism shell and bifrustum core, r
+    # 0. Retrieve geometric parameters of the prism shell and bifrustum core
     # and the rotation and translation of the bifrustum core
     shell, core, core_rotation, core_translation = _split(args)
 
     # 1. Shell form factor amplitude
-    # Issue with Fqabc of prism, it expects flattened q values?
-    # TO DO: if we aim to make a general core-shell model, we should modify the prism model to accept
-    # 3D q values without flattening
     F_shell = shell_model.Fqabc(qa, qb, qc, *shell)
 
     # 2. Core form factor amplitude with rotation and translation
@@ -203,8 +205,8 @@ def Fqabc(qa, qb, qc, sld_core, sld_shell, sld_solvent, *args):
     else:
         qa_core, qb_core, qc_core = qa, qb, qc
     F_core = core_model.Fqabc(qa_core, qb_core, qc_core, *core)
-    # 2.2. Phase if translation along z-axis is applied
-    phase = np.exp(1j * qc * core_translation) # phase factor for translation along z-axis, if z = 0, then phase = 1
+    # 2.2. Phase if translation along c-axis is applied
+    phase = np.exp(1j * qc * core_translation) # phase factor for translation along c-axis, if Tc = core_translation = 0, then phase = 1
 
     # 3. Total scattering amplitude: prism + bifrustum with phase factor
     total_scattering_amplitude = F_shell * (sld_shell - sld_solvent) + (F_core * phase) * (sld_core - sld_shell)
@@ -213,22 +215,20 @@ def Fqabc(qa, qb, qc, sld_core, sld_shell, sld_solvent, *args):
 
 def _Iqabc(qa, qb, qc, sld_core, sld_shell, sld_solvent, *args):
     """
-    Computes the scattered intensity of the tetrahedron at the specific
+    Computes the scattered intensity of the core/shell particle at the specific
     three dimensional q components from the form factor amplitude Fqabc.
+    Note that _Iqabc is defined without the scaling factor 10**-4 which is added in Iqabc.
     Parameters
     ----------
-    qa, qb, qc : float or array
-        Components of the scattering vector q
-    n_sides : int
-        Number of sides of the regular polygon cross-section.
-    radius : float
-        Circumradius of the regular polygon cross-section.
-    Returns
+     qa, qb, qc : float or array
+    Components of the scattering vector q
+    *args contains all the dimensions of core and shell particles with the shell_ and core_ prefixes.
+    Returns   
     -------
-    Iqabc : float or array
-        Scattered intensity of the tetrahedron at the specific three
+    _Iqabc : float or array
+        Scattered intensity of the core/shell at the specific three
         dimensional q components.
-    """
+       """
 
     A = Fqabc(qa, qb, qc, sld_core, sld_shell, sld_solvent, *args)  # shape (nq, npoints)
     intensity = (np.abs(A))**2  # (1e-6/Ang^2)**2 = 1e-12/Ang^4
@@ -236,13 +236,14 @@ def _Iqabc(qa, qb, qc, sld_core, sld_shell, sld_solvent, *args):
 
 def Iqabc(qa, qb, qc, sld_core, sld_shell, sld_solvent, *args):
     """
-    Computes the scattered intensity of the tetrahedron at the specific
+    Computes the scattered intensity of the core/shell particle at the specific
     three dimensional q components from the form factor amplitude Fqabc.
+    Iqabc contains the scaling factor 10**-4.
     Parameters
     ----------
     qa, qb, qc : float or array
         Components of the scattering vector q
-n.
+    *args contains all the dimensions of core and shell particles with shell_ and core_ prefixes.
     Returns
     -------
     Iqabc : float or array
@@ -256,7 +257,7 @@ n.
 
 def Iq(q, sld_core, sld_shell, sld_solvent, *args, npoints_fibonacci: int = 500):
     """
-    Computes the scattering intensity I(q) of tetrahedrons averaged over all
+    Computes the scattering intensity I(q) of core/shell particles averaged over all
     orientations using the Fibonacci quadrature.
     The number of points on the sphere is set by npoints_fibonacci.
     Each point has an equal weight = 1/npoints_fibonacci.
@@ -267,7 +268,7 @@ def Iq(q, sld_core, sld_shell, sld_solvent, *args, npoints_fibonacci: int = 500)
     sld_core, sld_shell, sld_solvent :
         Scattering length densities of the core, shell and solvent
     args : list
-        List of parameters in the order of `parameters` (see above)
+        List of parameters in the order of `parameters` (see above) with shell_ and core_ prefixes.
     npoints_fibonacci : int
         Number of Fibonacci points on the sphere, set to 500 by default
         (higher number increases accuracy but also computation time,
@@ -292,6 +293,8 @@ def Iq(q, sld_core, sld_shell, sld_solvent, *args, npoints_fibonacci: int = 500)
 
 
 Iq.vectorized = True
+
+# For tests, better to use _split function to attrubute values to the different dimension parameters.
 
 tests = [
     # core centred, core more contrasted than the shell
