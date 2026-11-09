@@ -2,10 +2,10 @@ r"""
 Definition
 ----------
 
-Calcuates the scattering from a simple star polymer with f equal Gaussian coil
-arms. A star being defined as a branched polymer with all the branches
-emanating from a common central (in the case of this model) point.  It is
-derived as a special case of on the Benoit model for general branched
+Calculates the scattering from a simple star polymer with f equal Gaussian coil
+arms. In the case of this model, a star is defined as a branched polymer with all the branches
+emanating from a common central point.  It is
+derived as a special case of the Benoit model for general branched
 polymers\ [#Benoit1953]_ as also used by Richter *et al.*\ [#Richter1989]_
 
 For a star with $f$ arms the scattering intensity $I(q)$ is calculated as
@@ -29,8 +29,16 @@ The two are related as:
 
 .. math:: R_{arm}^2 = \frac{f}{3f-2} R_{g}^2
 
-Note that when there is only one arm, $f = 1$, the Debye Gaussian coil
-equation is recovered.
+Regarding the number of arms; when there is only one arm, $f = 1$, the Debye Gaussian coil
+equation is recovered. This $f$ must also be a whole number, so a non-integer value of *arms*
+is quietly rounded to the nearest integer before $I(q)$ is calculated, with halves
+rounded up. For example, *arms* = 3.3 is calculated as $f = 3$ and *arms* = 3.5
+as $f = 4$. The input value is not changed, so it may differ from the $f$
+that was actually used for the model.
+
+Because $I(q)$ only changes in integer steps of *arms*, gradient-based
+optimizers such as Levenberg-Marquardt cannot refine this parameter. It is
+best to fix *arms* and compare fits at different integer values. 
 
 .. note::
    Star polymers in solutions tend to have strong interparticle and osmotic
@@ -53,7 +61,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** Kieran Campbell **Date:** July 24, 2012
-* **Last Modified by:** Paul Butler **Date:** Auguts 26, 2017
+* **Last Modified by:** Oliver Hammond **Date:** Nov 3, 2026
 * **Last Reviewed by:** Ziang Li and Richard Heenan **Date:** May 17, 2017
 """
 
