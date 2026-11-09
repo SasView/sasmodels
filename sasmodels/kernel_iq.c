@@ -289,7 +289,7 @@ qabc_rotation(
     const double J32 = -sin_phi*cos_theta;
     const double J33 = cos_phi*cos_theta;
 
-    // reverse matrix
+    // reverse matrix = inv(J) inv(V), with last column missing because qz = 0
     rotation->R11 = J11*V11 + J12*V21 + J13*V31;
     rotation->R12 = J11*V12 + J12*V22 + J13*V32;
     rotation->R21 = J21*V11 + J22*V21 + J23*V31;

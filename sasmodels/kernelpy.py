@@ -190,11 +190,12 @@ class PyKernel(Kernel):
             assert (qz == 0.).all()
             if model_info.Iqabc:
                 def _form():
+                    # Rx, Ry, Rz take degrees
                     dtheta, dphi, dpsi = parameter_vector[-3:]
                     #_jitter_inv = Rx(dphi)@Ry(dtheta)@Rz(dpsi)
                     _jitter_inv = Rz(-dpsi)@Ry(-dtheta)@Rx(-dphi)
-                    #print(f"{dtheta=} _jitter_inv")
-                    q = _jitter_inv@self._view_inv@np.vstack((qx, qy, qz))
+                    _rotate_inv = _jitter_inv@self._view_inv
+                    q = _rotate_inv@np.vstack((qx, qy, qz))
                     # prism with n_sides=4 is rotated 45 degrees relative to parallelepiped
                     #q = Rz(-45)@q
                     return model_info.Iqabc(q[0], q[1], q[2], *kernel_args)
@@ -203,7 +204,8 @@ class PyKernel(Kernel):
                 def _form():
                     dtheta, dphi = parameter_vector[-2:]
                     _jitter_inv = Ry(-dtheta)@Rz(-dphi)
-                    q = _jitter_inv@self._view_inv@np.vstack((qx, qy, qz))
+                    _rotate_inv = _jitter_inv@self._view_inv
+                    q = _rotate_inv@np.vstack((qx, qy, qz))
                     return model_info.Iqac(q[0], q[2], *kernel_args)
                 self._form = _form
             else:
@@ -282,6 +284,7 @@ class PyKernel(Kernel):
         nq = self.q_input.nq*self._nq_copies
 
         if self.info.Iqabc:
+            # Rx, Ry, Rz take degrees
             theta, phi, psi = parameters[-3:]
             self._view_inv = Rz(-psi)@Ry(-theta)@Rz(-phi)
             parameters[-3:] = 0. # Default is no jitter
