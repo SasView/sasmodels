@@ -998,9 +998,6 @@ def make_model_info(kernel_module):
     if control is not None:
         parameter_table[control].is_control = True
 
-    #if not info.compiled and parameter_table.has_2d:
-    #    raise ValueError("oriented python models not supported")
-
     # CRUFT: support old-style ER() for effective radius
     # radius_effective(mode, ...), if it is present, should be a callable
     # python function accepting the shape parameters, and have a corresponding
