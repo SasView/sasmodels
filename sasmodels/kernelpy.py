@@ -191,9 +191,10 @@ class PyKernel(Kernel):
             if model_info.Iqabc:
                 def _form():
                     dtheta, dphi, dpsi = parameter_vector[-3:]
-                    #jitter = Rx(dphi)@Ry(dtheta)@Rz(dpsi)
-                    jitter = Rz(-dpsi)@Ry(-dtheta)@Rx(-dphi)
-                    q = self._rotate@jitter@np.vstack((qx, qy, qz))
+                    #_jitter_inv = Rx(dphi)@Ry(dtheta)@Rz(dpsi)
+                    _jitter_inv = Rz(-dpsi)@Ry(-dtheta)@Rx(-dphi)
+                    #print(f"{dtheta=} _jitter_inv")
+                    q = _jitter_inv@self._view_inv@np.vstack((qx, qy, qz))
                     # prism with n_sides=4 is rotated 45 degrees relative to parallelepiped
                     #q = Rz(-45)@q
                     return model_info.Iqabc(q[0], q[1], q[2], *kernel_args)
@@ -201,8 +202,8 @@ class PyKernel(Kernel):
             elif model_info.Iqac:
                 def _form():
                     dtheta, dphi = parameter_vector[-2:]
-                    jitter = Ry(-dtheta)@Rz(-dphi)
-                    q = self._rotate@jitter@np.vstack((qx, qy, qz))
+                    _jitter_inv = Ry(-dtheta)@Rz(-dphi)
+                    q = _jitter_inv@self._view_inv@np.vstack((qx, qy, qz))
                     return model_info.Iqac(q[0], q[2], *kernel_args)
                 self._form = _form
             else:
@@ -282,34 +283,36 @@ class PyKernel(Kernel):
 
         if self.info.Iqabc:
             theta, phi, psi = parameters[-3:]
-            self._rotate = Rz(-psi)@Ry(-theta)@Rz(-phi)
+            self._view_inv = Rz(-psi)@Ry(-theta)@Rz(-phi)
             parameters[-3:] = 0. # Default is no jitter
 
-            _ = """
-            sin_theta, cos_theta = np.sin(np.degrees(theta)), np.cos(np.degrees(theta))
-            sin_phi, cos_phi = np.sin(np.degrees(phi)), np.cos(np.degrees(phi))
-            sin_psi, cos_psi = np.sin(np.degrees(psi)), np.cos(np.degrees(psi))
-            V11 = -sin_phi*sin_psi + cos_phi*cos_psi*cos_theta
-            V12 = sin_phi*cos_psi*cos_theta + sin_psi*cos_phi
-            V21 = -sin_phi*cos_psi - sin_psi*cos_phi*cos_theta
-            V22 = -sin_phi*sin_psi*cos_theta + cos_phi*cos_psi
-            V31 = sin_theta*cos_phi
-            V32 = sin_phi*sin_theta
-            rot = np.array([[V11, V12], [V21, V22], [V31, V32]])
-            if (rot != self._rotate[:2]).any():
-                print(rot)
-                print(self._rotate[:2])
-                raise Hell
-            """
+            if 0:
+                theta, phi, psi = np.radians(theta), np.radians(phi), np.radians(psi)
+                sin_theta, cos_theta = np.sin(theta), np.cos(theta)
+                sin_phi, cos_phi = np.sin(phi), np.cos(phi)
+                sin_psi, cos_psi = np.sin(psi), np.cos(psi)
+                V11 = -sin_phi*sin_psi + cos_phi*cos_psi*cos_theta
+                V12 = +sin_phi*cos_psi*cos_theta + sin_psi*cos_phi
+                V21 = -sin_phi*cos_psi - sin_psi*cos_phi*cos_theta
+                V22 = -sin_phi*sin_psi*cos_theta + cos_phi*cos_psi
+                V31 = +sin_theta*cos_phi
+                V32 = +sin_phi*sin_theta
+                rot = np.array([[V11, V21, V31], [V12, V22, V32]])
+                r = np.sum((rot - self._view_inv[:2])**2)
+                if r > 1e-14:
+                    print("angles", theta, phi, psi, r)
+                    print(rot)
+                    print(self._view_inv[:2])
+                    raise Hell
 
         elif self.info.Iqac:
             theta, phi = parameters[-2:]
-            self._rotate = Ry(-theta)@Rz(-phi)
+            self._view_inv = Ry(-theta)@Rz(-phi)
             parameters[-2:] = 0. # Default is no jitter
         else:
             # Unused. self._rotate is used within form, which
             # is specialized for the Iqabc and Iqac cases.
-            self._rotate = np.eye(3)
+            self._view_inv = np.eye(3)
 
         if call_details.num_active == 0:
             total = self._form()
