@@ -17,6 +17,8 @@ ratio :math:`t` (truncation) with :math:`t = 0` giving a sharp bipyramid and :ma
 
     Bifrustum geometry: examples with n=5, n=3 and n=15. 
 
+The c axis is along the symmetry axis of the bifrustum.
+The a axis is crossing a vertice of the polygon in the (a,b) plane.
 
 The scattering amplitude of a homogeneous particle is
 
