@@ -3,7 +3,7 @@ Calculates the scattering for a generalized Guinier/power law object. This is
 an empirical model that can be used to determine the size and dimensionality
 of scattering objects, including asymmetric objects such as rods or
 platelets, and shapes intermediate between spheres and rods or between rods
-and platelets, and overcomes some of the deficiencies of the (Beaucage)
+and platelets, and overcomes some of the deficiencies of the (Beaucage, 1995)
 :ref:`unified-power-rg` model (see Hammouda, 2010).
 
 Definition
@@ -18,12 +18,11 @@ The following functional form is used
     D / Q^m  & Q \geq Q_1
     \end{cases}
 
-This is based on the generalized Guinier law for such elongated objects
-(see the Glatter reference below). For 3D globular objects (such as spheres),
-$s = 0$ and one recovers the standard Guinier formula. For 2D symmetry
-(such as for rods) $s = 1$, and for 1D symmetry (such as for lamellae or
-platelets) $s = 2$. A dimensionality parameter ($3-s$) is thus defined,
-and is 3 for spherical objects, 2 for rods, and 1 for plates.
+This is based on the generalized Guinier law for such elongated objects (see
+Glatter, 1982). For globular objects (such as spheres), $s = 0$ and one recovers
+the standard Guinier formula. For rods-like objects, $s = 1$, and for lamellae
+or platelets, $s = 2$. A dimensionality parameter ($3-s$) is thus defined, and
+is 3 for spherical objects, 2 for rods, and 1 for plates.
 
 Enforcing the continuity of the Guinier and Porod functions and their
 derivatives yields
@@ -59,16 +58,21 @@ where the q vector is defined as
 Reference
 ---------
 
+#. G Beaucage, *Approximations Leading to a Unified Exponential/Power-Law Approach to Small-Angle Scattering*,
+   *J. Appl. Cryst.*, 28 (1995) 717-728 https://doi.org/10.1107/S0021889895005292
 #. B Hammouda, *A new Guinier-Porod model*,
-   *J. Appl. Cryst.*, (2010), 43, 716-719
+   *J. Appl. Cryst.*, (2010), 43, 716-719 https://doi.org/10.1107/S0021889810015773
 #. B Hammouda, *Analysis of the Beaucage model*,
-   *J. Appl. Cryst.*, (2010), 43, 1474-1478
+   *J. Appl. Cryst.*, (2010), 43, 1474-1478 https://doi.org/10.1107/S0021889810033856
+#. O Glatter, O Kratky, *Small Angle X-ray Scattering*, Academic Press, London, (1982),
+   Chapter 4 on Data Treatment, pages 155-156, ISBN 0-12-286280-5
+   https://doi.org/10.1002/actp.1985.010360520
 
 Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by:**
+* **Last Modified by:** Cristian Pilloni, **Date:** November 04, 2026
 * **Last Reviewed by:**
 """
 
