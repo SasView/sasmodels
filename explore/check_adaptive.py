@@ -330,7 +330,8 @@ def check(models=[]):
         fn()
         dt = toc()
         n = int(0.5 // dt)
-        for _ in range(n): fn()
+        for _ in range(n):
+            fn()
         return toc()/(n+1)
 
     @longlines

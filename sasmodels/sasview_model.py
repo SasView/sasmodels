@@ -497,17 +497,17 @@ class SasviewModel:
         # Look for dispersion parameters
         toks = name.split('.')
         if len(toks) == 2:
-            for item in self.dispersion.keys():
-                if item == toks[0]:
-                    for par in self.dispersion[item]:
+            for key in self.dispersion:
+                if key == toks[0]:
+                    for par in self.dispersion[key]:
                         if par == toks[1]:
-                            self.dispersion[item][par] = value
+                            self.dispersion[key][par] = value
                             return
         else:
             # Look for standard parameter
-            for item in self.params.keys():
-                if item == name:
-                    self.params[item] = value
+            for key in self.params:
+                if key == name:
+                    self.params[key] = value
                     return
 
         raise ValueError("Model does not contain parameter %s" % name)
@@ -523,16 +523,16 @@ class SasviewModel:
         # Look for dispersion parameters
         toks = name.split('.')
         if len(toks) == 2:
-            for item in self.dispersion.keys():
-                if item == toks[0]:
-                    for par in self.dispersion[item]:
+            for key in self.dispersion:
+                if key == toks[0]:
+                    for par in self.dispersion[key]:
                         if par == toks[1]:
-                            return self.dispersion[item][par]
+                            return self.dispersion[key][par]
         else:
             # Look for standard parameter
-            for item in self.params.keys():
-                if item == name:
-                    return self.params[item]
+            for key in self.params:
+                if key == name:
+                    return self.params[key]
 
         raise ValueError("Model does not contain parameter %s" % name)
 
@@ -553,7 +553,7 @@ class SasviewModel:
         """
         # TODO: fix test so that parameter order doesn't matter
         ret = ['%s.%s' % (p_name, ext)
-               for p_name in self.dispersion.keys()
+               for p_name in self.dispersion
                for ext in ('npts', 'nsigmas', 'width')]
         #print(ret)
         return ret

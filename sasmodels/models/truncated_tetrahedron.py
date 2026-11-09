@@ -98,22 +98,22 @@ The volume of the truncated tetrahedron is given by:
     V_{T_{truncated}}  = V_{T}  (1 - 4t^3)
 
 :math:`t` represents the truncation level. At the maximum value :math:`t=1/2`,
-the corresponding shape is a regular octahedron. At the minimum value :math:`t=0`, 
+the corresponding shape is a regular octahedron. At the minimum value :math:`t=0`,
 the shape is a regular tetrahedron. At :math:`t=1/3`, the corresponding shape is the
 Friauf polyhedron, in which all edges are equal.
 The truncated tetrahedron form factor is also obtained by subtracting the four
-smaller tetrahedrons at its vertices. It is expressed as:    
+smaller tetrahedrons at its vertices. It is expressed as:
 
 .. math::
 
-    F_{T_{\text{truncated}}} (\mathbf{q},t, \mathbf{v_1},\mathbf{v_2},\mathbf{v_3}) 
+    F_{T_{\text{truncated}}} (\mathbf{q},t, \mathbf{v_1},\mathbf{v_2},\mathbf{v_3})
     = F_{T} (\mathbf{q},\mathbf{v_1},\mathbf{v_2},\mathbf{v_3})
     - F_{T} (\mathbf{q},t\mathbf{v_1},t\mathbf{v_2},t\mathbf{v_3})
     \left(1 + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_1}}
             + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_2}}
             + e^{i(1-t)\mathbf{q} \cdot \mathbf{v_3}}\right)
 
-where the phase terms correspond to four translations inside the shape. 
+where the phase terms correspond to four translations inside the shape.
 
 Singularities: the expression of the regular tetreahedron form factor presents numerical singularities in four distinct cases, each handled analytically.
 
