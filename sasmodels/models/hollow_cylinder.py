@@ -54,6 +54,9 @@ To provide easy access to the orientation of the core-shell cylinder, we define
 the axis of the cylinder using two angles $\theta$ and $\phi$
 (see :ref:`cylinder model <cylinder-angle-definition>`).
 
+**NB**: As described for the :ref:`vesicle` model, with a structure factor, $S(q)$ automatically uses the volume fraction enclosed by the shape and *volfraction* is the volume fraction of shell material. 
+
+
 References
 ----------
 
@@ -65,8 +68,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** September 06, 2018
-   (corrected VR calculation)
+* **Last Modified by:** Oliver Hammond **Date:** Nov 3, 2026
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
 

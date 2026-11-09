@@ -49,8 +49,13 @@ orientation of the *q* vector which is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-NB: The outer most radius (= *radius* + *thickness*) is used as the effective
-radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
+
+NB: When *P(Q)* \* *S(Q)* is applied, *S(Q)* uses the outermost radius
+(= *radius* + *thickness*) as the effective radius. It also automatically uses
+the volume fraction enclosed by the vesicle, rather
+than the volume fraction of shell material, *volfraction*. For 'thin' shells this value can be significantly larger.
+
+
 
 
 References
@@ -63,7 +68,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** March 20, 2016
+* **Last Modified by:** Oliver Hammond **Date:** Nov 3, 2026
 * **Last Reviewed by:** Paul Butler **Date:** September 7, 2018
 """
 
@@ -79,7 +84,7 @@ description = """
         sld: the shell SLD
         sld_solvent: the solvent (and core) SLD
         background: incoherent background
-        volfraction: shell volume fraction
+        volfraction: shell volume fraction (S(Q) uses enclosed volume fraction)
         scale : scale factor = 1 if on absolute scale"""
 category = "shape:sphere"
 
@@ -89,7 +94,7 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
               ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "sld",
                "solvent scattering length density"],
               ["volfraction", "", 0.05, [0, 1.0], "",
-               "volume fraction of shell"],
+               "volume fraction of shell (S(Q) uses enclosed volume fraction)"],
               ["radius", "Ang", 100, [0, inf], "volume",
                "vesicle core radius"],
               ["thickness", "Ang", 30, [0, inf], "volume",
