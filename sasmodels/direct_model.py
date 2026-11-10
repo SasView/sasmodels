@@ -35,6 +35,7 @@ from . import (
 from .data import Data
 from .details import make_kernel_args
 from .kernel import KernelModel
+from .modelinfo import PD_N, PD_NSIGMA, PD_TYPE
 from .product import RADIUS_MODE_ID
 
 
@@ -135,10 +136,10 @@ def _pop_par_weights(parameter, values, active=True):
     """
     value = float(values.pop(parameter.name, parameter.default))
     if parameter.polydisperse:
-        npts = values.pop(parameter.name+'_pd_n', 0)
+        npts = values.pop(parameter.name+'_pd_n', PD_N)
         width = values.pop(parameter.name+'_pd', 0.0)
-        nsigma = values.pop(parameter.name+'_pd_nsigma', 3.0)
-        distribution = values.pop(parameter.name+'_pd_type', 'gaussian')
+        nsigma = values.pop(parameter.name+'_pd_nsigma', PD_NSIGMA)
+        distribution = values.pop(parameter.name+'_pd_type', PD_TYPE)
         relative = parameter.relative_pd
         if npts == 0 or width == 0.0 or not active:
             # Note: orientation parameters have the viewing angle as the parameter

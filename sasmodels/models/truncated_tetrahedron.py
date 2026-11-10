@@ -252,6 +252,12 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "Circumradius of the full tetrahedron"],
               ["truncation", "", 0, [0, 0.5], "volume",
                "truncation, 0 for full tetrahedron, 0.5 for octahedron"],
+              ["theta", "degrees", 0, [-180, 180], "orientation",
+               "c axis to beam angle"],
+              ["phi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about c axis"],
                ]
 
 ### Functions for geometrical calculations:
@@ -493,7 +499,7 @@ def Fqabc(qa, qb, qc, radius, truncation):
     return scattering_amplitude
 
 
-def Iqabc(qa, qb, qc, radius, truncation): # proportionnal to the volume**2
+def _Iqabc(qa, qb, qc, radius, truncation): # proportionnal to the volume**2
     """
     Computes the scattered intensity of the truncated tetrahedron at the specific
     three dimensional q components from the form factor amplitude Fqabc.
@@ -514,6 +520,29 @@ def Iqabc(qa, qb, qc, radius, truncation): # proportionnal to the volume**2
     A = Fqabc(qa, qb, qc, radius, truncation)
     intensity = (np.abs(A))**2  # intensity is proportional to the volume
     return intensity
+
+def Iqabc(qa, qb, qc, sld, sld_solvent, radius, truncation): # proportionnal to the volume**2
+    """
+    Computes the scattered intensity of the truncated tetrahedron at the specific
+    three dimensional q components from the form factor amplitude Fqabc.
+    Parameters
+    ----------
+    qa, qb, qc : float or array
+        Components of the scattering vector q
+    sld, sld_solvent :
+        Contrast of scattering length density
+    radius : float
+        Circumradius of the full tetrahedron.
+    truncation : float
+        Truncation parameter.
+    Returns
+    -------
+    Iqabc : float or array
+        Scattered intensity of the tetrahedron at the specific three
+        dimensional q components.
+    """
+    intensity = _Iqabc(qa, qb, qc, radius, truncation)  # shape (nq, npoints)
+    return intensity * ((sld - sld_solvent)**2 * 10**-4)
 
 def Iq(q, sld, sld_solvent, radius:float, truncation:float, npoints_fibonacci:int= 500):
     """
@@ -548,7 +577,7 @@ def Iq(q, sld, sld_solvent, radius:float, truncation:float, npoints_fibonacci:in
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
     # Compute intensity
-    intensity = Iqabc(qa, qb, qc, radius, truncation)  # shape (nq, npoints)
+    intensity = _Iqabc(qa, qb, qc, radius, truncation)  # shape (nq, npoints)
     # Uniform average over the sphere
     integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4

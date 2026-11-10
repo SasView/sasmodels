@@ -20,6 +20,7 @@ except ImportError:
         return x ** (1.0/3.0)
 
 from .generate import F64
+from .jitter import Rx, Ry, Rz
 from .kernel import Kernel, KernelModel
 
 # pylint: disable=unused-import
@@ -77,14 +78,20 @@ class PyInput:
     Call :meth:`release` when complete.  Even if not called directly, the
     buffer will be released when the data object is freed.
     """
-    def __init__(self, q_vectors, dtype):
+    def __init__(self, q_vectors, dtype, wavelength=None):
         self.nq = q_vectors[0].size
         self.dtype = dtype
-        self.is_2d = (len(q_vectors) == 2)
+        self.is_2d = 2 <= len(q_vectors) <= 3
         if self.is_2d:
+            qx, qy = q_vectors[:2]
             self.q = np.empty((self.nq, 2), dtype=dtype)
-            self.q[:, 0] = q_vectors[0]
-            self.q[:, 1] = q_vectors[1]
+            self.q[:, 0] = qx
+            self.q[:, 1] = qy
+            # TODO: should be putting this in self.q
+            if len(q_vectors) == 3:
+                self.qz = q_vectors[3]
+            else:
+                self.qz = np.zeros_like(self.q[:, 0])
         else:
             self.q = np.empty(self.nq, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
@@ -140,8 +147,14 @@ class PyKernel(Kernel):
         offset = 0
         kernel_args, volume_args = [], []
         for p in partable.kernel_parameters:
+            if p.type == "orientation":
+                continue
             if p.length == 1:
                 # Scalar values are length 1 vectors with no dimensions.
+                # The following expression captures the location of the
+                # parameter in the vector so that it can be updated according
+                # to the index into the polydispersity mesh within the _loops
+                # method below.
                 v = parameter_vector[offset:offset+1].reshape(())
             else:
                 # Vector values are simple views.
@@ -152,39 +165,68 @@ class PyKernel(Kernel):
             if p in volume_parameters:
                 volume_args.append(v)
 
-        # Hold on to the parameter vector so we can use it to call kernel later.
+        # Hold on to the parameter vector so it doesn't get collected
         # This may also be required to preserve the views into the vector.
         self._parameter_vector = parameter_vector
+        # Similarly for the orientation matrix
 
         # Generate a closure which calls the kernel with the views into the
         # parameter array.
         if q_input.is_2d:
-            form = model_info.Iqxy
-            qx, qy = q_input.q[:, 0], q_input.q[:, 1]
-            self._form = lambda: form(qx, qy, *kernel_args)
+            qx, qy, qz = q_input.q[:, 0], q_input.q[:, 1], q_input.qz
+            assert (qz == 0.).all()
+            if model_info.Iqabc:
+                def _form():
+                    # Rx, Ry, Rz take degrees
+                    dtheta, dphi, dpsi = parameter_vector[-3:]
+                    #_jitter_inv = Rx(dphi)@Ry(dtheta)@Rz(dpsi)
+                    _jitter_inv = Rz(-dpsi)@Ry(-dtheta)@Rx(-dphi)
+                    _rotate_inv = _jitter_inv@self._view_inv
+                    q = _rotate_inv@np.vstack((qx, qy, qz))
+                    # prism with n_sides=4 is rotated 45 degrees relative to parallelepiped
+                    #q = Rz(-45)@q
+                    return model_info.Iqabc(q[0], q[1], q[2], *kernel_args)
+                self._form = _form
+            elif model_info.Iqac:
+                def _form():
+                    dtheta, dphi = parameter_vector[-2:]
+                    _jitter_inv = Ry(-dtheta)@Rz(-dphi)
+                    _rotate_inv = _jitter_inv@self._view_inv
+                    q = _rotate_inv@np.vstack((qx, qy, qz))
+                    return model_info.Iqac(q[0], q[2], *kernel_args)
+                self._form = _form
+            else:
+                form = model_info.Iqxy
+                self._form = lambda: form(qx, qy, *kernel_args)
             self._nq_copies = 1
         else:
+            end = -3 if model_info.Iqabc else -2 if model_info.Iqac else len(parameter_vector)
             q = q_input.q
             if model_info.have_Fq:
-                form = model_info.Fq
-                self._form = lambda: _pack_fq(*form(q, *kernel_args))
+                def _form():
+                    return _pack_fq(*model_info.Fq(q, *kernel_args))
                 self._nq_copies = 2
             else:
                 form = model_info.Iq
-                self._form = lambda: form(q, *kernel_args)
+                def _form():
+                    return model_info.Iq(q, *kernel_args)
+                self._form = _form
                 self._nq_copies = 1
+            self._form = _form
 
         # Generate a closure which calls the form_volume if it exists.
         self._volume_args = volume_args
         volume = model_info.form_volume
         shell = model_info.shell_volume
         radius = model_info.radius_effective
-        self._volume = ((lambda: (shell(*volume_args), volume(*volume_args))) if shell and volume
-                        else (lambda: [volume(*volume_args)]*2) if volume
-                        else (lambda: (1.0, 1.0)))
-        self._radius = ((lambda mode: radius(mode, *volume_args)) if radius
-                        else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
-                        else (lambda mode: 1.0))
+        self._volume = (
+            (lambda: (shell(*volume_args), volume(*volume_args))) if shell and volume
+            else (lambda: [volume(*volume_args)]*2) if volume
+            else (lambda: (1.0, 1.0)))
+        self._radius = (
+            (lambda mode: radius(mode, *volume_args)) if radius
+            else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
+            else (lambda mode: 1.0))
 
     def _call_kernel(self, call_details, values, cutoff, magnetic, radius_effective_mode):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> None
@@ -192,11 +234,139 @@ class PyKernel(Kernel):
             raise NotImplementedError("Magnetism not implemented for pure python models")
         #print("Calling python kernel")
         #call_details.show(values)
-        radius = ((lambda: 0.0) if radius_effective_mode == 0
-                  else (lambda: self._radius(radius_effective_mode)))
-        self.result = _loops(
-            self._parameter_vector, self._form, self._volume, radius,
-            self.q_input.nq*self._nq_copies, call_details, values, cutoff)
+        form_radius = (
+            (lambda: 0.0)
+            if radius_effective_mode == 0
+            else (lambda: self._radius(radius_effective_mode))
+        )
+        self.result = self._loops(form_radius, call_details, values, cutoff)
+
+    def _loops(
+        self,
+        form_radius: Callable[[], float],
+        call_details: CallDetails,
+        values: np.ndarray,
+        cutoff: float
+    ) -> None:
+        ################################################################
+        #                                                              #
+        #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
+        #   !!                                                    !!   #
+        #   !!  KEEP THIS CODE CONSISTENT WITH KERNEL_TEMPLATE.C  !!   #
+        #   !!                                                    !!   #
+        #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
+        #                                                              #
+        ################################################################
+
+        # WARNING: Trickery ahead
+        # The parameters[] vector is embedded in the closures for form(),
+        # form_volume() and form_radius().  We set the initial vector from
+        # the values for the model parameters. As we loop through the polydispesity
+        # mesh, we update the components with the polydispersity values before
+        # calling the respective functions.
+        parameters = self._parameter_vector
+        n_pars = len(parameters)
+        # Skip scale and background
+        parameters[:] = values[2:n_pars+2]
+        nq = self.q_input.nq*self._nq_copies
+
+        if self.info.Iqabc:
+            # The last three parameters contain the orienation in degrees with respect
+            # to the beam (the view). During the polydispersity loop these are
+            # replaced by points in the angular dispersion mesh (the jitter), defaulting
+            # to zero if there is no angular dispersion on that parameter.
+            theta, phi, psi = parameters[-3:]
+            self._view_inv = Rz(-psi)@Ry(-theta)@Rz(-phi)
+            parameters[-3:] = 0. # Default is no jitter
+
+            if 0:
+                theta, phi, psi = np.radians(theta), np.radians(phi), np.radians(psi)
+                sin_theta, cos_theta = np.sin(theta), np.cos(theta)
+                sin_phi, cos_phi = np.sin(phi), np.cos(phi)
+                sin_psi, cos_psi = np.sin(psi), np.cos(psi)
+                V11 = -sin_phi*sin_psi + cos_phi*cos_psi*cos_theta
+                V12 = +sin_phi*cos_psi*cos_theta + sin_psi*cos_phi
+                V21 = -sin_phi*cos_psi - sin_psi*cos_phi*cos_theta
+                V22 = -sin_phi*sin_psi*cos_theta + cos_phi*cos_psi
+                V31 = +sin_theta*cos_phi
+                V32 = +sin_phi*sin_theta
+                rot = np.array([[V11, V21, V31], [V12, V22, V32]])
+                r = np.sum((rot - self._view_inv[:2])**2)
+                if r > 1e-14:
+                    print("angles", theta, phi, psi, r)
+                    print(rot)
+                    print(self._view_inv[:2])
+                    raise Hell
+
+        elif self.info.Iqac:
+            # Like Iqabc, the last two parameters (theta, phi) start with
+            # the view but switch to the jitter within the polydispersity loop.
+            theta, phi = parameters[-2:]
+            self._view_inv = Ry(-theta)@Rz(-phi)
+            parameters[-2:] = 0. # Default is no jitter
+        else:
+            # Unused. self._rotate is used within form, which
+            # is specialized for the Iqabc and Iqac cases.
+            self._view_inv = np.eye(3)
+
+        if call_details.num_active == 0:
+            total = self._form()
+            weight_norm = 1.0
+            weighted_shell, weighted_form = self._volume()
+            weighted_radius = form_radius()
+
+        else:
+            pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
+            pd_weight = values[2+n_pars + call_details.num_weights:]
+
+            weight_norm = 0.0
+            weighted_form = 0.0
+            weighted_shell = 0.0
+            weighted_radius = 0.0
+            partial_weight = np.nan
+            weight = np.nan
+
+            p0_par = call_details.pd_par[0]
+            p0_length = call_details.pd_length[0]
+            p0_index = p0_length
+            p0_offset = call_details.pd_offset[0]
+
+            pd_par = call_details.pd_par[:call_details.num_active]
+            pd_offset = call_details.pd_offset[:call_details.num_active]
+            pd_stride = call_details.pd_stride[:call_details.num_active]
+            pd_length = call_details.pd_length[:call_details.num_active]
+
+            total = np.zeros(nq, 'd')
+            for loop_index in range(call_details.num_eval):
+                # Update polydispersity parameter values.
+                if p0_index == p0_length:
+                    pd_index = (loop_index//pd_stride)%pd_length
+                    parameters[pd_par] = pd_value[pd_offset+pd_index]
+                    partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
+                    p0_index = loop_index%p0_length
+
+                weight = partial_weight * pd_weight[p0_offset + p0_index]
+                parameters[p0_par] = pd_value[p0_offset + p0_index]
+                p0_index += 1
+                if weight > cutoff:
+                    # Call the scattering function.
+                    # Assume that NaNs are only generated if the parameters are bad;
+                    # exclude all q for that NaN.  Even better would be to have an
+                    # INVALID expression like the C models, but that is expensive.
+                    Iq = np.asarray(self._form(), 'd')
+                    if np.isnan(Iq).any():
+                        continue
+
+                    # Update value and norm.
+                    total += weight * Iq
+                    weight_norm += weight
+                    unweighted_shell, unweighted_form = self._volume()
+                    weighted_shell += weight * unweighted_shell
+                    weighted_form += weight * unweighted_form
+                    weighted_radius += weight * form_radius()
+
+        result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
+        return result
 
     def release(self):
         # type: () -> None
@@ -206,93 +376,13 @@ class PyKernel(Kernel):
         self.q_input.release()
         self.q_input = None
 
+
 def _pack_fq(fq, fqsq):
     result = np.empty(2*fq.shape[0], dtype=fq.dtype)
     # PAK: For reasons unknown, the original author (me) decided to pack the
     # values into the returned array as (f^2, f) pairs.
     result[0::2] = fqsq
     result[1::2] = fq
-    return result
-
-def _loops(parameters, form, form_volume, form_radius, nq, call_details,
-           values, cutoff):
-    # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], Callable[[], float], int, CallDetails, np.ndarray, float) -> None
-    ################################################################
-    #                                                              #
-    #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
-    #   !!                                                    !!   #
-    #   !!  KEEP THIS CODE CONSISTENT WITH KERNEL_TEMPLATE.C  !!   #
-    #   !!                                                    !!   #
-    #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
-    #                                                              #
-    ################################################################
-
-    # WARNING: Trickery ahead
-    # The parameters[] vector is embedded in the closures for form(),
-    # form_volume() and form_radius().  We set the initial vector from
-    # the values for the model parameters. As we loop through the polydispesity
-    # mesh, we update the components with the polydispersity values before
-    # calling the respective functions.
-    n_pars = len(parameters)
-    parameters[:] = values[2:n_pars+2]
-
-    if call_details.num_active == 0:
-        total = form()
-        weight_norm = 1.0
-        weighted_shell, weighted_form = form_volume()
-        weighted_radius = form_radius()
-
-    else:
-        pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
-        pd_weight = values[2+n_pars + call_details.num_weights:]
-
-        weight_norm = 0.0
-        weighted_form = 0.0
-        weighted_shell = 0.0
-        weighted_radius = 0.0
-        partial_weight = np.nan
-        weight = np.nan
-
-        p0_par = call_details.pd_par[0]
-        p0_length = call_details.pd_length[0]
-        p0_index = p0_length
-        p0_offset = call_details.pd_offset[0]
-
-        pd_par = call_details.pd_par[:call_details.num_active]
-        pd_offset = call_details.pd_offset[:call_details.num_active]
-        pd_stride = call_details.pd_stride[:call_details.num_active]
-        pd_length = call_details.pd_length[:call_details.num_active]
-
-        total = np.zeros(nq, 'd')
-        for loop_index in range(call_details.num_eval):
-            # Update polydispersity parameter values.
-            if p0_index == p0_length:
-                pd_index = (loop_index//pd_stride)%pd_length
-                parameters[pd_par] = pd_value[pd_offset+pd_index]
-                partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
-                p0_index = loop_index%p0_length
-
-            weight = partial_weight * pd_weight[p0_offset + p0_index]
-            parameters[p0_par] = pd_value[p0_offset + p0_index]
-            p0_index += 1
-            if weight > cutoff:
-                # Call the scattering function.
-                # Assume that NaNs are only generated if the parameters are bad;
-                # exclude all q for that NaN.  Even better would be to have an
-                # INVALID expression like the C models, but that is expensive.
-                Iq = np.asarray(form(), 'd')
-                if np.isnan(Iq).any():
-                    continue
-
-                # Update value and norm.
-                total += weight * Iq
-                weight_norm += weight
-                unweighted_shell, unweighted_form = form_volume()
-                weighted_shell += weight * unweighted_shell
-                weighted_form += weight * unweighted_form
-                weighted_radius += weight * form_radius()
-
-    result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
     return result
 
 

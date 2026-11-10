@@ -37,6 +37,11 @@ logger = logging.getLogger(__name__)
 # If MAX_PD changes, need to change the loop macros in kernel_iq.c
 MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
 
+# Default pd_n/pd_nsigma
+PD_N = 35
+PD_NSIGMA = 3.0
+PD_TYPE = "gaussian"
+
 # assumptions about common parameters exist throughout the code, such as:
 # (1) kernel functions Iq, Iqxy, Iqac, Iqabc, form_volume, ... don't see them
 # (2) kernel drivers assume scale is par[0] and background is par[1]
@@ -992,9 +997,6 @@ def make_model_info(kernel_module):
     control = getattr(kernel_module, 'control', None)
     if control is not None:
         parameter_table[control].is_control = True
-
-    if not info.compiled and parameter_table.has_2d:
-        raise ValueError("oriented python models not supported")
 
     # CRUFT: support old-style ER() for effective radius
     # radius_effective(mode, ...), if it is present, should be a callable

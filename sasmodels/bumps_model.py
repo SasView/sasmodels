@@ -29,6 +29,7 @@ except ImportError:
 
 from .data import plot_theory
 from .direct_model import DataMixin
+from .modelinfo import PD_N, PD_NSIGMA, PD_TYPE
 
 # pylint: disable=unused-import
 try:
@@ -94,13 +95,13 @@ def create_parameters(model_info, **kwargs):
         addpar(p.name, p.default, p.limits)
         if p.polydisperse:
             addpar(f"{p.name}_pd", 0., limits=(0.0, np.inf))
-            addpar(f"{p.name}_pd_n", 35, limits=(0, 1000))
-            addpar(f"{p.name}_pd_nsigma", 3., limits=(0.0, 10.0))
+            addpar(f"{p.name}_pd_n", PD_N, limits=(0, 1000))
+            addpar(f"{p.name}_pd_nsigma", PD_NSIGMA, limits=(0.0, 10.0))
             name = p.name + '_pd_type'
             # If angular we should be defaulting to a cyclic gaussian, but this is not
             # yet in sasmodels. There is an implementation in the example/weights directory.
             # When we do add it be sure to update orientation.rst describing how to use it.
-            pd_types[name] = str(kwargs.pop(name, 'gaussian'))
+            pd_types[name] = str(kwargs.pop(name, PD_TYPE))
 
     if kwargs:  # args not corresponding to parameters
         raise TypeError("unexpected parameters: %s"

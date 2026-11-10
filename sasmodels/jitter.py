@@ -580,7 +580,7 @@ def Rx(angle):
     rot = [[1, 0, 0],
            [0, +cos(angle), -sin(angle)],
            [0, +sin(angle), +cos(angle)]]
-    return np.matrix(rot)
+    return np.asarray(rot)
 
 def Ry(angle):
     """Construct a matrix to rotate points about *y* by *angle* degrees."""
@@ -588,7 +588,7 @@ def Ry(angle):
     rot = [[+cos(angle), 0, +sin(angle)],
            [0, 1, 0],
            [-sin(angle), 0, +cos(angle)]]
-    return np.matrix(rot)
+    return np.asarray(rot)
 
 def Rz(angle):
     """Construct a matrix to rotate points about *z* by *angle* degrees."""
@@ -596,7 +596,7 @@ def Rz(angle):
     rot = [[+cos(angle), -sin(angle), 0],
            [+sin(angle), +cos(angle), 0],
            [0, 0, 1]]
-    return np.matrix(rot)
+    return np.asarray(rot)
 
 def transform_xyz(view, jitter, x, y, z):
     """
@@ -604,7 +604,7 @@ def transform_xyz(view, jitter, x, y, z):
     """
     x, y, z = [np.asarray(v) for v in (x, y, z)]
     shape = x.shape
-    points = np.matrix([x.flatten(), y.flatten(), z.flatten()])
+    points = np.asarray([x.flatten(), y.flatten(), z.flatten()])
     points = apply_jitter(jitter, points)
     points = orient_relative_to_beam(view, points)
     x, y, z = [np.array(v).reshape(shape) for v in points]
@@ -669,7 +669,7 @@ def orient_relative_to_beam_quaternion(view, points):
     #q = Quaternion.from_angle_axis(theta, x) * q
     #q = Quaternion.from_angle_axis(phi, y) * q
     #q = Quaternion.from_angle_axis(psi, z) * q
-    #print("axes psi", q.rot(np.matrix([x, y, z]).T))
+    #print("axes psi", q.rot(np.asarray([x, y, z]).T))
     return q.rot(points)
 #orient_relative_to_beam = orient_relative_to_beam_quaternion
 

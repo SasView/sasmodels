@@ -169,7 +169,13 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
               ["radius_average", "Ang", 500, [0., inf], "volume",
                "Average radius"],
               ["length", "Ang", 5000, [0., inf], "volume",
-               "Length"]
+               "Length"],
+              ["theta", "degrees", 0, [-180, 180], "orientation",
+               "c axis to beam angle"],
+              ["phi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about c axis"],
                ]
 
 ### Functions for geometrical calculations: volume, surface of the cross section, average radius, edge length etc.
@@ -367,7 +373,7 @@ def Fqabc(qa, qb, qc, n_sides, radius_average, length): # Form factor in 3D of t
     A = parallel_factor_value * perpendicular_factor_value
     return A
 
-def Iqabc(qa,qb,qc,n_sides,radius_average, length): # proportionnal to the volume**2
+def _Iqabc(qa,qb,qc,n_sides,radius_average, length): # proportionnal to the volume**2
     """
     Calls the function that computes the edge length and the scattered intensity.
     Parameters
@@ -389,6 +395,29 @@ def Iqabc(qa,qb,qc,n_sides,radius_average, length): # proportionnal to the volum
     A = Fqabc(qa, qb, qc, n_sides, radius_average, length)
     intensity = (np.abs(A))**2  # intensity is proportional to volume
     return intensity
+
+def Iqabc(qa, qb, qc, sld, sld_solvent, n_sides, radius_average, length):
+    """
+    Calls the function that computes the edge length and the scattered intensity.
+    Parameters
+    ----------
+    qa, qb, qc :  np.ndarray shape (N,)
+        components of the scattering vector q
+    sld, sld_solvent :
+        Contrast of scattering length density
+    n_sides : int
+        Number of sides of the regular polygon cross-section.
+    radius_average : float
+        Average radius of the regular polygon cross-section.
+    length : float
+        Length of the nanoprism.
+    Returns
+    -------
+    Iqabc : np.ndarray of float, shape (N,)
+        Scattered intensity of the nanoprism at the specific three dimensional q components.
+    """
+    intensity = _Iqabc(qa, qb, qc, n_sides, radius_average, length).reshape(qa.shape)
+    return (sld - sld_solvent)**2 * 10**-4 * intensity
 
 def Iq(q, sld, sld_solvent, n_sides:int, radius_average:float, length:float, npoints_fibonacci:int= 500):
     """
@@ -418,7 +447,7 @@ def Iq(q, sld, sld_solvent, n_sides:int, radius_average:float, length:float, npo
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
     # # Compute intensity
-    intensity = Iqabc(qa.ravel(), qb.ravel(), qc.ravel(), n_sides, radius_average, length).reshape(qa.shape)
+    intensity = _Iqabc(qa.ravel(), qb.ravel(), qc.ravel(), n_sides, radius_average, length).reshape(qa.shape)
     # Uniform average over the sphere
     integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4

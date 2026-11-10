@@ -163,7 +163,6 @@ def random():
     )
     return pars
 
-
 # Test 1-D and 2-D models
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 theta, phi = 80.1534480601659, 10.1510817110481  # (10, 10) in sasview 3.x
@@ -195,14 +194,19 @@ tests = [
       "radius_pd": 0.2, "radius_pd_n": 15, "length_pd": 0.1,
       "structure_factor_mode": 0,  # normal decoupling approx
       "radius_effective_mode": 1,  # Reff "excluded volume"
-     }, [0.01, 0.05, 0.2], [87.50350037, 63.95202427, 0.27889988]
+     },
+     [0.01, 0.05, 0.2],
+     [87.24724230561272, 64.13160420356327, 0.2767562850617265],
      ],
     [{"@S": "hardsphere",
       "scale": 5., "background": 0., "volfraction": 0.2,
       "radius_pd": 0.2, "radius_pd_n": 15, "length_pd": 0.1,
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 1,  # Reff "excluded volume"
-     }, [0.01, 0.05, 0.2], [132.2101165, 59.89948174, 0.28048784]
+     },
+     [0.01, 0.05, 0.2],
+     [133.64381121064, 59.98053655588723, 0.2783893128312404]
+
      ],
     #
     [{'theta': theta, 'phi': phi}, (qx, qy), 0.03514647218513852],
