@@ -40,7 +40,7 @@ from numpy import cos, ma, pi, sin, sqrt
 
 # pylint: disable=unused-import
 try:
-    from typing import Callable, Optional, Union
+    from typing import Any, Callable, Optional, Union
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
     OptLimits = Optional[tuple[float, float]]
@@ -64,9 +64,8 @@ def deduce_qz(qx, qy, wavelength):
 
     return qz
 
-# TODO: deprecate in favour of sasdata, once it is available
-def load_data(filename, index=0, wavelength=None):
-    # type: (str, int) -> Data
+# TODO: set type for sasdata loader return (one or many)
+def load_data(filename: str, index: int = 0, wavelength: float|None = None) -> Any:
     """
     Load data using a sasview loader.
     """
@@ -394,9 +393,12 @@ def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     data.filename = "fake data"
     return data
 
-
-def empty_data2D(qx, qy=None, resolution=0.0, wavelength=None):
-    # type: (np.ndarray, OptArray, float) -> Data2D
+def empty_data2D(
+    qx: np.ndarray,
+    qy: np.ndarray|None = None,
+    resolution: float = 0.0,
+    wavength: float|None = None
+) -> Data2D:
     """
     Create empty 2D data using the given mesh.
 
