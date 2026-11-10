@@ -1,5 +1,5 @@
 r"""
-This model provides the form factor for a right prism whose cross-section is a regular polygon. 
+This model provides the form factor for a right prism whose cross-section is a regular polygon.
 Orientation averaging is done by using the Fibonacci quadrature.
 This quadrature provides a quasi-uniform distribution of points on the unit sphere
 using the golden ratio. The number of points to generate on the unit sphere is set to 500 points, it usually provides
@@ -8,7 +8,7 @@ a good balance between accuracy and computational efficiency.
 Definition
 ----------
 
-We consider particles having the shape of a right prism of length *L* (parameter called *length* in the model) and a cross section made of 
+We consider particles having the shape of a right prism of length *L* (parameter called *length* in the model) and a cross section made of
 a regular polygon with a certain number of sides *n* (parameter called *n_sides* in the model) as illustrated in the figure below.
 
 .. figure:: img/nanoprisms_geometry.jpg
@@ -82,6 +82,8 @@ of circumradius :math:`R` can be expressed as
 In the sum over all edges, :math:`\mathbf{M}_{j}` is the vector joining the center of the polygon to the middle of the jth edge and
 :math:`\mathbf{E}_{j}` is the half-edge vector.
 
+Note that the a axis of a prism is crossing a vertice of the polygon in the (a,b) plane.
+
 The scattered intensity for one prism is given by:
 
 .. math::
@@ -100,7 +102,7 @@ Instead of rotating the shape through all the possible orientations,
 it is equivalent to integrate the 3D scattering vector over a sphere of radius q with the shape in its reference orientation.
 
 The sphere is sampled using Fibonacci quadrature to provide a quasi-uniform distribution of points on the unit sphere.
-The distribution of the N points is computed using the golden ratio (see fibonacci.py). 
+The distribution of the N points is computed using the golden ratio (see fibonacci.py).
 Each point of the quadrature on the unit sphere corresponds to a vector :math:`\mathbf{u}_{j}`.
 In the sum, all weights :math:`w_j` are taken identical and equal to :math:`\frac{1}{N}`.
 
@@ -172,10 +174,8 @@ parameters = [["sld", "1e-6/Ang^2", 126., [-inf, inf], "sld",
                "Length"],
               ["theta", "degrees", 0, [-180, 180], "orientation",
                "c axis to beam angle"],
-              ["phi", "degrees", 0, [-360, 360], "orientation",
-               "rotation about beam"],
-              ["psi", "degrees", 0, [-360, 360], "orientation",
-               "rotation about c axis"],
+              ["phi", "degrees", 0, [-360, 360], "orientation", "rotation about beam"],
+              ["psi", "degrees", 0, [-360, 360], "orientation", "rotation about c axis"],
                ]
 
 ### Functions for geometrical calculations: volume, surface of the cross section, average radius, edge length etc.
@@ -310,7 +310,7 @@ def parallel_factor(vertices:np.ndarray, q:np.ndarray, c:float): # gives the are
     Computes the parallel form factor of a 2D shape defined by its vertices at a specific in-plane scattering vector q.
     Parameters
     ----------
-    vertices : np.ndarray shape (2, n) 
+    vertices : np.ndarray shape (2, n)
         list of the vertices of the 2D-shape each listed as a list of the
         2D coordinates of the shape in the plane
     q : np.ndarray shape (N, 2)
@@ -364,6 +364,10 @@ def Fqabc(qa, qb, qc, n_sides, radius_average, length): # Form factor in 3D of t
     Fqabc : np.ndarray of complex, shape (N,)
         Form factor amplitude of the nanoprism at the specific three dimensional q.
     """
+    # New: fix the n_sides to be an integer and accept q with good shape
+    n_sides = int(n_sides)                       # sasmodels passes floats
+    shape = np.shape(qa)                         # accept q of any shape, e.g. (nq, npoints)
+    qa, qb, qc = np.ravel(qa), np.ravel(qb), np.ravel(qc)
     qab = np.vstack((qa, qb)).T
     edge = edge_from_gyration_radius(n_sides, radius_average)
     radius = radius_from_edge(n_sides,edge)
@@ -371,7 +375,7 @@ def Fqabc(qa, qb, qc, n_sides, radius_average, length): # Form factor in 3D of t
     perpendicular_factor_value = sas_sinx_x(qc*length/2) * length
     parallel_factor_value = parallel_factor(vertices,qab,0.)
     A = parallel_factor_value * perpendicular_factor_value
-    return A
+    return A.reshape(shape)
 
 def _Iqabc(qa,qb,qc,n_sides,radius_average, length): # proportionnal to the volume**2
     """
@@ -447,7 +451,7 @@ def Iq(q, sld, sld_solvent, n_sides:int, radius_average:float, length:float, npo
     qb = q[:, np.newaxis] * q_unit[:, 1][np.newaxis, :]
     qc = q[:, np.newaxis] * q_unit[:, 2][np.newaxis, :]
     # # Compute intensity
-    intensity = _Iqabc(qa.ravel(), qb.ravel(), qc.ravel(), n_sides, radius_average, length).reshape(qa.shape)
+    intensity = _Iqabc(qa, qb, qc, n_sides, radius_average, length)
     # Uniform average over the sphere
     integral = np.mean(intensity, axis=1)
     return (integral) * (sld - sld_solvent)**2 * 10**-4
