@@ -397,7 +397,7 @@ def empty_data2D(
     qx: np.ndarray,
     qy: np.ndarray|None = None,
     resolution: float = 0.0,
-    wavength: float|None = None
+    wavelength: float|None = None
 ) -> Data2D:
     """
     Create empty 2D data using the given mesh.
