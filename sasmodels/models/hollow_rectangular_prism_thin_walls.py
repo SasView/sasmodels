@@ -101,9 +101,9 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
-              ["b2a_ratio", "Ang", 1, [0, inf], "volume",
+              ["b2a_ratio", "", 1, [0, inf], "volume",
                "Ratio sides b/a"],
-              ["c2a_ratio", "Ang", 1, [0, inf], "volume",
+              ["c2a_ratio", "", 1, [0, inf], "volume",
                "Ratio sides c/a"],
              ]
 
