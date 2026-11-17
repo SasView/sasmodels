@@ -150,7 +150,7 @@ testpaths = [
   "sasmodels",
 ]
 python_files = [
-  "sasmodels/**/*.py",
+  "sasmodels/*.py",
 ]
 python_functions = [
   "*_test",
