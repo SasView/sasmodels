@@ -362,20 +362,12 @@ def slit_resolution(q_calc, q, *, q_length=0., q_width=0., n_length=30):
         elif wi == 0:
             weights[i, :] = _q_perp_weights(q_edges, qi, li)
         elif li == 0:
-            in_x = 1.0 * ((q_calc >= qi-wi) & (q_calc <= qi+wi))
-            abs_x = 1.0*(q_calc < abs(qi - wi)) if qi < wi else 0.
-            #print(qi - w, qi + w)
-            #print(in_x + abs_x)
-            # TODO: need pixel fraction for the boundary pixels
-            # Diff q_edges in the expression below gives the pixel width in
-            # q. As wi drops below the width of a single pixel, the
-            # numerator stays the same but the denominater gets smaller, leading
-            # to ever increasing weights. We can't see this in SasView since
-            # it explicitly excludes q_length < 10 q_width.
-            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*wi)
-
-            # Make sure we don't accidentally use this code.
-            raise NotImplementedError("We do not yet handle the q_length=0.0 case for all q_width.")
+            # Integrate each bin only over its overlap with [qi-wi, qi+wi].
+            # Fold the negative part onto positive q since I(q) = I(|q|).
+            edges = np.maximum(q_edges, 0.)
+            positive = np.diff(np.clip(edges, qi-wi, qi+wi))
+            negative = np.diff(np.clip(edges, -qi-wi, -qi+wi))
+            weights[i, :] = (positive + negative)/(2*wi)
         else:
             for k in range(-n_length, n_length+1):
                 weights[i, :] += _q_perp_weights(q_edges, qi+k*wi/n_length, li)
@@ -718,7 +710,6 @@ class ResolutionTest(unittest.TestCase):
         ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
-    @unittest.skip("Code is broken. See sasmodels #697")
     def test_slit_wide(self):
         """
         Slit smearing with q_width 0.0002
@@ -733,6 +724,51 @@ class ResolutionTest(unittest.TestCase):
             11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
         ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
+
+    def test_slit_width_bin_overlap(self):
+        """Integrate boundary fractions on an irregular calculation grid."""
+        q_calc = np.array([0.5, 1.5, 3.0, 5.0])
+        q = np.array([2.0, 2.5, 1.0, 0.0, 4.0, 4.0])
+        width = np.array([0.1, 1.0, 2.0, 1.5, 2.0, 3.0])
+        resolution = Slit1D(q, q_length=0, q_width=width, q_calc=q_calc)
+        # Bin edges are 0, 1, 2.25, 4, 6. The third and fourth
+        # intervals cross zero, so their negative parts fold onto I(|q|).
+        expected = np.array([
+            [0, 1, 0, 0],
+            [0, 0.375, 0.625, 0],
+            [0.5, 0.3125, 0.1875, 0],
+            [2./3., 1./3., 0, 0],
+            [0, 0.0625, 0.4375, 0.5],
+            [0, 1.25/6, 1.75/6, 2./6],
+        ])
+        np.testing.assert_allclose(resolution.weight_matrix, expected.T)
+        # The last interval extends beyond q_calc: keep the missing mass.
+        np.testing.assert_allclose(resolution.apply(np.ones(4)), [1, 1, 1, 1, 1, 5./6])
+        # Distinct bin values also detect misplaced weights after folding.
+        np.testing.assert_allclose(
+            resolution.apply(np.array([2., 5., 11., 17.])),
+            [5., 8.75, 4.625, 3., 13.625, 119./12])
+
+    def test_slit_width_zero_edge(self):
+        """A calculation bin straddling zero only covers its positive half."""
+        resolution = Slit1D(np.array([0.]), q_length=0, q_width=1,
+                            q_calc=np.array([0., 1., 2., 4.]))
+        np.testing.assert_allclose(resolution.weight_matrix[:, 0],
+                                   [0.5, 0.5, 0, 0])
+        np.testing.assert_allclose(resolution.apply(np.ones(4)), 1)
+
+    def test_slit_width_gaussian(self):
+        """Finite-width convolution agrees with its analytic Gaussian integral."""
+        q = np.array([0., 0.01, 0.04, 0.1])
+        width = np.array([0.01, 0.02, 0.025, 0.001])
+        sigma = 0.03
+        q_calc = np.linspace(0, 0.2, 20001)
+        resolution = Slit1D(q, q_length=0, q_width=width, q_calc=q_calc)
+        theory = np.exp(-0.5*(resolution.q_calc/sigma)**2)
+        expected = (sigma*np.sqrt(np.pi/2)/(2*width)
+                    * (erf((q+width)/(np.sqrt(2)*sigma))
+                       - erf((q-width)/(np.sqrt(2)*sigma))))
+        np.testing.assert_allclose(resolution.apply(theory), expected, rtol=2e-7)
 
     @unittest.skip("Target values have not been verified.")
     def test_slit_both_wide(self):
