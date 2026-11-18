@@ -4,19 +4,22 @@ Generate the Gauss-Legendre integration points and save them as a C file.
 """
 
 import numpy as np
-from numpy.polynomial.legendre import leggauss
+
+from sasmodels.special import roots_legendre
 
 
 def gengauss(n, path):
     """
     Save the Gauss-Legendre integration points for length *n* into file *path*.
     """
-    z, w = leggauss(n)
+    z, w = roots_legendre(n)
 
-    # Make sure array size is a multiple of 4
-    if n%4:
+    # Make sure array size is a multiple of 4 otherwise some OpenCL devices
+    # will misbehave
+    if n%4 != 0:
         array_size = n + (4 - n%4)
-        z, w = [np.hstack((v, [0.]*(4-n%4))) for v in (z, w)]
+        padding = [0.] * (4 - n%4)
+        z, w = np.hstack((z, padding)), np.hstack((w, padding))
     else:
         array_size = n
 
