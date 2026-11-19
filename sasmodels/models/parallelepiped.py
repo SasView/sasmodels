@@ -25,87 +25,55 @@ restrict their ranges. There may be a number of closely similar "best fits", so
 some trial and error, or fixing of some dimensions at expected values, may
 help.
 
-The form factor is normalized by the particle volume and the 1D scattering
-intensity $I(q)$ is then calculated as:
-
-.. Comment by Miguel Gonzalez:
-   I am modifying the original text because I find the notation a little bit
-   confusing. I think that in most textbooks/papers, the notation P(Q) is
-   used for the form factor (adim, P(Q=0)=1), although F(q) seems also to
-   be used. But here (as for many other models), P(q) is used to represent
-   the scattering intensity (in cm-1 normally). It would be good to agree on
-   a common notation.
+Let $q_a$, $q_b$, and $q_c$ be the components of $\vec q$ along the particle
+axes. The normalized form factor for a single orientation is the product of
+three squared sinc factors (see [#Mittelbach1961]_ and [#Mao2017]_).
 
 .. math::
 
-    I(q) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2
-           \left< P(q, \alpha, \beta) \right> + \text{background}
+    P(q_a,q_b,q_c) =
+    S^2(Aq_a/2)\,S^2(Bq_b/2)\,S^2(Cq_c/2),
+    \qquad S(x) = \frac{\sin x}{x}, \quad S(0) = 1.
 
-where the volume $V = A B C$, the contrast is defined as
-$\Delta\rho = \rho_\text{p} - \rho_\text{solvent}$, $P(q, \alpha, \beta)$
-is the form factor corresponding to a parallelepiped oriented
-at an angle $\alpha$ (angle between the long axis C and $\vec q$), and $\beta$
-(the angle between the projection of the particle in the $xy$ detector plane
-and the $y$ axis) and the averaging $\left<\ldots\right>$ is applied over all
-orientations.
+Here $A$, $B$, and $C$ are full edge lengths. The factors of one half come
+from the Fourier transform of a box centered at the origin.
 
-Assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
-form factor is given by (Mittelbach and Porod, 1961 [#Mittelbach1961]_)
+For randomly oriented particles, the 1D intensity uses a normalized average
+over the direction of $\vec q$ in the particle frame. Let $\vartheta$ be the
+angle from the $C$ axis and $\varphi$ the azimuth from the $A$ axis.
 
 .. math::
 
-    P(q, \alpha) = \int_0^1 \phi_Q\left(\mu \sqrt{1-\sigma^2},a\right)
-        \left[S(\mu c \sigma/2)\right]^2 d\sigma
+    (q_a,q_b,q_c) =
+    q(\sin\vartheta\cos\varphi,\sin\vartheta\sin\varphi,\cos\vartheta).
 
-with
+The squared sinc factors are even, so all eight octants contribute equally.
 
 .. math::
 
-    \phi_Q(\mu,a) &= \int_0^1
-        \left\{S\left[\frac{\mu}{2}\cos\left(\frac{\pi}{2}u\right)\right]
-               S\left[\frac{\mu a}{2}\sin\left(\frac{\pi}{2}u\right)\right]
-               \right\}^2 du \\
-    S(x) &= \frac{\sin x}{x} \\
-    \mu &= qB
+    \langle P \rangle(q) &=
+    \frac{2}{\pi} \int_0^{\pi/2}\int_0^{\pi/2}
+    P(q_a,q_b,q_c)\sin\vartheta\,d\varphi\,d\vartheta, \\
+    I(q) &= \frac{\text{scale}}{V}(\Delta\rho V)^2
+             \langle P \rangle(q) + \text{background}.
 
-where substitution of $\sigma = \cos\alpha$ and $\beta = \pi/2 \ u$ have been
-applied.
+The volume is $V=ABC$ and the contrast is
+$\Delta\rho=\rho_\text{p}-\rho_\text{solvent}$. The average is one at $q=0$.
+The implementation integrates over $\sigma=\cos\vartheta$ and a rescaled
+azimuth in $[0,1]$. Its substitution $\mu=qB/2$ includes the factor of one
+half in each sinc argument. For example, the $C$ term uses
+$\mu(C/B)\sigma=qC\sigma/2$.
 
 For **oriented** particles, the 2D scattering intensity, $I(q_x, q_y)$, is
 given as:
 
 .. math::
 
-    I(q_x, q_y) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2 P(q_x, q_y)
+    I(q_x, q_y) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2 P(q_a,q_b,q_c)
             + \text{background}
 
-.. Comment by Miguel Gonzalez:
-   This reflects the logic of the code, as in parallelepiped.c the call
-   to _pkernel returns $P(q_x, q_y)$ and then this is multiplied by
-   $V^2 * (\Delta \rho)^2$. And finally outside parallelepiped.c it will be
-   multiplied by scale, normalized by $V$ and the background added. But
-   mathematically it makes more sense to write
-   $I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background}$,
-   with scale being the volume fraction.
-
-Where $P(q_x, q_y)$ for a given orientation of the form factor is calculated as
-
-.. math::
-
-    P(q_x, q_y) = \left[\frac{\sin(\tfrac{1}{2}qA\cos\alpha)}{(\tfrac{1}
-                   {2}qA\cos\alpha)}\right]^2
-                  \left[\frac{\sin(\tfrac{1}{2}qB\cos\beta)}{(\tfrac{1}
-                   {2}qB\cos\beta)}\right]^2
-                  \left[\frac{\sin(\tfrac{1}{2}qC\cos\gamma)}{(\tfrac{1}
-                   {2}qC\cos\gamma)}\right]^2
-
-with
-
-.. math::
-
-    \cos\alpha &= \hat A \cdot \hat q, \\
-    \cos\beta  &= \hat B \cdot \hat q, \\
-    \cos\gamma &= \hat C \cdot \hat q
+The detector-plane vector $(q_x,q_y,0)$ is rotated into the particle frame
+using the orientation angles below to obtain $(q_a,q_b,q_c)$.
 
 
 FITTING NOTES
@@ -180,6 +148,8 @@ See also Nayuk [#Nayuk2012]_ and Onsager [#Onsager1949]_.
 
 .. [#Mittelbach1961] P Mittelbach and G Porod, *Acta Physica Austriaca*,
    14 (1961) 185-211
+.. [#Mao2017] Y Mao et al., *J. Phys. Chem. B*, 121 (2017) 1340-1351,
+   Eq. (6), https://doi.org/10.1021/acs.jpcb.6b11425
 .. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 .. [#Onsager1949] L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
@@ -198,17 +168,13 @@ from numpy import inf
 name = "parallelepiped"
 title = "Rectangular parallelepiped with uniform scattering length density."
 description = r"""
-    I(q)= scale*V*(sld - sld_solvent)^2*P(q,alpha)+background
-        P(q,alpha) = integral from 0 to 1 of ...
-           phi(mu*sqrt(1-sigma^2),a) * S(mu*c*sigma/2)^2 * dsigma
-        with
-            phi(mu,a) = integral from 0 to 1 of ..
-            (S((mu/2)*\cos(pi*u/2))*S((mu*a/2)*\sin(pi*u/2)))^2 * du
-            S(x) = \sin(x)/x
-            mu = q*B
-        V: Volume of the rectangular parallelepiped
-        alpha: angle between the long axis of the
-            parallelepiped and the q-vector for 1D
+    I(q) = scale*V*(sld - sld_solvent)^2*<P>(q) + background
+        P(qa,qb,qc) = [sinc(A*qa/2)*sinc(B*qb/2)*sinc(C*qc/2)]^2
+        sinc(x) = sin(x)/x, with sinc(0) = 1
+        qa, qb, qc are the components of q in the particle frame.
+        V = A*B*C, where A, B, C are the full edge lengths.
+        <P>(q) averages P over directions of q for the 1D model.
+        The oriented 2D model evaluates P for a single direction.
 """
 category = "shape:parallelepiped"
 
