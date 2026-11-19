@@ -459,4 +459,13 @@ tests = [
      0.01, 5.62789],
     [{"background": 0, "scale": 1, "n_sides": 4, "radius_average": 10, "length": 200, "sld": 1., "sld_solvent": 0.},
      [0.01, 0.1], [5.62789, 0.73696]],
+    # 2D reference values from quadrature over the rotated particle volume.
+    [{"background": 0.05, "scale": 0.7, "sld": 2.8, "sld_solvent": 1.1, "n_sides": 5, "radius_average": 24, "length": 110,
+      "theta": 0, "phi": 0, "psi": 0},
+     [(0.013, 0.021), (-0.027, 0.014), (0.035, -0.023), (-0.04, 0.005)],
+     [36.85292996, 35.16366321, 31.02436304, 31.64033182]],
+    [{"background": 0.05, "scale": 0.7, "sld": 2.8, "sld_solvent": 1.1, "n_sides": 5, "radius_average": 24, "length": 110,
+      "theta": 37, "phi": -22, "psi": 19},
+     [(0.013, 0.021), (-0.027, 0.014), (0.035, -0.023), (-0.04, 0.005)],
+     [36.65245707, 26.13385881, 17.63067966, 19.10383797]],
 ]
