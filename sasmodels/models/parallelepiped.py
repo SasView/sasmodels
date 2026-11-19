@@ -150,14 +150,16 @@ See also Nayuk [#Nayuk2012]_ and Onsager [#Onsager1949]_.
    14 (1961) 185-211
 .. [#Mao2017] Y Mao et al., *J. Phys. Chem. B*, 121 (2017) 1340-1351,
    Eq. (6), https://doi.org/10.1021/acs.jpcb.6b11425
-.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-.. [#Onsager1949] L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854,
+   https://doi.org/10.1524/zpch.2012.0257
+.. [#Onsager1949] L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659,
+   https://doi.org/10.1111/j.1749-6632.1949.tb27296.x
 
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
+* **Last Modified by:** Shurong Cao **Date:** November 20, 2026 (documentation)
 * **Last Reviewed by:**  Miguel Gonzales and Paul Butler **Date:** May 24,
   2018 - documentation updated
 """
