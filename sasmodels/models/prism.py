@@ -320,12 +320,8 @@ def parallel_factor(vertices:np.ndarray, q:np.ndarray, c:float): # gives the are
     a loop, all in the plane
     """
     qmodulus2 = q[:, 0]**2 + q[:, 1]**2
-    cutoff = 10**-30
-    qmodulus2_cutoff = np.where(qmodulus2==0, cutoff, qmodulus2) # replace by cutoff if equal to 0
-    # This case starts occuring for computations of the prism formfactor, where during the
-    # calculation of the orientational average, q// may be equal to 0.
-    # if qmodulus2==0:
-    #    return 0
+    zero = qmodulus2 == 0
+    qmodulus2_safe = np.where(zero, 1.0, qmodulus2)
     edgecenters = edgecenters_generator(vertices)
     halfedges = halfedges_generator(vertices)
     sum = 0
@@ -337,7 +333,11 @@ def parallel_factor(vertices:np.ndarray, q:np.ndarray, c:float): # gives the are
         #The exp(iqRj) is rewritten as a sum of cos+isin because of the way math.exp() works (not allowing complex as input)
         qRj = np.dot(q, edgecenters[:,i])
         sum += triple_product * (sas_sinx_x(qEj)*(np.cos(qRj)+np.sin(qRj)*1J)-c)
-    return (2/(1J*qmodulus2_cutoff)*sum)
+    amplitude = 2 / (1J * qmodulus2_safe) * sum
+    if np.any(zero):
+        # The zero-frequency limit of the polygon transform is its signed area.
+        amplitude[zero] = np.sum(edgecenters[0] * halfedges[1] - edgecenters[1] * halfedges[0])
+    return amplitude
 
 def Fqabc(qa, qb, qc, n_sides, radius_average, length): # Form factor in 3D of the nanoprism for (qa, qb, qc) scattering vector
     """
@@ -427,7 +427,7 @@ Iq.vectorized = True
 
 tests = [
     [{"background": 0, "scale": 1, "n_sides": 4, "radius_average": 10, "length": 200, "sld": 1., "sld_solvent": 0.},
-     0.01, 5.62789],
+     [0.0, 0.01], [6.28318530718, 5.62789]],
     [{"background": 0, "scale": 1, "n_sides": 4, "radius_average": 10, "length": 200, "sld": 1., "sld_solvent": 0.},
      [0.01, 0.1], [5.62789, 0.73696]],
 ]
