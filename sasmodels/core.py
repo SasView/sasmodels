@@ -130,17 +130,24 @@ def load_model(model_name, dtype=None, platform='ocl'):
 def load_model_info(model_string):
     # type: (str) -> modelinfo.ModelInfo
     """
-    Load a model definition given the model name.
+    Load a model definition from a name, expression or file path.
 
     *model_string* is the name of the model, or perhaps a model expression
     such as sphere*cylinder or sphere+cylinder. Use '@' for a structure
     factor product, e.g. sphere@hardsphere. Custom models can be specified by
     prefixing the model name with 'custom.', e.g. 'custom.MyModel+sphere'.
 
-    This returns a handle to the module defining the model.  This can be
-    used with functions in generate to build the docs or extract model info.
+    A path to an existing .py file is loaded before interpreting expression
+    operators in its name. A file may define a composite model by providing
+    a module-level *model_info*, as SasView sum/product plugins do. Paths without
+    expression operators can also be used as operands in model expressions.
+
+    This returns the model information used to build kernels or generate docs.
     """
-    if "+" in model_string:
+    if model_string.endswith('.py') and os.path.isfile(os.path.expanduser(model_string)):
+        kernel_module = generate.load_kernel_module(model_string)
+        return modelinfo.make_model_info(kernel_module)
+    elif "+" in model_string:
         parts = [load_model_info(part)
                  for part in model_string.split("+")]
         return mixture.make_mixture_info(parts, operation='+')
