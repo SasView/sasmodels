@@ -18,10 +18,20 @@ The scattering intensity $I(q)$ is calculated as
 
 Here the peak position is related to the d-spacing as $q_0 = 2\pi / d_0$.
 
-$A$ is the Porod law scale factor, $n$ the Porod exponent, $C$ is the
-peak scale factor, $m$ the peak width exponent, $\xi$ the correlation length,
-$p$ the peak shape exponent, and $B$ the flat background. The exponent $p$
-acts on the peak term only.
+The symbols map to the model parameters as follows:
+
+=========  ======================  ==========================================
+Symbol     Parameter               Meaning
+=========  ======================  ==========================================
+$A$        ``porod_scale``         Porod term scale factor
+$n$        ``porod_exp``           Porod exponent
+$C$        ``peak_scale``          peak scale factor
+$q_0$      ``peak_pos``            peak position
+$\xi$      ``correlation_length``  correlation length
+$m$        ``width_exp``           peak width exponent
+$p$        ``shape_exp``           peak shape exponent (peak term only)
+$B$        ``background``          flat background
+=========  ======================  ==========================================
 
 With $A = 0$ and $q_0 = 0$, the model reduces to the lorentz model for
 $m = 2$, $p = 1$, and to the Debye-Anderson-Brumberger (dab) model for
