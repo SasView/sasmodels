@@ -419,16 +419,17 @@ def _random_pd(model_info, pars, is2d):
     name = [] # type: List[str]  # name of the next volume parameter
     default = [] # type: List[float]  # default val for that volume parameter
     for p in pd:
+        base_name = p.name.split('[')[0]
         if p.length_control is not None:
             slots = int(pars.get(p.length_control, 1) + 0.5)
-            name.extend(p.name+str(k+1) for k in range(slots))
+            name.extend(base_name+str(k+1) for k in range(slots))
             default.extend(p.default for k in range(slots))
         elif p.length > 1:
             slots = p.length
-            name.extend(p.name+str(k+1) for k in range(slots))
+            name.extend(base_name+str(k+1) for k in range(slots))
             default.extend(p.default for k in range(slots))
         else:
-            name.append(p.name)
+            name.append(base_name)
             default.append(p.default)
     p = [pars.get(k, v) for k, v in zip(name, default)]  # relative weight
     p = np.array(p)/sum(p) if p else []  # normalize to probability
