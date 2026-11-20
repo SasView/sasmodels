@@ -151,4 +151,8 @@ tests = [
     [{'porod_scale': 0.0, 'peak_pos': 0.0, 'peak_scale': 125000.0,
       'correlation_length': 50.0, 'width_exp': 2.0, 'shape_exp': 2.0},
      0.01, 80000.001],
+    # porod term dominant, low q: 1e-5/0.01**3 + 10/(1 + 4.5**2)**2 + 0.001
+    [{'shape_exp': 2.0}, 0.01, 10.0231453],
+    # porod and peak comparable: 1e-4/0.05**3 + 10/(1 + 2.5**2)**2 + 0.001
+    [{'porod_scale': 1e-4, 'shape_exp': 2.0}, 0.05, 0.991249703],
 ]
