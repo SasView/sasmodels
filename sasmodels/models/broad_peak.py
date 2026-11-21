@@ -18,20 +18,8 @@ The scattering intensity $I(q)$ is calculated as
 
 Here the peak position is related to the d-spacing as $q_0 = 2\pi / d_0$.
 
-The symbols map to the model parameters as follows:
-
-=========  ======================  ==========================================
-Symbol     Parameter               Meaning
-=========  ======================  ==========================================
-$A$        ``porod_scale``         Porod term scale factor
-$n$        ``porod_exp``           Porod exponent
-$C$        ``peak_scale``          peak scale factor
-$q_0$      ``peak_pos``            peak position
-$\xi$      ``correlation_length``  correlation length
-$m$        ``width_exp``           peak width exponent
-$p$        ``shape_exp``           peak shape exponent (peak term only)
-$B$        ``background``          flat background
-=========  ======================  ==========================================
+The symbols are given with each parameter in the table below. $B$ is the
+flat background, and the exponent $p$ acts on the peak term only.
 
 With $A = 0$ and $q_0 = 0$, the model reduces to the lorentz model for
 $m = 2$, $p = 1$, and to the Debye-Anderson-Brumberger (dab) model for
@@ -74,7 +62,7 @@ description = """\
       List of default parameters:
       porod_scale = Porod term scaling
       porod_exp = Porod exponent
-      peak_scale = Lorentzian term scaling
+      peak_scale = Peak scale factor
       correlation_length = Correlation length [A]
       peak_pos = peak location [1/A]
       width_exp = peak width exponent
@@ -84,13 +72,13 @@ category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["porod_scale",    "",  1.0e-05, [-inf, inf], "", "Power law scale factor"],
-              ["porod_exp",      "",      3.0, [-inf, inf], "", "Exponent of power law"],
-              ["peak_scale",  "",     10.0, [-inf, inf], "", "Scale factor for broad peak"],
-              ["correlation_length", "Ang",  50.0, [-inf, inf], "", "screening length"],
-              ["peak_pos",       "1/Ang", 0.1, [-inf, inf], "", "Peak position in q"],
-              ["width_exp",    "",      2.0, [-inf, inf], "", "Exponent of peak width"],
-              ["shape_exp",    "",      1.0, [-inf, inf], "", "Exponent of peak shape"],
+parameters = [["porod_scale",    "",  1.0e-05, [-inf, inf], "", "Power law scale factor A"],
+              ["porod_exp",      "",      3.0, [-inf, inf], "", "Power law exponent n"],
+              ["peak_scale",  "",     10.0, [-inf, inf], "", "Peak scale factor C"],
+              ["correlation_length", "Ang",  50.0, [-inf, inf], "", "Correlation length ξ"],
+              ["peak_pos",       "1/Ang", 0.1, [-inf, inf], "", "Peak position q_0"],
+              ["width_exp",    "",      2.0, [-inf, inf], "", "Peak width exponent m"],
+              ["shape_exp",    "",      1.0, [-inf, inf], "", "Peak shape exponent p"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
